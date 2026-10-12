@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+*.egg-info/
+
+# Generated data
+data/processed/*
+!data/processed/.gitkeep
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+
+# Frontend dependencies and builds
+node_modules/
+.next/
+.vercel/
+*.tsbuildinfo

@@ -1,0 +1,235 @@
+# Compare Insurance — UX specification
+
+**Scope:** MVP web experience for Swiss compulsory basic insurance  
+**Status:** Implementation-ready design direction  
+**Last updated:** 12 October 2026
+
+## 1. Experience goal
+
+Help a person move from “I do not know which inputs matter” to a trustworthy shortlist in a few minutes. The assistant should guide the task, but deterministic controls and the comparison service—not the language model—must define the query, prices, ranking, and savings.
+
+Success means the user can:
+
+- confirm the correct municipality and official premium region;
+- understand each choice before committing it;
+- compare up to ten eligible plan combinations at a glance;
+- distinguish premium savings from possible healthcare costs; and
+- verify the data year, source, and assumptions without leaving the result.
+
+Do not request gender. It is not a pricing dimension for compulsory basic insurance.
+
+## 2. Recommended information architecture
+
+Use one task-focused page with four layers:
+
+1. **Compact trust header** — product name, “Swiss compulsory basic insurance,” language control when available, and data status/year.
+2. **Guided comparison workspace** — chat transcript containing structured input cards. On desktop, a sticky “Your comparison” summary sits beside it; on mobile it becomes a collapsible summary bar.
+3. **Results workspace** — a summary, visual comparison, and ranked top-ten list. Keep the guide available in a narrow contextual panel or drawer for explanations.
+4. **Plan details and provenance** — an expandable row/drawer with exact product name, restrictions, source fields, dataset date, and official link.
+
+Reduce the current hero height so the first guided input is visible on a typical laptop without scrolling. The dataset card should support trust, not compete with the primary “Start comparison” action.
+
+## 3. Chat-embedded input flow
+
+The chat is a guided form, not a blank prompt. Each assistant turn may contain explanatory text plus one semantic input card. Preserve completed answers as compact editable chips in the transcript and mirror them in “Your comparison.” Free text remains available for questions, but cannot silently alter pricing inputs.
+
+### Step sequence
+
+1. **Location**
+   - Ask for municipality or four-digit postal code.
+   - Use an accessible type-ahead combobox showing municipality, canton, postal code, and premium region when known.
+   - If a postal code maps to multiple municipalities, require an explicit choice. Never select by proximity or GPS alone.
+   - Confirmation example: “Zürich (ZH) · Premium region 1.”
+2. **Age category**
+   - Prefer birth year as the privacy-minimizing input; derive and display the official category for the selected premium year.
+   - Offer “Child,” “Young adult,” and “Adult” directly when birth year is not required by the engine.
+   - Explain the derived category inline and provide an “Edit” action.
+3. **Accident coverage**
+   - Present “Include” and “Exclude” as radios, with “I’m not sure” opening a short explanation.
+   - Do not make the legal decision for the user. Require an explicit include/exclude choice before comparison.
+4. **Deductible (franchise)**
+   - Default to “Compare all valid deductibles.”
+   - Allow multi-select. For adults show CHF 300, 500, 1,000, 1,500, 2,000, and 2,500; for children show only source-valid choices.
+   - Pair the control with: “A higher deductible can lower the premium but can increase what you pay when you need care.”
+5. **Insurance model**
+   - Default to “Compare all models.”
+   - Allow multi-select for Standard/free choice, Family doctor, HMO, Telmed, and source-defined Other.
+   - Each option has a one-sentence care-access description. Preserve the insurer’s exact product name in results.
+6. **Current premium (optional)**
+   - Ask “What do you pay now each month?” with CHF prefix and “Skip.”
+   - Explain that this enables a gross-premium difference only. It is not a total-cost estimate.
+7. **Review and compare**
+   - Show one confirmation card with location, premium year, age category, accident choice, selected deductibles, models, and optional reference premium.
+   - Primary action: **Compare plans**. Secondary action: **Edit answers**.
+
+The assistant may explain or ask for a missing field, but it must submit normalized structured values. If the user types “I live in 8001 and want Telmed,” show extracted values as unconfirmed chips and ask for confirmation before running the search.
+
+## 4. Progressive disclosure
+
+- Ask one decision at a time and reveal the next step after a valid answer.
+- Keep explanations to one or two sentences; place legal nuance and model details behind “Why this matters.”
+- Always show progress, for example “3 of 6,” and allow users to edit completed steps without restarting.
+- Hide insurer filters and sorting until results exist.
+- Show advanced source fields only in plan details.
+- When an upstream input changes, identify dependent answers that were reset. Example: changing from Adult to Child resets invalid deductible selections and announces why.
+- Do not require a chat exchange for experienced users: “Fill all details” expands the full deterministic form using the same controls.
+
+## 5. Results hierarchy
+
+After a successful search, move focus to a results heading and announce the number of matches. Keep the query summary visible and editable.
+
+### Level 1 — decision summary
+
+Show:
+
+- **Cheapest eligible premium:** CHF X.XX/month and CHF X,XXX.XX/year;
+- **Potential savings:** only if a current monthly premium was supplied and the result is cheaper;
+- number of eligible combinations and number displayed;
+- premium year, confirmed municipality/premium region, and accident choice; and
+- “Official BAG data” with import/update date.
+
+The main callout is the exact monthly premium, not an AI-written recommendation. Phrase the outcome as “Lowest premium for these filters,” not “Best insurance.”
+
+### Level 2 — graphical comparison
+
+Use two focused visualizations:
+
+1. **Top-plan price comparison:** ranked horizontal delta bars for up to ten results, showing each plan’s exact monthly premium and “CHF X.XX/month above the cheapest.” Use zero as the baseline for the *difference*, clearly title it “Difference from cheapest,” and give the cheapest a zero marker. This avoids visually exaggerating small differences between full premiums.
+2. **Deductible comparison:** grouped columns for the selected insurer/product/model across available deductibles. Label the y-axis “Monthly premium (CHF)” and every value on interaction. Add the persistent caption “Premium only—healthcare use and out-of-pocket costs are not included.” Do not interpolate missing deductible offers.
+
+Do not use pie/donut charts, gauges, “AI scores,” or quality rankings without an authoritative quality dataset. Every chart must have a “View as table” equivalent.
+
+### Level 3 — ranked plan list
+
+Display up to ten plan combinations. Each row/card contains:
+
+- rank and insurer;
+- exact product name plus normalized model label;
+- monthly premium as the strongest number and annual premium beneath it;
+- deductible and accident status;
+- savings/difference label using the rules below;
+- model restriction summary; and
+- **View details** action.
+
+Use a distinct but non-promotional “Lowest premium” badge for rank 1. Do not use “recommended,” stars, or “best value” unless future requirements define and validate those claims. Filters for model, deductible, and insurer sit above the list; sorting defaults to monthly premium ascending.
+
+### Level 4 — plan detail
+
+Open an inline expansion on desktop and a full-height sheet on mobile. Include all comparison dimensions, exact source product/model, source year, import timestamp, publisher, official source link, and the reminder to confirm availability and contractual rules with the insurer.
+
+## 6. Savings and deductible semantics
+
+Use the following language consistently:
+
+- With a user-provided reference and a cheaper result: **“Save CHF X.XX/month · CHF Y.YY/year in gross premiums.”** State the reference next to it.
+- With a user-provided reference and a more expensive result: **“CHF X.XX/month more.”** Never show negative savings.
+- Without a reference: **“CHF X.XX/month above the cheapest.”** Do not call this savings.
+- Across deductibles for the same plan/model: **“Annual premium difference vs CHF 300 deductible.”** Do not call it total savings.
+
+Beside deductible comparisons, show both:
+
+- the annual premium difference; and
+- the change in deductible exposure (for example, “Deductible is CHF 2,200 higher than CHF 300”).
+
+Add: “Actual annual cost depends on healthcare use, deductible, retention fee, and other applicable contributions.” Do not calculate a break-even point or recommend a deductible until the product has a reviewed total-cost model.
+
+## 7. System states
+
+### Initial/empty
+
+- Begin with a welcome message and the first location input visible.
+- Provide two intent shortcuts: “Find the lowest premium” and “Help me understand the choices.”
+- The free-text composer remains available, but its placeholder should mention that the guided fields are required for prices.
+
+### Loading
+
+- Keep confirmed inputs visible and disable only the submitted action.
+- For chat, show “Guide is responding…” in a polite live region after a short delay.
+- For search, show a result-card skeleton plus “Comparing validated BAG premiums for [municipality]…”; preserve the previous results if filters are being refreshed.
+- Never use an indefinite spinner without explanatory text.
+
+### Location ambiguity
+
+- State “We found more than one municipality for 8001” and render explicit options with canton/municipality context.
+- Return focus to the choice list and do not proceed until confirmed.
+
+### No matching plans
+
+- State that no eligible combination matches the selected filters—not that no insurance exists.
+- Show which filters caused the narrow result and offer one-click actions such as “Compare all models” or “Compare all valid deductibles.”
+
+### Invalid or unavailable combination
+
+- Attach the error to the relevant field, explain it in plain language, and offer only source-valid choices.
+- Preserve all unaffected answers.
+
+### Chat failure
+
+- Keep the structured comparison usable.
+- Show an inline message: “The guide is temporarily unavailable. Your answers are still here.” Add **Retry explanation**; do not duplicate the user’s message.
+
+### Search unavailable (`501`/`503`)
+
+- Do not render sample prices as results.
+- For `501`: “Price comparison is not available yet. The guide can still explain your choices.”
+- For `503`: show the true last validated dataset year/date if safe to query it, label it clearly, and provide **Try again**.
+- Never silently substitute stale or partial data.
+
+## 8. Responsive behavior
+
+### Desktop (≥ 960 px)
+
+- Use a two-column task layout: guided conversation (approximately 60%) and sticky comparison summary (approximately 40%).
+- Once results load, allow the result area to use the full content width; keep the guide in a collapsible side drawer.
+- Keep controls and result columns aligned to support scanning.
+
+### Tablet (600–959 px)
+
+- Use one primary column. Place “Your comparison” in a collapsible card above the current chat step.
+- Charts span the available width; the result list remains a table only when all required columns fit without horizontal scrolling.
+
+### Mobile (< 600 px)
+
+- Use a single-column step flow with a sticky progress/summary bar and sticky composer that does not obscure content or the software keyboard.
+- Render results as cards: insurer and price first, then model/deductible, then difference and details.
+- Default charts to the accessible compact/table view if labels would collide. Never require horizontal page scrolling.
+- Use full-width bottom sheets for explanations, filter editing, and plan details.
+- Keep touch targets at least 44 × 44 CSS px and preserve 16 px minimum input text to prevent mobile zoom.
+
+## 9. Accessibility requirements
+
+- Target WCAG 2.2 AA for contrast, keyboard access, focus visibility, and reflow.
+- Implement selectable cards as native radio buttons/checkboxes with visible labels; do not use styling-only buttons as a substitute for form semantics.
+- Build location search as an ARIA combobox with keyboard navigation, active-option announcement, and a labelled results list.
+- Maintain logical heading order and landmarks for header, comparison form/chat, results, and details.
+- On validation failure, show an error summary and move focus to the first invalid field. Associate help/error text with its input.
+- Use `aria-live="polite"` for assistant status and result counts. Do not announce decorative typing dots.
+- After comparison, move programmatic focus to the results heading, not the first plan or chart.
+- Do not encode cheapest/more expensive states by green/red alone; pair colour with text, icons, and signs.
+- Charts require a concise accessible summary and the same values in a navigable table. Tooltips must work by keyboard and touch.
+- Respect reduced-motion and high-contrast preferences. Do not auto-scroll if the user has scrolled away from the latest chat turn; offer a “New message” control instead.
+- Use plain language and define “deductible (franchise),” “premium region,” and restricted models on first use.
+
+## 10. Pre-launch illustrative-data policy
+
+The current comparison endpoint is not implemented. Until it returns validated data:
+
+- Change “VALIDATED”/“Ready” UI language to **“Data files validated · price search not yet available.”** The chat status may read **“Guide ready · prices unavailable.”**
+- Do not show real insurer names, plausible premiums, rankings, savings, or active outbound purchase links in the product experience.
+- If a layout preview is essential in a development/demo route, use labels such as “Example plan A” and non-production fixture values. Place **“Illustrative preview—not actual premiums or offers”** above every results module and include it in exported screenshots.
+- Prefix every outcome label with “Example,” including “Example lowest premium” and “Example annual difference.” Disable switching/purchase actions.
+- Keep preview fixtures out of the production results endpoint and analytics. A global footer disclaimer alone is insufficient.
+
+When the engine is live, replace the preview label with: **“Official BAG data · premiums for [year] · imported [date].”** Do not say “live” unless data freshness is actually monitored.
+
+## 11. Acceptance criteria
+
+- A user can complete the comparison using only structured controls embedded in the conversation.
+- A user can edit any prior answer and sees which dependent choices were reset.
+- Location ambiguity, age-dependent deductibles, and accident coverage require explicit confirmation.
+- Results visually and textually identify the lowest premium, exact monthly/annual amounts, and the reference used for any claimed savings.
+- Charts expose equivalent tabular data and never imply quality, recommendation, or total healthcare cost.
+- The complete flow is usable at 320 CSS px width, with keyboard only, and at 200% zoom.
+- If chat fails, deterministic comparison controls remain functional; if price search is unavailable, no plausible result data is shown.
+- The data source, premium year, import date, and calculation scope are visible from every result set.
+
