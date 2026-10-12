@@ -1,45 +1,49 @@
-import { previewPlans } from "../../config";
 import { formatCurrency } from "../../formatters";
-import { PreviewLabel } from "../primitives";
+import type { PremiumOffer } from "../../types";
 
-export function PriceDifferenceChart() {
+export function PriceDifferenceChart({ offers }: { offers: PremiumOffer[] }) {
+  const chartOffers = offers.slice(0, 5);
+  const maximum = Math.max(
+    ...chartOffers.map((offer) => Number(offer.monthly_difference_from_cheapest_chf)),
+    1,
+  );
   return (
     <section className="chart-card" aria-labelledby="difference-title">
-      <PreviewLabel />
       <div className="chart-heading">
         <div>
-          <p className="chart-kicker">Example price gap</p>
+          <p className="chart-kicker">Price gap</p>
           <h3 id="difference-title">Difference from cheapest</h3>
         </div>
         <span>CHF / month</span>
       </div>
       <div className="delta-chart" aria-hidden="true">
-        {previewPlans.map((plan) => (
-          <div className="delta-row" key={plan.name}>
-            <strong>{plan.name.replace("Example plan ", "Plan ")}</strong>
+        {chartOffers.map((offer) => {
+          const difference = Number(offer.monthly_difference_from_cheapest_chf);
+          return <div className="delta-row" key={`${offer.insurer_id}-${offer.plan_id}`}>
+            <strong>#{offer.rank}</strong>
             <div className="delta-track">
               <span
-                className={plan.difference === 0 ? "zero" : ""}
+                className={difference === 0 ? "zero" : ""}
                 style={{
-                  width: plan.difference === 0 ? "4px" : `${(plan.difference / 29) * 100}%`,
+                  width: difference === 0 ? "4px" : `${(difference / maximum) * 100}%`,
                 }}
               />
             </div>
-            <b>{plan.difference === 0 ? "CHF 0" : `+ CHF ${plan.difference}`}</b>
+            <b>{difference === 0 ? "CHF 0" : `+ CHF ${difference.toFixed(2)}`}</b>
           </div>
-        ))}
+        })}
       </div>
       <details className="table-view">
         <summary>View as table</summary>
         <table>
-          <caption>Example difference from the cheapest plan</caption>
+          <caption>Difference from the cheapest matching plan</caption>
           <thead><tr><th>Plan</th><th>Monthly premium</th><th>Difference</th></tr></thead>
           <tbody>
-            {previewPlans.map((plan) => (
-              <tr key={plan.name}>
-                <th>{plan.name}</th>
-                <td>{formatCurrency(plan.monthly)}</td>
-                <td>+ {formatCurrency(plan.difference)}</td>
+            {chartOffers.map((offer) => (
+              <tr key={`${offer.insurer_id}-${offer.plan_id}`}>
+                <th>{offer.insurer_name}</th>
+                <td>{formatCurrency(Number(offer.monthly_premium_chf))}</td>
+                <td>+ {formatCurrency(Number(offer.monthly_difference_from_cheapest_chf))}</td>
               </tr>
             ))}
           </tbody>

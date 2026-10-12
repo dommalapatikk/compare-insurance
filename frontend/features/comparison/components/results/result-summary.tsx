@@ -1,31 +1,38 @@
 import { formatCurrency } from "../../formatters";
-import { PreviewLabel } from "../primitives";
+import type { PremiumSearchResponse } from "../../types";
 
 export function ResultSummary({
   location,
   accidentLabel,
+  results,
 }: {
   location: string;
   accidentLabel: string;
+  results: PremiumSearchResponse;
 }) {
+  const cheapest = results.offers[0];
+  const reference = cheapest.reference_comparison;
   return (
     <div className="result-summary-card">
-      <PreviewLabel />
       <div className="result-summary-grid">
         <div>
-          <span>Example lowest premium</span>
-          <strong>{formatCurrency(318)}<small>/month</small></strong>
-          <p>{formatCurrency(3816)} per year</p>
+          <span>Lowest matching premium</span>
+          <strong>{formatCurrency(Number(cheapest.monthly_premium_chf))}<small>/month</small></strong>
+          <p>
+            {reference?.relation === "cheaper"
+              ? `Save ${formatCurrency(Number(reference.annual_difference_chf))} / year vs current`
+              : `${formatCurrency(Number(cheapest.annual_premium_chf))} per year`}
+          </p>
         </div>
         <div>
-          <span>Example plans shown</span>
-          <strong>3<small> of 10</small></strong>
+          <span>Plans shown</span>
+          <strong>{results.offers.length}<small> of {results.total_eligible_offers}</small></strong>
           <p>Ranked by monthly premium</p>
         </div>
         <div>
-          <span>Example query</span>
-          <strong className="result-query">{location || "Your municipality"}</strong>
-          <p>2027 · {accidentLabel.toLowerCase()} accident</p>
+          <span>Query</span>
+          <strong className="result-query">{location}</strong>
+          <p>{results.source_year} · accident {accidentLabel.toLowerCase()}</p>
         </div>
       </div>
     </div>

@@ -25,6 +25,9 @@ Generated, application-ready outputs belong here. Expected processing work inclu
 - excluding BAG special territorial codes from ordinary Swiss-resident searches;
 - deriving monthly and annual savings from an explicitly defined baseline.
 
-Processed files must be reproducible from `raw/` and should never be edited by hand. Processing code should fail loudly on an unknown year, insurer, model, age code, deductible or premium region rather than silently dropping the row.
+Processed data must be reproducible from `raw/` and should never be edited by hand. Processing code fails loudly on an unknown year, insurer, model, age code, deductible, or premium region rather than silently dropping the row.
 
-No processed dataset has been generated yet.
+The application-ready catalogue is generated directly into the dedicated
+Supabase `premium_offers` table. Run
+`backend/scripts/ingest_bag_to_supabase.py --validate-only` to validate the
+entire snapshot without making a remote change.

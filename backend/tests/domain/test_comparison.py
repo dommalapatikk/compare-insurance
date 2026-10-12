@@ -40,7 +40,8 @@ def make_offer(
 
 def test_adult_criteria_accept_requested_deductibles() -> None:
     criteria = SearchCriteria(
-        municipality_id="261",
+        canton="ZH",
+        region="1",
         age_category=AgeCategory.ADULT,
         accident_coverage=False,
         deductibles=(
@@ -71,7 +72,8 @@ def test_criteria_rejects_age_incompatible_deductibles(
 ) -> None:
     with pytest.raises(DomainValidationError, match="not valid"):
         SearchCriteria(
-            municipality_id="261",
+            canton="ZH",
+            region="1",
             age_category=age_category,
             accident_coverage=True,
             deductibles=(deductible,),

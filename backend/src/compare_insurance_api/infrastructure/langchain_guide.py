@@ -7,11 +7,19 @@ from typing import Any
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 
+from compare_insurance_api.application.use_cases import ComparePremiums
+from compare_insurance_api.infrastructure.langchain_tools import (
+    build_premium_comparison_tool,
+)
+from compare_insurance_api.infrastructure.supabase_repository import (
+    SupabasePremiumRepository,
+)
+
 
 SYSTEM_PROMPT = """
 You are the Compare Insurance guide for Swiss compulsory basic health
 insurance (OKP/AOS). Help users understand the inputs needed for a neutral
-premium comparison: municipality, official age category, deductible,
+premium comparison: canton and official premium region, age category, deductible,
 insurance model, accident coverage, and premium year.
 
 Rules:
@@ -20,9 +28,12 @@ Rules:
   the user asks, and never request gender for a basic-insurance comparison.
 - Never invent an insurer, premium, ranking, saving, eligibility decision, or
   provider-network rule.
-- The data-backed comparison tool is not implemented yet. Until a verified
-  premium-search tool is attached, say that you can explain the choices but
-  cannot quote or rank live prices.
+- Use compare_swiss_health_insurance only when every required input is known:
+  canton, official premium region, age category, deductible choices, insurance
+  model choices, accident coverage, and premium year.
+- All premiums, rankings, and differences must come from that tool. Never do
+  premium arithmetic yourself and never alter the tool's factual output.
+- If the catalogue is unavailable or no offers match, state that plainly.
 - Explain that a higher deductible can lower the premium while increasing the
   user's possible out-of-pocket cost.
 - Do not tell a user whether they are legally entitled to exclude accident
@@ -31,8 +42,7 @@ Rules:
   savings. Do not provide medical, legal, financial, or insurance advice.
 - Do not ask for names, exact street addresses, health history, policy numbers,
   payment information, or other unnecessary personal data.
-- When enough comparison inputs are available, summarize them in a short list
-  and explain that official 2027 BAG data will power the future result.
+- When inputs are missing, ask for only the next necessary comparison input.
 """.strip()
 
 
@@ -49,7 +59,11 @@ def get_langchain_agent() -> Any:
 
     return create_agent(
         model=f"openai:{model}",
-        tools=[],
+        tools=[
+            build_premium_comparison_tool(
+                ComparePremiums(SupabasePremiumRepository.from_env())
+            )
+        ],
         system_prompt=SYSTEM_PROMPT,
         checkpointer=InMemorySaver(),
     )

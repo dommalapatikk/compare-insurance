@@ -6,19 +6,22 @@ export function ReviewStep({ flow }: { flow: ComparisonFlow }) {
       <p className="card-eyebrow">Ready to review</p>
       <h3 id="review-title">Your comparison profile is complete.</h3>
       <p>
-        The price engine is not connected yet. Trying the comparison will show the
-        unavailable state and an explicitly illustrative output design.
+        The deterministic engine will filter the official BAG catalogue and rank
+        matching premiums from lowest to highest.
       </p>
-      <button className="primary-action" type="button" onClick={flow.comparePlans}>
-        Compare plans <span aria-hidden="true">→</span>
+      <button
+        className="primary-action"
+        type="button"
+        disabled={flow.isSearching}
+        onClick={() => void flow.comparePlans()}
+      >
+        {flow.isSearching ? "Comparing…" : "Compare plans"}
+        <span aria-hidden="true">→</span>
       </button>
       {flow.searchNotice && (
         <div className="search-notice" role="status">
-          <strong>Price comparison is not available yet.</strong>
-          <span>
-            The guide can still explain your choices. The preview below contains no actual
-            premiums or offers.
-          </span>
+          <strong>Comparison status</strong>
+          <span>{flow.searchNotice}</span>
         </div>
       )}
     </section>

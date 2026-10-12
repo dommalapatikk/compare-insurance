@@ -7,7 +7,7 @@ export function SiteHeader() {
       </a>
       <div className="header-meta">
         <span className="data-dot" aria-hidden="true" />
-        Data files validated · price search not yet available
+        BAG 2027 catalogue · deterministic ranking
       </div>
     </header>
   );
@@ -20,8 +20,8 @@ export function Hero() {
         <p className="eyebrow">Swiss compulsory health insurance</p>
         <h1 id="page-title">A clearer route to a lower premium.</h1>
         <p className="hero-lede">
-          Answer six guided questions. The LangChain guide explains each choice,
-          while validated controls keep pricing inputs precise.
+          Answer six guided questions, compare official premiums, and ask the
+          LangChain guide to explain the choices.
         </p>
       </div>
       <dl className="dataset-strip" aria-label="Dataset summary">
@@ -37,7 +37,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <p>Compare Insurance · Neutral comparison concept for Swiss compulsory basic insurance</p>
-      <p>Prices will be sourced from validated BAG data. Always confirm terms with the insurer.</p>
+      <p>Premiums come from the BAG 2027 snapshot. Always confirm terms with the insurer.</p>
     </footer>
   );
 }

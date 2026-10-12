@@ -37,7 +37,7 @@ export function ComparisonSummary({ flow }: { flow: ComparisonFlow }) {
           <span className="trust-icon" aria-hidden="true">✓</span>
           <div>
             <strong>Pricing guardrail</strong>
-            <p>The assistant can explain inputs, but it cannot invent, rank, or change premiums.</p>
+            <p>The assistant can call the comparison tool, but it cannot invent or change premiums.</p>
           </div>
         </div>
       </div>

@@ -1,11 +1,11 @@
-import type { Choice, PreviewDeductible, PreviewPlan } from "./types";
+import type { Choice } from "./types";
 
 export const adultDeductibles = [300, 500, 1000, 1500, 2000, 2500];
 export const childDeductibles = [0, 100, 200, 300, 400, 500, 600];
 
 export const ageChoices: Choice[] = [
   { value: "child", label: "Child", description: "Up to age 18" },
-  { value: "young-adult", label: "Young adult", description: "Age 19–25" },
+  { value: "young_adult", label: "Young adult", description: "Age 19–25" },
   { value: "adult", label: "Adult", description: "Age 26+" },
 ];
 
@@ -16,7 +16,7 @@ export const modelChoices: Choice[] = [
     description: "Free choice of doctor under the plan rules.",
   },
   {
-    value: "family-doctor",
+    value: "family_doctor",
     label: "Family doctor",
     description: "Your chosen practice is normally the first contact.",
   },
@@ -43,18 +43,27 @@ export const quickQuestions = [
   "What is the difference between HMO and Telmed?",
 ];
 
-export const previewPlans: PreviewPlan[] = [
-  { name: "Example plan A", monthly: 318, difference: 0, model: "Telmed" },
-  { name: "Example plan B", monthly: 329, difference: 11, model: "HMO" },
-  { name: "Example plan C", monthly: 347, difference: 29, model: "Family doctor" },
+export const cantonChoices = [
+  "AG", "AI", "AR", "BE", "BL", "BS", "FR", "GE", "GL", "GR", "JU",
+  "LU", "NE", "NW", "OW", "SG", "SH", "SO", "SZ", "TG", "TI", "UR",
+  "VD", "VS", "ZG", "ZH",
 ];
 
-export const previewDeductibles: PreviewDeductible[] = [
-  { deductible: 300, monthly: 372 },
-  { deductible: 500, monthly: 350 },
-  { deductible: 1000, monthly: 334 },
-  { deductible: 1500, monthly: 327 },
-  { deductible: 2000, monthly: 322 },
-  { deductible: 2500, monthly: 318 },
-];
+const subdividedPremiumRegions: Record<string, string[]> = {
+  BE: ["1", "2", "3"],
+  BL: ["1", "2"],
+  FR: ["1", "2"],
+  GR: ["1", "2", "3"],
+  LU: ["1", "2", "3"],
+  SG: ["1", "2", "3"],
+  SH: ["1", "2"],
+  TI: ["1", "2"],
+  VD: ["1", "2"],
+  VS: ["1", "2"],
+  ZH: ["1", "2", "3"],
+};
+
+export function premiumRegionsFor(canton: string) {
+  return canton ? subdividedPremiumRegions[canton] || ["0"] : [];
+}
 

@@ -7,12 +7,14 @@ import {
   ageChoices,
   childDeductibles,
   modelChoices,
+  premiumRegionsFor,
 } from "./config";
 import type {
   AccidentChoice,
   AgeGroup,
   ComparisonStep,
   Message,
+  PremiumSearchResponse,
 } from "./types";
 
 function makeId() {
@@ -25,7 +27,8 @@ export function useComparisonFlow() {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [step, setStep] = useState<ComparisonStep>(1);
-  const [location, setLocation] = useState("");
+  const [canton, setCanton] = useState("");
+  const [region, setRegion] = useState("");
   const [locationError, setLocationError] = useState("");
   const [ageGroup, setAgeGroup] = useState<AgeGroup>("");
   const [accident, setAccident] = useState<AccidentChoice>("");
@@ -33,8 +36,9 @@ export function useComparisonFlow() {
   const [models, setModels] = useState<string[]>(modelChoices.map(({ value }) => value));
   const [currentPremium, setCurrentPremium] = useState("");
   const [resetNotice, setResetNotice] = useState("");
-  const [showPreview, setShowPreview] = useState(false);
-  const [searchNotice, setSearchNotice] = useState(false);
+  const [results, setResults] = useState<PremiumSearchResponse | null>(null);
+  const [searchNotice, setSearchNotice] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const resultsRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -42,8 +46,8 @@ export function useComparisonFlow() {
   }, []);
 
   useEffect(() => {
-    if (showPreview) resultsRef.current?.focus();
-  }, [showPreview]);
+    if (results || searchNotice) resultsRef.current?.focus();
+  }, [results, searchNotice]);
 
   const availableDeductibles = ageGroup === "child" ? childDeductibles : adultDeductibles;
   const progressStep = Math.min(step, 6);
@@ -54,19 +58,28 @@ export function useComparisonFlow() {
   const selectedModelLabels = modelChoices
     .filter(({ value }) => models.includes(value))
     .map(({ label }) => label);
+  const location = canton && region ? `${canton} · premium region ${region}` : "";
+  const availableRegions = premiumRegionsFor(canton);
 
   function goTo(nextStep: ComparisonStep) {
-    setSearchNotice(false);
+    setSearchNotice("");
     setStep(nextStep);
   }
 
   function continueFromLocation() {
-    if (!location.trim()) {
-      setLocationError("Enter a municipality or four-digit postal code.");
+    if (!canton || !region) {
+      setLocationError("Choose both a canton and an official premium region.");
       return;
     }
     setLocationError("");
     goTo(2);
+  }
+
+  function chooseCanton(value: string) {
+    const available = premiumRegionsFor(value);
+    setCanton(value);
+    setRegion(available.length === 1 ? available[0] : "");
+    setLocationError("");
   }
 
   function chooseAge(value: AgeGroup) {
@@ -135,12 +148,46 @@ export function useComparisonFlow() {
     }
   }
 
-  function comparePlans() {
-    setSearchNotice(true);
-    setShowPreview(true);
-    window.setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
+  async function comparePlans() {
+    if (!canton || !region || !ageGroup || !accident) return;
+    setIsSearching(true);
+    setSearchNotice("");
+    setResults(null);
+    const params = new URLSearchParams({
+      canton,
+      region,
+      age_category: ageGroup,
+      accident_coverage: String(accident === "included"),
+      year: "2027",
+      top_n: "10",
+    });
+    deductibles.forEach((value) => params.append("deductible", String(value)));
+    models.forEach((value) => params.append("insurance_model", value));
+    if (currentPremium) {
+      params.set("reference_monthly_premium_chf", currentPremium);
+    }
+    try {
+      const response = await fetch(`/api/premiums?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as PremiumSearchResponse & {
+        detail?: string;
+      };
+      if (!response.ok) throw new Error(payload.detail || "Comparison failed.");
+      setResults(payload);
+      if (payload.offers.length === 0) {
+        setSearchNotice("No published offers matched every selected filter.");
+      }
+    } catch (error) {
+      setSearchNotice(
+        error instanceof Error ? error.message : "The comparison service is unavailable.",
+      );
+    } finally {
+      setIsSearching(false);
+      window.setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
   }
 
   return {
@@ -149,6 +196,9 @@ export function useComparisonFlow() {
     ageGroup,
     ageLabel,
     availableDeductibles,
+    availableRegions,
+    canton,
+    chooseCanton,
     chooseAge,
     comparePlans,
     continueFromLocation,
@@ -157,6 +207,7 @@ export function useComparisonFlow() {
     draft,
     goTo,
     isSending,
+    isSearching,
     location,
     locationError,
     messages,
@@ -165,6 +216,7 @@ export function useComparisonFlow() {
     progressStep,
     resetNotice,
     resultsRef,
+    results,
     searchNotice,
     selectedModelLabels,
     sendMessage,
@@ -172,14 +224,14 @@ export function useComparisonFlow() {
     setCurrentPremium,
     setDeductibles,
     setDraft,
-    setLocation,
     setLocationError,
     setModels,
-    showPreview,
+    setRegion,
     step,
     threadId,
     toggleDeductible,
     toggleModel,
+    region,
   };
 }
 

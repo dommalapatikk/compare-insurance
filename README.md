@@ -4,7 +4,7 @@ Compare Insurance is an early-stage Swiss compulsory health-insurance comparison
 
 ## Project status
 
-The repository contains the product and UX requirements, a guided Next.js frontend, a layered FastAPI/LangChain backend, tested domain comparison rules, and a documented copy of the relevant official Swiss government premium dataset. The frontend and API scaffold are deployed on Vercel. Live price search remains blocked until the ingestion adapter is implemented and validated.
+The repository contains the product and UX requirements, a guided Next.js frontend, a layered FastAPI/LangChain backend, tested deterministic comparison rules, and a documented official Swiss government premium snapshot. A dedicated Supabase catalogue stores the normalized 2027 data, and the same comparison use case powers the HTTP API and the LangChain tool.
 
 ## Planned capabilities
 
@@ -29,19 +29,19 @@ frontend/         Feature-modular Next.js comparison and LangChain chat UI
 ```bash
 cd backend
 python3.12 -m venv .venv
-.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -m pip install -e '.[dev,data]'
 .venv/bin/python -m pytest -q
+.venv/bin/python scripts/ingest_bag_to_supabase.py --validate-only
 .venv/bin/uvicorn compare_insurance_api.main:app --reload
 ```
 
-The API provides `GET /health` and the LangChain-backed `POST /v1/chat` route.
-The premium-search endpoint is deliberately marked `501 Not Implemented` until
-the raw BAG data has a tested, reproducible ingestion pipeline.
+The API provides `GET /health`, data-backed `GET /v1/premiums/search`, and the
+LangChain-backed `POST /v1/chat` route.
 
 ## Development approach
 
 Business rules live in a framework-free domain layer. Application use cases
-depend on ports, while FastAPI, LangChain, and the future BAG repository are
+depend on ports, while FastAPI, LangChain, and the Supabase BAG repository are
 outer adapters. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for bounded
 contexts, dependency rules, ubiquitous language, and the required
 red–green–refactor workflow. The planned privacy-safe telemetry design is in
@@ -55,9 +55,10 @@ npm install
 npm run dev
 ```
 
-The browser calls a same-origin Next.js route, which forwards chat messages to
-the FastAPI service configured by `COMPARE_API_URL`. `OPENAI_API_KEY` and
-`OPENAI_MODEL` remain server-side. Copy `.env.example` to your local secret
+The browser calls same-origin Next.js routes, which forward comparison and chat
+requests to the FastAPI service configured by `COMPARE_API_URL`.
+`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, and `OPENAI_MODEL` remain
+server-side. Copy the relevant `.env.example` file to local secret
 configuration without committing the resulting file.
 
 ## Deployment
@@ -68,9 +69,9 @@ configuration without committing the resulting file.
   pushes to `main` and on pull requests.
 
 The two applications are separate Vercel projects in this monorepo. The
-frontend production environment points to the API project. The chat assistant
-remains safely disabled until `OPENAI_API_KEY` is added to the API project's
-Vercel environment and that project is redeployed.
+frontend production environment points to the API project. Premium comparison
+does not depend on an LLM. The chat assistant remains safely disabled until
+`OPENAI_API_KEY` is added to the API project's Vercel environment.
 
 Automatic Vercel deployments from Git require the Vercel account's GitHub
 integration to be authorized for `dommalapatikk/compare-insurance`.
@@ -81,8 +82,8 @@ This project is an informational comparison tool. It does not provide medical, l
 
 ## Next milestones
 
-1. Test-drive the BAG normalization and premium-repository adapter.
-2. Connect the tested repository to the existing comparison use case.
-3. Add API contract and end-to-end comparison tests.
-4. Add end-to-end tests against the deployed API contract.
+1. Add municipality lookup from the pinned BAG premium-region workbook.
+2. Add source-version metadata and atomic catalogue promotion.
+3. Add deployed end-to-end browser tests.
+4. Add privacy-safe OpenTelemetry instrumentation.
 5. Grant the Vercel GitHub App repository access for automatic deployments.

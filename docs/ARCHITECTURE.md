@@ -38,15 +38,17 @@ fully reproducible from source-backed values.
 
 ### Premium catalogue — supporting domain
 
-Will ingest, validate, normalize, version, and expose official BAG records. It
-implements the premium-repository port defined by the application layer. A
-failed import must not replace the last validated catalogue.
+Ingests, validates, normalizes, and exposes official BAG records in Supabase.
+The PostgREST adapter implements the premium-repository port defined by the
+application layer. The checked-in snapshot is validated fully before a remote
+write begins.
 
 ### Conversational guidance — supporting domain
 
 Explains concepts and collects user intent. LangChain is an adapter behind the
-`InsuranceGuide` port. It may eventually call a read-only comparison use case,
-but it never owns eligibility, prices, ranking, or savings.
+`InsuranceGuide` port. Its read-only comparison tool calls the same
+`ComparePremiums` use case as HTTP, so it never owns eligibility, prices,
+ranking, or savings.
 
 ### Web experience — presentation
 
@@ -60,7 +62,7 @@ The frontend is organized by feature rather than as a single route component:
 frontend/
   app/                         Next.js delivery boundary and API proxy
   features/comparison/
-    config.ts                  immutable choices and preview fixtures
+    config.ts                  immutable input choices
     types.ts                   feature language
     use-comparison-flow.ts     client-side workflow state and actions
     components/
@@ -85,8 +87,11 @@ backend/src/compare_insurance_api/
     ports.py           repository and guide interfaces
     use_cases.py       comparison and explanation orchestration
   infrastructure/
-    langchain_guide.py LangChain adapter
-    # premium_repository.py will be added with ingestion/search
+    bag_ingestion.py          reproducible source loading and upload
+    bag_normalization.py      source-code mappings and validation
+    supabase_repository.py    PremiumRepository PostgREST adapter
+    langchain_tools.py        read-only deterministic comparison tool
+    langchain_guide.py        LangChain agent adapter
   api/
     schemas.py         HTTP-only Pydantic contracts
     routes.py          thin FastAPI controllers
@@ -131,23 +136,16 @@ privacy boundary, service objectives, and test requirements.
 ```text
 Browser
   -> Next.js guided comparison and chat
-  -> same-origin POST /api/chat
+  -> same-origin /api/premiums and /api/chat
   -> FastAPI API controller
-  -> ExplainInsuranceChoices use case
-  -> InsuranceGuide port
-  -> LangChain adapter -> configured OpenAI model
+  -> ComparePremiums -> PremiumRepository -> Supabase
+  -> ExplainInsuranceChoices -> LangChain -> comparison tool
 
 Official BAG raw data
-  -> tested import/validation adapter (next milestone)
-  -> PremiumRepository port
-  -> ComparePremiums use case
+  -> tested import/validation adapter
+  -> normalized Supabase catalogue
   -> pure domain ranking and difference calculations
 ```
-
-`GET /v1/premiums/search` remains an explicit `501` until a validated catalogue
-adapter is implemented. The domain and application comparison foundation is
-already isolated and tested, but it must not be presented as a working live
-search before official records are mapped and verified.
 
 ## Test-driven development policy
 
@@ -165,7 +163,7 @@ backend/tests/
   domain/       fast tests for invariants and calculations; no frameworks
   application/  use-case tests with in-memory fakes for ports
   api/          HTTP contract, validation, and error-mapping tests
-  integration/  future BAG parsing and repository adapter tests
+  infrastructure/ BAG parsing, repository, and LangChain-tool adapter tests
 ```
 
 Rules for future work:
@@ -204,8 +202,8 @@ projects from the same monorepo. `backend/src/index.py` is the thin Vercel
 Python-runtime entry point and only re-exports the existing FastAPI composition
 root. The frontend reaches that service through its same-origin proxy route.
 
-This production deployment publishes the guided MVP and API scaffold only.
-The premium-search route remains an explicit `501` until the catalogue adapter
-and its validation suite are complete, so preview fixtures must not be
-presented as live price results.
+Supabase is server-only: browser code reaches it through FastAPI, row-level
+security is enabled, and the service-role key is stored only in deployment and
+automation secret stores. The public UI presents returned BAG records rather
+than local preview fixtures.
 

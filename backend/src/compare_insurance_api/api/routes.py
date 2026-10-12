@@ -1,22 +1,33 @@
 """Thin HTTP controllers that translate transport data into use-case calls."""
 
-from datetime import date
 from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from compare_insurance_api.api.dependencies import get_explain_insurance_choices
+from compare_insurance_api.api.dependencies import (
+    get_compare_premiums,
+    get_explain_insurance_choices,
+)
 from compare_insurance_api.api.schemas import (
-    ADULT_DEDUCTIBLE_VALUES,
     ChatRequest,
     ChatResponse,
     HealthResponse,
     PremiumSearchRequest,
     PremiumSearchResponse,
 )
-from compare_insurance_api.application.use_cases import ExplainInsuranceChoices
-from compare_insurance_api.domain.models import Deductible
+from compare_insurance_api.application.use_cases import (
+    ComparePremiums,
+    ExplainInsuranceChoices,
+)
+from compare_insurance_api.domain.models import (
+    AgeCategory,
+    Deductible,
+    DomainValidationError,
+    InsuranceModel,
+    SearchCriteria,
+    valid_deductibles,
+)
 
 
 router = APIRouter()
@@ -66,40 +77,95 @@ async def chat(
     tags=["premiums"],
 )
 async def search_premiums(
-    canton: Annotated[str | None, Query(min_length=2, max_length=2)] = None,
-    region: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
-    postal_code: Annotated[str | None, Query(pattern=r"^\d{4}$")] = None,
-    municipality_id: Annotated[str | None, Query(min_length=1, max_length=20)] = None,
-    birth_date: date | None = None,
-    age: Annotated[int | None, Query(ge=0, le=120)] = None,
+    use_case: Annotated[ComparePremiums, Depends(get_compare_premiums)],
+    canton: Annotated[str, Query(min_length=2, max_length=2)],
+    region: Annotated[str, Query(min_length=1, max_length=8)],
+    age_category: AgeCategory,
     deductible: Annotated[list[Deductible] | None, Query()] = None,
     accident_coverage: bool = True,
-    insurance_model: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
-    year: Annotated[int | None, Query(ge=2020, le=2100)] = None,
+    insurance_model: Annotated[list[InsuranceModel] | None, Query()] = None,
+    year: Annotated[int, Query(ge=2020, le=2100)] = 2027,
     top_n: Annotated[int, Query(ge=1, le=10)] = 10,
     reference_monthly_premium_chf: Annotated[Decimal | None, Query(ge=0)] = None,
 ) -> PremiumSearchResponse:
-    # Keep transport validation explicit while the repository adapter is built.
-    PremiumSearchRequest(
+    selected_deductibles = deductible or sorted(
+        valid_deductibles(age_category),
+        key=int,
+    )
+    selected_models = insurance_model or list(InsuranceModel)
+    request = PremiumSearchRequest(
         canton=canton,
         region=region,
-        postal_code=postal_code,
-        municipality_id=municipality_id,
-        birth_date=birth_date,
-        age=age,
-        deductibles=deductible or list(ADULT_DEDUCTIBLE_VALUES),
+        age_category=age_category,
+        deductibles=selected_deductibles,
         accident_coverage=accident_coverage,
-        insurance_model=insurance_model,
+        insurance_models=selected_models,
         year=year,
         top_n=top_n,
         reference_monthly_premium_chf=reference_monthly_premium_chf,
     )
+    try:
+        criteria = SearchCriteria(
+            canton=request.canton,
+            region=request.region,
+            age_category=request.age_category,
+            accident_coverage=request.accident_coverage,
+            deductibles=tuple(request.deductibles),
+            insurance_models=tuple(request.insurance_models),
+            premium_year=request.year,
+            top_n=request.top_n,
+            reference_monthly_premium_chf=request.reference_monthly_premium_chf,
+        )
+        comparison = await use_case.execute(criteria)
+    except DomainValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except RuntimeError as exc:
+        if "not configured" in str(exc):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The official premium catalogue is not configured.",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The official premium catalogue could not be queried.",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The official premium catalogue could not be queried.",
+        ) from exc
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail=(
-            "Premium search is not available until the official premium dataset "
-            "has been ingested and validated."
-        ),
+    return PremiumSearchResponse(
+        query=request,
+        source_year=criteria.premium_year,
+        source_name="Swiss Federal Office of Public Health (BAG)",
+        total_eligible_offers=comparison.total_eligible_offers,
+        offers=[
+            {
+                "rank": ranked.rank,
+                "insurer_id": ranked.offer.insurer_id,
+                "insurer_name": ranked.offer.insurer_name,
+                "plan_id": ranked.offer.plan_id,
+                "product_name": ranked.offer.product_name,
+                "canton": ranked.offer.canton,
+                "region": ranked.offer.region,
+                "deductible_chf": ranked.offer.deductible,
+                "accident_coverage": ranked.offer.accident_coverage,
+                "insurance_model": ranked.offer.insurance_model.value,
+                "monthly_premium_chf": ranked.offer.monthly_premium_chf,
+                "annual_premium_chf": ranked.offer.annual_premium_chf,
+                "monthly_difference_from_cheapest_chf": (
+                    ranked.monthly_difference_from_cheapest_chf
+                ),
+                "annual_difference_from_cheapest_chf": (
+                    ranked.annual_difference_from_cheapest_chf
+                ),
+                "reference_comparison": ranked.reference_comparison,
+            }
+            for ranked in comparison.offers
+        ],
     )
 

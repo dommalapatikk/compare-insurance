@@ -21,6 +21,16 @@ class AgeCategory(str, Enum):
     YOUNG_ADULT = "young_adult"
     ADULT = "adult"
 
+    @property
+    def ordinary_source_subgroup(self) -> str:
+        """BAG subgroup without optional multi-child premium discounts."""
+
+        return {
+            AgeCategory.CHILD: "K1",
+            AgeCategory.YOUNG_ADULT: "J1",
+            AgeCategory.ADULT: "E1",
+        }[self]
+
 
 class InsuranceModel(str, Enum):
     STANDARD = "standard"
@@ -92,18 +102,30 @@ def valid_deductibles(age_category: AgeCategory) -> frozenset[Deductible]:
 class SearchCriteria:
     """Confirmed, normalized inputs for one premium comparison."""
 
-    municipality_id: str
+    canton: str
+    region: str
     age_category: AgeCategory
     accident_coverage: bool
     deductibles: tuple[Deductible, ...]
     insurance_models: tuple[InsuranceModel, ...]
     premium_year: int
+    municipality_id: str | None = None
     top_n: int = 10
     reference_monthly_premium_chf: Decimal | None = None
 
     def __post_init__(self) -> None:
-        if not self.municipality_id.strip():
-            raise DomainValidationError("municipality_id is required")
+        normalized_canton = self.canton.strip().upper()
+        if len(normalized_canton) != 2 or not normalized_canton.isalpha():
+            raise DomainValidationError("canton must be a two-letter code")
+        object.__setattr__(self, "canton", normalized_canton)
+
+        normalized_region = self.region.removeprefix("PR_REG_").strip()
+        if normalized_region not in {"0", "1", "2", "3"}:
+            raise DomainValidationError("region must be 0, 1, 2, or 3")
+        object.__setattr__(self, "region", normalized_region)
+
+        if self.municipality_id is not None and not self.municipality_id.strip():
+            raise DomainValidationError("municipality_id cannot be blank")
         if not self.deductibles:
             raise DomainValidationError("at least one deductible is required")
         if not self.insurance_models:
@@ -136,7 +158,7 @@ class PremiumOffer:
     insurer_name: str
     plan_id: str
     product_name: str
-    municipality_id: str
+    municipality_id: str | None
     canton: str
     region: str
     age_category: AgeCategory

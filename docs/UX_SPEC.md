@@ -168,10 +168,9 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 - Keep the structured comparison usable.
 - Show an inline message: “The guide is temporarily unavailable. Your answers are still here.” Add **Retry explanation**; do not duplicate the user’s message.
 
-### Search unavailable (`501`/`503`)
+### Search unavailable (`503`)
 
 - Do not render sample prices as results.
-- For `501`: “Price comparison is not available yet. The guide can still explain your choices.”
 - For `503`: show the true last validated dataset year/date if safe to query it, label it clearly, and provide **Try again**.
 - Never silently substitute stale or partial data.
 
@@ -210,17 +209,12 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 - Respect reduced-motion and high-contrast preferences. Do not auto-scroll if the user has scrolled away from the latest chat turn; offer a “New message” control instead.
 - Use plain language and define “deductible (franchise),” “premium region,” and restricted models on first use.
 
-## 10. Pre-launch illustrative-data policy
+## 10. Production data policy
 
-The current comparison endpoint is not implemented. Until it returns validated data:
-
-- Change “VALIDATED”/“Ready” UI language to **“Data files validated · price search not yet available.”** The chat status may read **“Guide ready · prices unavailable.”**
-- Do not show real insurer names, plausible premiums, rankings, savings, or active outbound purchase links in the product experience.
-- If a layout preview is essential in a development/demo route, use labels such as “Example plan A” and non-production fixture values. Place **“Illustrative preview—not actual premiums or offers”** above every results module and include it in exported screenshots.
-- Prefix every outcome label with “Example,” including “Example lowest premium” and “Example annual difference.” Disable switching/purchase actions.
-- Keep preview fixtures out of the production results endpoint and analytics. A global footer disclaimer alone is insufficient.
-
-When the engine is live, replace the preview label with: **“Official BAG data · premiums for [year] · imported [date].”** Do not say “live” unless data freshness is actually monitored.
+- Render insurer names, premiums, rankings, and differences only from the validated comparison response.
+- Label every result set with the BAG source and premium year.
+- Keep fixture data out of production result routes and analytics.
+- Do not say “live” unless source freshness is actively monitored.
 
 ## 11. Acceptance criteria
 

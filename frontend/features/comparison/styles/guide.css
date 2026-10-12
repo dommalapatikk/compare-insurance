@@ -54,6 +54,9 @@
 .field-help, .field-error { margin: 7px 0 0; font-size: .7rem; line-height: 1.45; }
 .field-help { color: var(--muted); }
 .field-error { color: #a73325; font-weight: 700; }
+.location-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
+.input-label select { width: 100%; min-height: 50px; display: block; margin-top: 8px; padding: 0 12px; color: var(--ink); background: #fcfdf9; border: 1px solid #becbc0; border-radius: 11px; font: inherit; }
+.input-label select:focus { outline: 3px solid rgba(13, 96, 72, .1); border-color: var(--green); }
 
 .choice-fieldset { padding: 0; margin: 0; border: 0; }
 .choice-grid { display: grid; gap: 9px; }

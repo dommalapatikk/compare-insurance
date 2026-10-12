@@ -12,7 +12,7 @@ export function ComparisonGuide({ flow }: { flow: ComparisonFlow }) {
           <p className="step-label">LANGCHAIN GUIDE</p>
           <h2>Build your comparison</h2>
         </div>
-        <span className="agent-status"><i /> Guide ready · prices unavailable</span>
+        <span className="agent-status"><i /> Price comparison ready</span>
       </div>
 
       <div className="progress-heading">

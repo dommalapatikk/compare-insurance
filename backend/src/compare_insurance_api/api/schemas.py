@@ -1,20 +1,14 @@
 """Pydantic request and response contracts for the HTTP boundary."""
 
-from datetime import date
 from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
-from compare_insurance_api.domain.models import CostRelation, Deductible
-
-
-ADULT_DEDUCTIBLE_VALUES = (
-    Deductible.CHF_300,
-    Deductible.CHF_500,
-    Deductible.CHF_1000,
-    Deductible.CHF_1500,
-    Deductible.CHF_2000,
-    Deductible.CHF_2500,
+from compare_insurance_api.domain.models import (
+    AgeCategory,
+    CostRelation,
+    Deductible,
+    InsuranceModel,
 )
 
 
@@ -25,19 +19,13 @@ class HealthResponse(BaseModel):
 class PremiumSearchRequest(BaseModel):
     """Transport representation of premium-search filters."""
 
-    canton: str | None = Field(default=None, min_length=2, max_length=2)
-    region: str | None = Field(default=None, min_length=1, max_length=100)
-    postal_code: str | None = Field(default=None, pattern=r"^\d{4}$")
-    municipality_id: str | None = Field(default=None, min_length=1, max_length=20)
-    birth_date: date | None = None
-    age: int | None = Field(default=None, ge=0, le=120)
-    deductibles: list[Deductible] = Field(
-        default_factory=lambda: list(ADULT_DEDUCTIBLE_VALUES),
-        min_length=1,
-    )
+    canton: str = Field(min_length=2, max_length=2)
+    region: str = Field(min_length=1, max_length=8)
+    age_category: AgeCategory
+    deductibles: list[Deductible] = Field(min_length=1)
     accident_coverage: bool = True
-    insurance_model: str | None = Field(default=None, min_length=1, max_length=100)
-    year: int | None = Field(default=None, ge=2020, le=2100)
+    insurance_models: list[InsuranceModel] = Field(min_length=1)
+    year: int = Field(default=2027, ge=2020, le=2100)
     top_n: int = Field(default=10, ge=1, le=10)
     reference_monthly_premium_chf: Decimal | None = Field(
         default=None,
@@ -57,9 +45,9 @@ class PremiumOfferResponse(BaseModel):
     insurer_id: str
     insurer_name: str
     plan_id: str | None = None
+    product_name: str
     canton: str
-    region: str | None = None
-    postal_code: str | None = None
+    region: str
     deductible_chf: Deductible
     accident_coverage: bool
     insurance_model: str
@@ -86,5 +74,5 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     message: str
     thread_id: str
-    data_status: str = "comparison_search_not_implemented"
+    data_status: str = "comparison_available_when_catalogue_configured"
 

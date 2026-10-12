@@ -6,9 +6,8 @@ The API compares published Swiss mandatory health-insurance premiums. It must
 only return offers from an ingested, validated official dataset; it must not
 fabricate insurers, products, prices, or coverage.
 
-The initial implementation exposes a health check and reserves the search
-contract. Premium search returns HTTP `501 Not Implemented` until ingestion and
-validation are complete.
+The implementation exposes a health check, a data-backed search contract, and
+a LangChain guide with a read-only comparison tool.
 
 ## Endpoints
 
@@ -40,15 +39,15 @@ Response:
 {
   "message": "Assistant response text",
   "thread_id": "opaque-client-generated-id",
-  "data_status": "comparison_search_not_implemented"
+  "data_status": "comparison_available_when_catalogue_configured"
 }
 ```
 
 The endpoint uses server-side `OPENAI_API_KEY` and `OPENAI_MODEL` environment
 variables. It must never expose those values to a browser response. Conversation
 state is currently in-memory and is lost when the API process restarts. The
-agent is explanatory only until a validated deterministic premium-search tool
-is attached; it must not invent prices, rankings, or savings.
+agent may obtain prices only through the deterministic premium-search tool; it
+must not invent prices, rankings, or savings.
 
 ### `GET /v1/premiums/search`
 
@@ -59,23 +58,15 @@ Ties use insurer name and stable source identifiers for deterministic ordering.
 
 | Parameter | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `municipality_id` | string | One location field | Preferred stable BFS municipality identifier selected after location lookup. |
-| `canton` | string | One location field | Two-letter canton code, normalized to uppercase; only sufficient where the canton has no regional subdivision. |
-| `region` | string | One location field | Official premium-region identifier combined with the applicable canton. |
-| `postal_code` | four digits | One location field | Swiss postal code; ambiguous matches require municipality confirmation before comparison. |
-| `birth_date` | ISO date | One age field | Used to derive the source-defined tariff age for the requested premium year. |
-| `age` | integer, 0–120 | One age field | Age already expressed according to the source dataset's tariff rules. |
+| `canton` | string | Yes | Two-letter canton code, normalized to uppercase. |
+| `region` | string | Yes | Official premium-region code `0`, `1`, `2`, or `3`. |
+| `age_category` | string | Yes | `child`, `young_adult`, or `adult`. Ordinary child premiums use BAG subgroup `K1`; optional multi-child discounts are not mixed into results. |
 | `deductible` | repeated integer | No | One or more of `300`, `500`, `1000`, `1500`, `2000`, `2500` CHF. Omission searches all six values. |
 | `accident_coverage` | boolean | No | Whether accident coverage is included; defaults to `true`. |
-| `insurance_model` | string | No | Official model identifier or normalized model name (for example, a model value present in the ingested source). Omission searches all models. |
-| `year` | integer | No | Premium year. Omission selects the latest successfully ingested and validated year. |
+| `insurance_model` | repeated string | No | One or more of `standard`, `family_doctor`, `hmo`, `telmed`, or `other`. Omission searches all models. |
+| `year` | integer | No | Premium year; defaults to `2027`. |
 | `top_n` | integer, 1–10 | No | Maximum returned offers; defaults to `10`. |
 | `reference_monthly_premium_chf` | decimal | No | User-supplied current monthly premium used only for an explicitly labelled savings/cost comparison. |
-
-Exactly one of `municipality_id`, `canton`, `region`, or `postal_code` must be supplied. Exactly
-one of `birth_date` or `age` must be supplied. These cross-field rules become
-active with the data-backed search; while the endpoint is a placeholder, valid
-individual parameter formats are still enforced.
 
 Gender is intentionally not a query parameter because it is not a pricing
 dimension for Swiss compulsory basic insurance.
@@ -83,7 +74,7 @@ dimension for Swiss compulsory basic insurance.
 Repeated deductible example:
 
 ```text
-/v1/premiums/search?postal_code=8001&age=35&deductible=300&deductible=2500&top_n=10
+/v1/premiums/search?canton=ZH&region=1&age_category=adult&deductible=300&deductible=2500&top_n=10
 ```
 
 #### Successful response
@@ -91,14 +82,12 @@ Repeated deductible example:
 ```json
 {
   "query": {
-    "canton": null,
-    "region": null,
-    "postal_code": "8001",
-    "birth_date": null,
-    "age": 35,
+    "canton": "ZH",
+    "region": "1",
+    "age_category": "adult",
     "deductibles": [300, 2500],
     "accident_coverage": true,
-    "insurance_model": null,
+    "insurance_models": ["standard", "hmo"],
     "year": 2027,
     "top_n": 10,
     "reference_monthly_premium_chf": "400.00"
@@ -112,9 +101,9 @@ Repeated deductible example:
       "insurer_id": "source-insurer-id",
       "insurer_name": "Source insurer name",
       "plan_id": "source-plan-id",
+      "product_name": "Exact source product name",
       "canton": "ZH",
       "region": "source-region-id",
-      "postal_code": "8001",
       "deductible_chf": 2500,
       "accident_coverage": true,
       "insurance_model": "source-model-name",
@@ -169,9 +158,7 @@ healthcare use or out-of-pocket costs.
 
 - `422 Unprocessable Entity`: invalid or conflicting filters, unresolved
   location, unsupported deductible/model dimension, or unavailable year.
-- `501 Not Implemented`: official data has not yet been ingested and validated.
-- `503 Service Unavailable`: a previously enabled search cannot safely query its
-  validated dataset.
+- `503 Service Unavailable`: the server-side catalogue connection is not configured.
 
 Error details must explain the rejected field without leaking internal paths or
 credentials.

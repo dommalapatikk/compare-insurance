@@ -12,19 +12,36 @@ export type Choice = {
 
 export type ComparisonStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-export type AgeGroup = "" | "child" | "young-adult" | "adult";
+export type AgeGroup = "" | "child" | "young_adult" | "adult";
 
 export type AccidentChoice = "" | "included" | "excluded";
 
-export type PreviewPlan = {
-  name: string;
-  monthly: number;
-  difference: number;
-  model: string;
+export type PremiumOffer = {
+  rank: number;
+  insurer_id: string;
+  insurer_name: string;
+  plan_id: string | null;
+  product_name: string;
+  canton: string;
+  region: string;
+  deductible_chf: number;
+  accident_coverage: boolean;
+  insurance_model: string;
+  monthly_premium_chf: string;
+  annual_premium_chf: string;
+  monthly_difference_from_cheapest_chf: string;
+  annual_difference_from_cheapest_chf: string;
+  reference_comparison: {
+    relation: "cheaper" | "same" | "more_expensive";
+    monthly_difference_chf: string;
+    annual_difference_chf: string;
+  } | null;
 };
 
-export type PreviewDeductible = {
-  deductible: number;
-  monthly: number;
+export type PremiumSearchResponse = {
+  source_year: number;
+  source_name: string;
+  total_eligible_offers: number;
+  offers: PremiumOffer[];
 };
 

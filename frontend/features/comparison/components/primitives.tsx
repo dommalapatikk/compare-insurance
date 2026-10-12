@@ -25,7 +25,6 @@ export function QuestionCard({
     </div>
   );
 }
-
 export function StepActions({
   onContinue,
   disabled = false,
@@ -83,8 +82,3 @@ export function AnswerChip({
     </div>
   );
 }
-
-export function PreviewLabel() {
-  return <p className="preview-label">Illustrative preview—not actual premiums or offers</p>;
-}
-

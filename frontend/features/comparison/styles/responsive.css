@@ -12,7 +12,7 @@
   .summary-item dd { margin-left: 0; }
   .visual-grid { grid-template-columns: 1fr; }
   .plan-row { grid-template-columns: 36px minmax(180px, 1fr) minmax(145px, .7fr) minmax(140px, .6fr); }
-  .plan-row button { display: none; }
+  .source-chip { display: none; }
 }
 
 @media (max-width: 650px) {
@@ -32,6 +32,7 @@
   .summary-item { padding: 12px 0; }
   .agent-status { display: none; }
   .question-card { padding: 20px 15px; }
+  .location-grid { grid-template-columns: 1fr; }
   .choice-grid.three-up, .choice-grid.two-up, .model-grid { grid-template-columns: 1fr; }
   .model-card:last-child { grid-column: auto; }
   .deductible-grid { grid-template-columns: repeat(2, 1fr); }

@@ -35,7 +35,8 @@ class StubInsuranceGuide:
 
 def make_criteria() -> SearchCriteria:
     return SearchCriteria(
-        municipality_id="261",
+        canton="ZH",
+        region="1",
         age_category=AgeCategory.ADULT,
         accident_coverage=False,
         deductibles=(Deductible.CHF_2500,),

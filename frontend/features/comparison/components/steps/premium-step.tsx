@@ -6,7 +6,7 @@ export function PremiumStep({ flow }: { flow: ComparisonFlow }) {
     <QuestionCard
       eyebrow="Optional reference"
       title="What do you pay each month now?"
-      description="This would calculate a gross-premium difference only—not your total healthcare cost."
+      description="This calculates a gross-premium difference only—not your total healthcare cost."
     >
       <label className="input-label" htmlFor="current-premium">Current monthly premium</label>
       <div className="currency-field">

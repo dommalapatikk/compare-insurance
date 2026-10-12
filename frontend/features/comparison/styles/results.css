@@ -3,7 +3,8 @@
 .results-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 24px; }
 .results-heading h2 { max-width: 650px; margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.3rem, 5vw, 4rem); font-weight: 500; letter-spacing: -.045em; line-height: 1; }
 .preview-lock { color: var(--muted); font-size: .7rem; font-weight: 700; }
-.preview-label { margin: 0 0 18px; padding: 8px 10px; color: #724111; background: #fff1d4; border: 1px solid #eed1a1; border-radius: 7px; font-size: .66rem; font-weight: 850; letter-spacing: .04em; text-align: center; text-transform: uppercase; }
+.result-state { padding: 28px; color: var(--green-dark); background: var(--card); border: 1px solid var(--line); border-radius: 18px; font-size: .85rem; font-weight: 750; }
+.result-state.error { color: #8a2d22; background: #fff2ed; border-color: #ebc0b5; }
 
 .result-summary-card, .chart-card, .ranked-results { padding: 25px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 15px 40px rgba(16, 34, 28, .05); }
 .result-summary-grid { display: grid; grid-template-columns: 1.25fr .75fr 1fr; }
@@ -53,4 +54,5 @@
 .plan-price span { color: var(--muted); font-size: .6rem; }
 .plan-row button { min-height: 42px; padding: 0 11px; background: white; border: 1px solid var(--line); border-radius: 9px; font-size: .66rem; }
 .plan-row button:disabled { color: #8a938e; cursor: not-allowed; }
+.source-chip { justify-self: end; padding: 7px 9px; color: var(--green-dark); background: var(--mint); border-radius: 7px; font-size: .6rem; font-weight: 850; }
 
