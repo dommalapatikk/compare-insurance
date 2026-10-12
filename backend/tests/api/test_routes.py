@@ -10,10 +10,12 @@ from compare_insurance_api.api.dependencies import (
 from compare_insurance_api.application.use_cases import PremiumComparison
 from compare_insurance_api.domain.models import (
     AgeCategory,
+    CostRelation,
     Deductible,
     InsuranceModel,
     PremiumOffer,
     RankedPremiumOffer,
+    ReferenceComparison,
     SearchCriteria,
 )
 from compare_insurance_api.main import app
@@ -49,7 +51,15 @@ class StubComparePremiums:
             offer=offer,
             monthly_difference_from_cheapest_chf=Decimal("0.00"),
             annual_difference_from_cheapest_chf=Decimal("0.00"),
-            reference_comparison=None,
+            reference_comparison=(
+                ReferenceComparison(
+                    relation=CostRelation.CHEAPER,
+                    monthly_difference_chf=Decimal("80.00"),
+                    annual_difference_chf=Decimal("960.00"),
+                )
+                if criteria.reference_monthly_premium_chf is not None
+                else None
+            ),
         )
         return PremiumComparison(
             criteria=criteria,
@@ -117,6 +127,31 @@ def test_premium_search_requires_source_filters() -> None:
     response = client.get("/v1/premiums/search")
 
     assert response.status_code == 422
+
+
+def test_premium_search_serializes_reference_savings() -> None:
+    app.dependency_overrides[get_compare_premiums] = lambda: StubComparePremiums()
+    try:
+        response = client.get(
+            "/v1/premiums/search",
+            params={
+                "canton": "AG",
+                "region": "0",
+                "age_category": "adult",
+                "deductible": 2500,
+                "insurance_model": "hmo",
+                "reference_monthly_premium_chf": "400.00",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["offers"][0]["reference_comparison"] == {
+        "relation": "cheaper",
+        "monthly_difference_chf": "80.00",
+        "annual_difference_chf": "960.00",
+    }
 
 
 def test_premium_search_reports_missing_supabase_configuration() -> None:

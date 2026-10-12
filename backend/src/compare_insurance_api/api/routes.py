@@ -163,7 +163,19 @@ async def search_premiums(
                 "annual_difference_from_cheapest_chf": (
                     ranked.annual_difference_from_cheapest_chf
                 ),
-                "reference_comparison": ranked.reference_comparison,
+                "reference_comparison": (
+                    {
+                        "relation": ranked.reference_comparison.relation,
+                        "monthly_difference_chf": (
+                            ranked.reference_comparison.monthly_difference_chf
+                        ),
+                        "annual_difference_chf": (
+                            ranked.reference_comparison.annual_difference_chf
+                        ),
+                    }
+                    if ranked.reference_comparison is not None
+                    else None
+                ),
             }
             for ranked in comparison.offers
         ],
