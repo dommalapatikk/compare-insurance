@@ -58,12 +58,29 @@ class PremiumOfferResponse(BaseModel):
     reference_comparison: ReferenceComparisonResponse | None = None
 
 
+class CategoryMinimumResponse(BaseModel):
+    insurer_id: str
+    insurer_name: str
+    plan_id: str | None = None
+    product_name: str
+    canton: str
+    region: str
+    deductible_chf: Deductible
+    accident_coverage: bool
+    insurance_model: str
+    monthly_premium_chf: Decimal = Field(ge=0, decimal_places=2)
+    annual_premium_chf: Decimal = Field(ge=0, decimal_places=2)
+
+
 class PremiumSearchResponse(BaseModel):
     query: PremiumSearchRequest
     source_year: int
     source_name: str
     total_eligible_offers: int = Field(ge=0)
     offers: list[PremiumOfferResponse]
+    cheapest_by_deductible: list[CategoryMinimumResponse]
+    cheapest_by_model: list[CategoryMinimumResponse]
+    cheapest_by_deductible_and_model: list[CategoryMinimumResponse]
 
 
 class ChatRequest(BaseModel):

@@ -122,7 +122,11 @@ As a resident, I want to describe my situation or ask questions in a chat window
 
 ### US-8 — Understand the comparison visually
 
-As a resident, I want the guided inputs to appear within the conversation and the results to use clear charts, exact values, and ranked cards so that I can understand price differences without interpreting a dense data table.
+As a resident, I want a compact matrix with exact values and a ranked table so that I can identify the cheapest offer by franchise and insurance model without interpreting a dense report.
+
+### US-9 — Understand the insurance provider
+
+As a resident, I want each result to show the provider's official name, BAG insurer number, exact product, plan identifier, and regional availability context so that I can identify and verify the company and offer before making a decision.
 
 ## 8. Core user experience
 
@@ -134,8 +138,8 @@ As a resident, I want the guided inputs to appear within the conversation and th
 6. The user selects one deductible, multiple deductibles, or "compare all valid deductibles."
 7. The user selects one or more model types, or "all models."
 8. Optionally, the user selects their current plan or enters the current monthly premium for a savings comparison.
-9. The guide presents each structured input as a semantic form card inside the conversation, preserves completed answers as editable summaries, and mirrors them in a persistent comparison summary.
-10. The results page shows the top ten matching plan combinations, cheapest first, with a concise summary and visual price-difference and deductible comparisons.
+9. The page presents location, age category, and accident coverage together in one compact form. All valid franchises and models are selected by default and remain editable under one disclosure.
+10. The results page shows the lowest matching premium, a franchise-by-model matrix of exact category minima, and the top ten matching plan combinations in a compact table.
 11. The user can change a filter without re-entering the other inputs, inspect plan details, and open the insurer's official site or neutral next-step guidance.
 
 ## 9. Functional requirements
@@ -191,6 +195,7 @@ As a resident, I want the guided inputs to appear within the conversation and th
 ### FR-7 — Plan detail and provenance
 
 - Provide a detail view or drawer with the exact source fields used in the comparison.
+- Put the official provider name first in each result and show the BAG insurer number, exact product name, and source plan identifier without requiring the user to open a detail view.
 - Show the dataset publisher, premium year, source update/import date, and a link to the official source.
 - State that availability and contractual model rules must be confirmed with the insurer before switching.
 
@@ -214,12 +219,13 @@ The public API must reject unknown filter values, cap page size, and never accep
 
 ### FR-10 — LangChain conversational guide
 
-- Embed the structured comparison controls in the guided conversation; keep a synchronized summary visible alongside the chat on desktop and above it on smaller screens.
-- Use progressive disclosure, one pricing decision at a time, while allowing any completed answer to be edited without losing unaffected answers.
+- Keep the structured comparison form primary and the conversational guide secondary and initially collapsed.
+- Use static, source-linked CH.CH answers for common questions before invoking a language model.
 - Implement the assistant on the server with LangChain; provider credentials must never be sent to browser code.
 - Keep conversation context within an opaque thread identifier and avoid collecting names, exact street addresses, health history, policy numbers, or payment details.
 - Let the guide explain comparison concepts and summarize the user's selected inputs.
 - Give the agent access to premium results only through a validated, deterministic comparison tool once ingestion is complete.
+- The agent must not generate SQL, construct database filters, perform premium arithmetic, or receive direct database credentials. It may invoke only typed application tools whose repositories enforce exact filters.
 - Until that tool is available, the agent must clearly state that it cannot quote, rank, or invent live premiums.
 - The structured comparison service, not the language model, remains the source of truth for eligibility, premium values, ordering, and savings calculations.
 - Display a persistent informational-only disclaimer and ensure the deterministic controls remain usable when the conversational service is unavailable.
@@ -348,12 +354,16 @@ Raw source files must remain immutable. Normalized data must be reproducible fro
 ### Accuracy and reliability
 
 - All displayed premiums must be traceable to one validated source record.
+- Every displayed category minimum must be computed from the complete eligible result set, never inferred from the top-ten shortlist.
+- Any known mismatch with the official verification suite is a release blocker; the target is at least 99.9% agreement across the maintained representative suite.
 - Calculation tests must cover rounding, ties, missing offers, age transitions, ambiguous postal codes, and year boundaries.
 - The comparison service target availability is 99.9% per calendar month after launch.
 - A failed data refresh must not corrupt the active dataset.
 
 ### Performance
 
+- Median time for a new user to submit the default comparison flow: 30 seconds or less.
+- After submission, the lowest premium and category comparison should be understandable within 30 seconds in moderated usability testing.
 - Search/filter API p95 response time: under 500 ms under normal production load.
 - Location type-ahead p95 response time: under 300 ms.
 - Largest Contentful Paint target: under 2.5 seconds on a typical Swiss 4G connection.
@@ -450,9 +460,13 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 14. An invalid or incomplete dataset cannot be promoted to production; the last validated dataset remains available with an accurate label.
 15. Automated tests include at least one example from each official age category, every requested adult deductible, accident included/excluded, each normalized model category, a multi-region canton, an ambiguous postal code, and a ranking tie.
 16. Keyboard-only and screen-reader users can complete the input flow, understand validation errors, and read or navigate the ranked results.
-17. All required pricing inputs are available as native form controls embedded in the guided conversation, and completed answers can be reviewed and edited.
+17. All required pricing inputs are available as native form controls in one compact comparison form, and every answer remains visible and editable before resubmission.
 18. Every result chart exposes the same values in a navigable table and never implies plan quality, endorsement, or total healthcare cost.
 19. While the comparison endpoint is unavailable, the product shows no plausible data as a real result; any design fixture is labelled “Illustrative preview—not actual premiums or offers” in every result module.
+20. The default form requires no more than location, age category, and accident coverage; all valid franchises and models are preselected and editable.
+21. Every franchise/model matrix cell is computed from all eligible source rows for that exact pair, not from the displayed top-ten rows.
+22. Each ranked result exposes the provider's official name, BAG insurer number, exact product name, and source plan identifier.
+23. The language model cannot access the database directly, produce premium values, or determine ordering; disabling it does not prevent a comparison.
 
 ## 16. Success metrics
 
@@ -460,7 +474,7 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 
 - At least 70% of users who start the comparison reach a valid results page.
 - At least 60% of results-page users interact with a plan detail, deductible, model, or savings control.
-- Median time from landing page to valid results is under two minutes.
+- Median time from landing page to a submitted valid comparison is 30 seconds or less.
 - Fewer than 2% of valid searches return an unexplained empty result.
 
 ### Trust and quality metrics
@@ -468,7 +482,7 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 - 100% of production result rows are traceable to a validated source record.
 - Zero known gender-dependent price or ranking behavior for basic insurance.
 - Zero silent cross-year comparisons.
-- At least 99.5% agreement between the production output and the representative official-source verification suite.
+- At least 99.9% agreement between the production output and the representative official-source verification suite, with zero known unresolved mismatches at release.
 - Data-import failures are detected and alerted before an invalid dataset is promoted.
 
 Business conversion metrics such as outbound insurer visits may be measured later, but they must not compromise ranking neutrality.

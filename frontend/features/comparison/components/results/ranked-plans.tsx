@@ -1,55 +1,44 @@
-import { formatCurrency } from "../../formatters";
+import { modelLabels } from "../../config";
+import { formatCurrency, formatDeductible } from "../../formatters";
 import type { PremiumOffer } from "../../types";
 
 function comparisonLabel(offer: PremiumOffer) {
   const reference = offer.reference_comparison;
   if (!reference) {
-    return Number(offer.monthly_difference_from_cheapest_chf) === 0
-      ? "Cheapest baseline"
-      : `+ CHF ${Number(offer.monthly_difference_from_cheapest_chf).toFixed(2)} / month`;
+    const difference = Number(offer.monthly_difference_from_cheapest_chf);
+    return difference === 0 ? "Cheapest" : `+ ${formatCurrency(difference)}`;
   }
-  if (reference.relation === "cheaper") {
-    return `Save CHF ${Number(reference.monthly_difference_chf).toFixed(2)} / month`;
-  }
-  if (reference.relation === "more_expensive") {
-    return `CHF ${Number(reference.monthly_difference_chf).toFixed(2)} more / month`;
-  }
-  return "Same as current premium";
+  if (reference.relation === "cheaper") return `Save ${formatCurrency(Number(reference.monthly_difference_chf))}`;
+  if (reference.relation === "more_expensive") return `+ ${formatCurrency(Number(reference.monthly_difference_chf))}`;
+  return "Same as current";
 }
 
 export function RankedPlans({ offers, source }: { offers: PremiumOffer[]; source: string }) {
   return (
     <section className="ranked-results" aria-labelledby="ranked-title">
-      <div className="ranked-heading">
-        <div>
-          <p className="chart-kicker">Top matching offers</p>
-          <h3 id="ranked-title">Plans in price order</h3>
-        </div>
-        <span>Monthly premium ascending</span>
+      <div className="section-heading">
+        <div><p className="eyebrow">Top 10</p><h3 id="ranked-title">Plans in price order</h3></div>
+        <span>{offers.length} shown · monthly premium ascending</span>
       </div>
-      <div className="plan-list">
-        {offers.map((offer) => (
-          <article className="plan-row" key={`${offer.insurer_id}-${offer.plan_id}-${offer.deductible_chf}`}>
-            <span className="rank">{String(offer.rank).padStart(2, "0")}</span>
-            <div className="plan-name">
-              <div>
-                {offer.insurer_name}
-                {offer.rank === 1 && <span className="lowest-badge">Lowest premium</span>}
-              </div>
-              <p>{offer.product_name} · {offer.insurance_model} · CHF {offer.deductible_chf.toLocaleString("de-CH")}</p>
-            </div>
-            <div className="plan-difference">
-              {comparisonLabel(offer)}
-            </div>
-            <div className="plan-price">
-              <strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong>
-              <span>{formatCurrency(Number(offer.annual_premium_chf))} / year</span>
-            </div>
-            <span className="source-chip" title={source}>BAG {offer.canton}</span>
-          </article>
-        ))}
+      <div className="plans-scroll">
+        <table className="plans-table">
+          <caption>Top matching plan combinations from {source}</caption>
+          <thead><tr><th>#</th><th>Provider</th><th>Product and model</th><th>Franchise</th><th>Monthly</th><th>Annual</th><th>Difference</th></tr></thead>
+          <tbody>
+            {offers.map((offer) => (
+              <tr key={`${offer.insurer_id}-${offer.plan_id}-${offer.deductible_chf}`}>
+                <td>{offer.rank}</td>
+                <th><strong>{offer.insurer_name}</strong><small>BAG no. {offer.insurer_id}</small></th>
+                <td><strong>{offer.product_name}</strong><small>{modelLabels[offer.insurance_model] || offer.insurance_model} · plan {offer.plan_id || "—"}</small></td>
+                <td>{formatDeductible(offer.deductible_chf)}</td>
+                <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong></td>
+                <td className="money">{formatCurrency(Number(offer.annual_premium_chf))}</td>
+                <td><span className={offer.rank === 1 ? "difference best" : "difference"}>{comparisonLabel(offer)}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );
 }
-

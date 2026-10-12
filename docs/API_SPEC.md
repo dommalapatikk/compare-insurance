@@ -47,7 +47,8 @@ The endpoint uses server-side `OPENAI_API_KEY` and `OPENAI_MODEL` environment
 variables. It must never expose those values to a browser response. Conversation
 state is currently in-memory and is lost when the API process restarts. The
 agent may obtain prices only through the deterministic premium-search tool; it
-must not invent prices, rankings, or savings.
+must not invent prices, rankings, or savings. It cannot generate SQL, access
+database credentials, or construct repository queries.
 
 ### `GET /v1/premiums/search`
 
@@ -117,12 +118,22 @@ Repeated deductible example:
         "annual_difference_chf": "600.00"
       }
     }
+  ],
+  "cheapest_by_deductible": [
+    {"deductible_chf": 2500, "insurance_model": "hmo", "monthly_premium_chf": "000.00"}
+  ],
+  "cheapest_by_model": [
+    {"deductible_chf": 2500, "insurance_model": "hmo", "monthly_premium_chf": "000.00"}
+  ],
+  "cheapest_by_deductible_and_model": [
+    {"deductible_chf": 2500, "insurance_model": "hmo", "monthly_premium_chf": "000.00"}
   ]
 }
 ```
 
-The example values above describe the schema only and are not insurer or price
-data.
+Each category-minimum item also includes insurer ID and name, plan ID and
+product name, canton, region, accident setting, and annual premium. The example
+values above describe the schema only and are not insurer or price data.
 
 ## Eligibility, ranking, and savings
 
@@ -134,7 +145,9 @@ data.
    validation.
 4. Compute `annual_premium_chf` as `monthly_premium_chf × 12`, using decimal
    arithmetic and rounding to CHF 0.01 only after multiplication.
-5. Rank all eligible offers by annual premium ascending, then return `top_n`.
+5. Compute the true minimum for every selected deductible, model, and
+   deductible/model pair from the complete eligible set.
+6. Rank all eligible offers by annual premium ascending, then return `top_n`.
 
 Without a reference premium, each offer reports its non-negative premium
 difference from the cheapest eligible offer:

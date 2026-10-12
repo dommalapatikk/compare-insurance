@@ -79,6 +79,9 @@ def test_compare_premiums_orchestrates_repository_and_domain_ranking() -> None:
     assert result.offers[0].offer.insurer_id == "cheap"
     assert result.offers[0].reference_comparison is not None
     assert result.offers[0].reference_comparison.monthly_difference_chf == Decimal("80.00")
+    assert result.cheapest_by_deductible[0].insurer_id == "cheap"
+    assert result.cheapest_by_model[0].insurer_id == "cheap"
+    assert result.cheapest_by_deductible_and_model[0].insurer_id == "cheap"
 
 
 def test_explain_insurance_choices_uses_the_guide_port() -> None:

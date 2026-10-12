@@ -1,41 +1,47 @@
-import { formatCurrency } from "../../formatters";
+import { modelLabels } from "../../config";
+import { formatCurrency, formatDeductible } from "../../formatters";
 import type { PremiumSearchResponse } from "../../types";
 
 export function ResultSummary({
   location,
+  ageLabel,
   accidentLabel,
   results,
 }: {
   location: string;
+  ageLabel: string;
   accidentLabel: string;
   results: PremiumSearchResponse;
 }) {
   const cheapest = results.offers[0];
   const reference = cheapest.reference_comparison;
   return (
-    <div className="result-summary-card">
-      <div className="result-summary-grid">
-        <div>
-          <span>Lowest matching premium</span>
-          <strong>{formatCurrency(Number(cheapest.monthly_premium_chf))}<small>/month</small></strong>
-          <p>
-            {reference?.relation === "cheaper"
-              ? `Save ${formatCurrency(Number(reference.annual_difference_chf))} / year vs current`
-              : `${formatCurrency(Number(cheapest.annual_premium_chf))} per year`}
-          </p>
+    <div className="lowest-result">
+      <div className="lowest-price">
+        <span>Lowest matching premium</span>
+        <strong>{formatCurrency(Number(cheapest.monthly_premium_chf))}<small>/month</small></strong>
+        <p>{formatCurrency(Number(cheapest.annual_premium_chf))} per year</p>
+      </div>
+      <div className="lowest-provider">
+        <span>Provider and plan</span>
+        <strong>{cheapest.insurer_name}</strong>
+        <p>
+          {cheapest.product_name} · {modelLabels[cheapest.insurance_model] || cheapest.insurance_model}
+          {" · "}{formatDeductible(cheapest.deductible_chf)} franchise
+        </p>
+        <small>BAG insurer no. {cheapest.insurer_id} · plan {cheapest.plan_id || "not supplied"}</small>
+      </div>
+      {reference?.relation === "cheaper" && (
+        <div className="saving-block">
+          <span>Gross premium saving</span>
+          <strong>{formatCurrency(Number(reference.annual_difference_chf))}<small>/year</small></strong>
+          <p>{formatCurrency(Number(reference.monthly_difference_chf))} per month</p>
         </div>
-        <div>
-          <span>Plans shown</span>
-          <strong>{results.offers.length}<small> of {results.total_eligible_offers}</small></strong>
-          <p>Ranked by monthly premium</p>
-        </div>
-        <div>
-          <span>Query</span>
-          <strong className="result-query">{location}</strong>
-          <p>{results.source_year} · accident {accidentLabel.toLowerCase()}</p>
-        </div>
+      )}
+      <div className="query-chips" aria-label="Comparison profile">
+        <span>{location}</span><span>{ageLabel}</span><span>Accident {accidentLabel.toLowerCase()}</span>
+        <span>{results.total_eligible_offers} eligible offers</span>
       </div>
     </div>
   );
 }
-

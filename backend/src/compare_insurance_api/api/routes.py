@@ -25,12 +25,29 @@ from compare_insurance_api.domain.models import (
     Deductible,
     DomainValidationError,
     InsuranceModel,
+    PremiumOffer,
     SearchCriteria,
     valid_deductibles,
 )
 
 
 router = APIRouter()
+
+
+def _minimum_response(offer: PremiumOffer) -> dict[str, object]:
+    return {
+        "insurer_id": offer.insurer_id,
+        "insurer_name": offer.insurer_name,
+        "plan_id": offer.plan_id,
+        "product_name": offer.product_name,
+        "canton": offer.canton,
+        "region": offer.region,
+        "deductible_chf": offer.deductible,
+        "accident_coverage": offer.accident_coverage,
+        "insurance_model": offer.insurance_model.value,
+        "monthly_premium_chf": offer.monthly_premium_chf,
+        "annual_premium_chf": offer.annual_premium_chf,
+    }
 
 
 @router.get("/health", response_model=HealthResponse, tags=["system"])
@@ -178,6 +195,18 @@ async def search_premiums(
                 ),
             }
             for ranked in comparison.offers
+        ],
+        cheapest_by_deductible=[
+            _minimum_response(offer)
+            for offer in comparison.cheapest_by_deductible
+        ],
+        cheapest_by_model=[
+            _minimum_response(offer)
+            for offer in comparison.cheapest_by_model
+        ],
+        cheapest_by_deductible_and_model=[
+            _minimum_response(offer)
+            for offer in comparison.cheapest_by_deductible_and_model
         ],
     )
 

@@ -3,8 +3,13 @@
 from dataclasses import dataclass
 
 from compare_insurance_api.application.ports import InsuranceGuide, PremiumRepository
-from compare_insurance_api.domain.models import RankedPremiumOffer, SearchCriteria
-from compare_insurance_api.domain.services import rank_premium_offers
+from compare_insurance_api.domain.models import PremiumOffer, RankedPremiumOffer, SearchCriteria
+from compare_insurance_api.domain.services import (
+    cheapest_offers_by_deductible,
+    cheapest_offers_by_deductible_and_model,
+    cheapest_offers_by_model,
+    rank_premium_offers,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,6 +17,9 @@ class PremiumComparison:
     criteria: SearchCriteria
     total_eligible_offers: int
     offers: tuple[RankedPremiumOffer, ...]
+    cheapest_by_deductible: tuple[PremiumOffer, ...]
+    cheapest_by_model: tuple[PremiumOffer, ...]
+    cheapest_by_deductible_and_model: tuple[PremiumOffer, ...]
 
 
 class ComparePremiums:
@@ -31,6 +39,11 @@ class ComparePremiums:
             criteria=criteria,
             total_eligible_offers=len(eligible_offers),
             offers=ranked,
+            cheapest_by_deductible=cheapest_offers_by_deductible(eligible_offers),
+            cheapest_by_model=cheapest_offers_by_model(eligible_offers),
+            cheapest_by_deductible_and_model=(
+                cheapest_offers_by_deductible_and_model(eligible_offers)
+            ),
         )
 
 

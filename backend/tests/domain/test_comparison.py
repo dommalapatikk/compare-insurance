@@ -11,7 +11,12 @@ from compare_insurance_api.domain.models import (
     PremiumOffer,
     SearchCriteria,
 )
-from compare_insurance_api.domain.services import rank_premium_offers
+from compare_insurance_api.domain.services import (
+    cheapest_offers_by_deductible,
+    cheapest_offers_by_deductible_and_model,
+    cheapest_offers_by_model,
+    rank_premium_offers,
+)
 
 
 def make_offer(
@@ -20,6 +25,7 @@ def make_offer(
     plan_id: str,
     monthly_premium: str,
     deductible: Deductible = Deductible.CHF_2500,
+    insurance_model: InsuranceModel = InsuranceModel.TELMED,
 ) -> PremiumOffer:
     return PremiumOffer(
         insurer_id=insurer_id,
@@ -32,7 +38,7 @@ def make_offer(
         age_category=AgeCategory.ADULT,
         deductible=deductible,
         accident_coverage=False,
-        insurance_model=InsuranceModel.TELMED,
+        insurance_model=insurance_model,
         premium_year=2027,
         monthly_premium_chf=Decimal(monthly_premium),
     )
@@ -138,4 +144,96 @@ def test_ranking_honours_top_n_without_changing_total_input() -> None:
 
     assert len(ranked) == 3
     assert [item.rank for item in ranked] == [1, 2, 3]
+
+
+def test_cheapest_by_deductible_uses_all_eligible_offers() -> None:
+    offers = [
+        make_offer(
+            insurer_id="300-expensive",
+            plan_id="a",
+            monthly_premium="410.00",
+            deductible=Deductible.CHF_300,
+        ),
+        make_offer(
+            insurer_id="2500-cheap",
+            plan_id="b",
+            monthly_premium="300.00",
+            deductible=Deductible.CHF_2500,
+        ),
+        make_offer(
+            insurer_id="300-cheap",
+            plan_id="c",
+            monthly_premium="390.00",
+            deductible=Deductible.CHF_300,
+        ),
+    ]
+
+    grouped = cheapest_offers_by_deductible(offers)
+
+    assert [(int(offer.deductible), offer.insurer_id) for offer in grouped] == [
+        (300, "300-cheap"),
+        (2500, "2500-cheap"),
+    ]
+
+
+def test_cheapest_by_model_is_stable_and_model_ordered() -> None:
+    standard = make_offer(
+        insurer_id="standard",
+        plan_id="1",
+        monthly_premium="340.00",
+        insurance_model=InsuranceModel.STANDARD,
+    )
+    telmed_expensive = make_offer(
+        insurer_id="telmed-expensive",
+        plan_id="2",
+        monthly_premium="330.00",
+    )
+    telmed_cheapest = make_offer(
+        insurer_id="telmed-cheap",
+        plan_id="3",
+        monthly_premium="310.00",
+    )
+    grouped = cheapest_offers_by_model(
+        [telmed_expensive, standard, telmed_cheapest]
+    )
+
+    assert [(offer.insurance_model, offer.insurer_id) for offer in grouped] == [
+        (InsuranceModel.STANDARD, "standard"),
+        (InsuranceModel.TELMED, "telmed-cheap"),
+    ]
+
+
+def test_cheapest_by_deductible_and_model_returns_each_available_cell() -> None:
+    offers = [
+        make_offer(
+            insurer_id="standard-300",
+            plan_id="1",
+            monthly_premium="400.00",
+            deductible=Deductible.CHF_300,
+            insurance_model=InsuranceModel.STANDARD,
+        ),
+        make_offer(
+            insurer_id="telmed-300",
+            plan_id="2",
+            monthly_premium="370.00",
+            deductible=Deductible.CHF_300,
+        ),
+        make_offer(
+            insurer_id="telmed-2500",
+            plan_id="3",
+            monthly_premium="290.00",
+            deductible=Deductible.CHF_2500,
+        ),
+    ]
+
+    grouped = cheapest_offers_by_deductible_and_model(offers)
+
+    assert [
+        (int(offer.deductible), offer.insurance_model, offer.insurer_id)
+        for offer in grouped
+    ] == [
+        (300, InsuranceModel.STANDARD, "standard-300"),
+        (300, InsuranceModel.TELMED, "telmed-300"),
+        (2500, InsuranceModel.TELMED, "telmed-2500"),
+    ]
 

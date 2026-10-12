@@ -65,6 +65,9 @@ class StubComparePremiums:
             criteria=criteria,
             total_eligible_offers=1,
             offers=(ranked,),
+            cheapest_by_deductible=(offer,),
+            cheapest_by_model=(offer,),
+            cheapest_by_deductible_and_model=(offer,),
         )
 
 
@@ -121,6 +124,12 @@ def test_premium_search_maps_ranked_offers_to_the_http_contract() -> None:
         "annual_difference_from_cheapest_chf": "0.00",
         "reference_comparison": None,
     }
+    assert body["cheapest_by_deductible"][0]["deductible_chf"] == 2500
+    assert body["cheapest_by_deductible"][0]["monthly_premium_chf"] == "320.00"
+    assert body["cheapest_by_model"][0]["insurance_model"] == "hmo"
+    assert body["cheapest_by_model"][0]["insurer_id"] == "8"
+    assert body["cheapest_by_deductible_and_model"][0]["deductible_chf"] == 2500
+    assert body["cheapest_by_deductible_and_model"][0]["insurance_model"] == "hmo"
 
 
 def test_premium_search_requires_source_filters() -> None:

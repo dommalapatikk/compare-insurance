@@ -1,8 +1,9 @@
 "use client";
 
-import { ComparisonGuide } from "./components/comparison-guide";
-import { ComparisonSummary } from "./components/comparison-summary";
-import { Hero, SiteFooter, SiteHeader } from "./components/page-chrome";
+import { GuideChat } from "./components/guide-chat";
+import { OfficialHelp } from "./components/official-help";
+import { Intro, SiteFooter, SiteHeader } from "./components/page-chrome";
+import { QuickProfileForm } from "./components/quick-profile-form";
 import { ResultsPreview } from "./components/results-preview";
 import { useComparisonFlow } from "./use-comparison-flow";
 
@@ -12,12 +13,13 @@ export function CompareInsuranceExperience() {
   return (
     <main id="top">
       <SiteHeader />
-      <Hero />
-      <section className="workspace" aria-label="Guided insurance comparison">
-        <ComparisonGuide flow={flow} />
-        <ComparisonSummary flow={flow} />
-      </section>
+      <Intro />
+      <QuickProfileForm flow={flow} />
       <ResultsPreview flow={flow} />
+      <div className="support-grid">
+        <OfficialHelp />
+        <GuideChat flow={flow} />
+      </div>
       <SiteFooter />
     </main>
   );

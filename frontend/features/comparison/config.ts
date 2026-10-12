@@ -38,10 +38,14 @@ export const modelChoices: Choice[] = [
 ];
 
 export const quickQuestions = [
-  "How does the deductible change my costs?",
+  "What does franchise mean?",
   "Should accident coverage be included?",
   "What is the difference between HMO and Telmed?",
 ];
+
+export const modelLabels: Record<string, string> = Object.fromEntries(
+  modelChoices.map(({ value, label }) => [value, label]),
+);
 
 export const cantonChoices = [
   "AG", "AI", "AR", "BE", "BL", "BS", "FR", "GE", "GL", "GR", "JU",

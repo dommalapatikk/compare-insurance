@@ -1,6 +1,5 @@
 import type { ComparisonFlow } from "../use-comparison-flow";
-import { DeductibleChart } from "./results/deductible-chart";
-import { PriceDifferenceChart } from "./results/price-difference-chart";
+import { CategoryMatrix } from "./results/category-matrix";
 import { RankedPlans } from "./results/ranked-plans";
 import { ResultSummary } from "./results/result-summary";
 
@@ -16,13 +15,13 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
     >
       <div className="results-heading">
         <div>
-          <p className="eyebrow">Official premium comparison</p>
-          <h2 id="results-title">Your lowest matching premiums.</h2>
+          <p className="eyebrow">Your results</p>
+          <h2 id="results-title">Cheapest matches at a glance</h2>
         </div>
-        <span className="preview-lock">BAG 2027 · gross monthly premiums</span>
+        <span>BAG 2027 · gross monthly premiums</span>
       </div>
 
-      {flow.isSearching && <div className="result-state">Querying the premium catalogue…</div>}
+      {flow.isSearching && <div className="result-state">Checking the validated catalogue…</div>}
       {!flow.isSearching && flow.searchNotice && !flow.results?.offers.length && (
         <div className="result-state error" role="alert">{flow.searchNotice}</div>
       )}
@@ -31,16 +30,18 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
           <ResultSummary
             results={flow.results}
             location={flow.location}
+            ageLabel={flow.ageLabel}
             accidentLabel={flow.accidentLabel}
           />
-          <div className="visual-grid">
-            <PriceDifferenceChart offers={flow.results.offers} />
-            <DeductibleChart offers={flow.results.offers} />
-          </div>
+          <CategoryMatrix offers={flow.results.cheapest_by_deductible_and_model} />
           <RankedPlans offers={flow.results.offers} source={flow.results.source_name} />
+          <div className="source-bar">
+            <div><b>Source</b><span>{flow.results.source_name} · premium year {flow.results.source_year}</span></div>
+            <div><b>Method</b><span>Exact database filters, deterministic price sorting, no LLM calculations</span></div>
+            <a href="https://www.priminfo.admin.ch/" target="_blank" rel="noreferrer">Verify with official Priminfo ↗</a>
+          </div>
         </>
       )}
     </section>
   );
 }
-
