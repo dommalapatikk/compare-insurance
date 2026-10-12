@@ -13,7 +13,11 @@ export async function GET(request: Request) {
     });
     const result = await upstream.json();
     return NextResponse.json(result, { status: upstream.status });
-  } catch {
+  } catch (error) {
+    console.error(
+      "Premium proxy request failed",
+      error instanceof Error ? `${error.name}: ${error.message}` : "Unknown error",
+    );
     return NextResponse.json(
       { detail: "The premium comparison API is unavailable." },
       { status: 502 },
