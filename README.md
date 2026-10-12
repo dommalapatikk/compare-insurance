@@ -72,8 +72,8 @@ frontend production environment points to the API project. The chat assistant
 remains safely disabled until `OPENAI_API_KEY` is added to the API project's
 Vercel environment and that project is redeployed.
 
-Automatic Vercel deployments from Git require the Vercel GitHub App to be
-granted access to the private `dommalapatikk/compare-insurance` repository.
+Automatic Vercel deployments from Git require the Vercel account's GitHub
+integration to be authorized for `dommalapatikk/compare-insurance`.
 
 ## Important
 
