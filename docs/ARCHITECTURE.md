@@ -199,8 +199,13 @@ npm run build
 
 ## Deployment boundary
 
-The frontend is suitable for a later Vercel deployment. The FastAPI/LangChain
-runtime may be deployed separately unless a reviewed Vercel Python-runtime
-configuration is added. Production publication should happen only after the
-premium catalogue adapter and its validation suite are complete.
+The frontend and FastAPI/LangChain runtime are deployed as separate Vercel
+projects from the same monorepo. `backend/src/index.py` is the thin Vercel
+Python-runtime entry point and only re-exports the existing FastAPI composition
+root. The frontend reaches that service through its same-origin proxy route.
+
+This production deployment publishes the guided MVP and API scaffold only.
+The premium-search route remains an explicit `501` until the catalogue adapter
+and its validation suite are complete, so preview fixtures must not be
+presented as live price results.
 

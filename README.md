@@ -4,7 +4,7 @@ Compare Insurance is an early-stage Swiss compulsory health-insurance comparison
 
 ## Project status
 
-The repository contains the product and UX requirements, a guided Next.js frontend, a layered FastAPI/LangChain backend, tested domain comparison rules, and a documented copy of the relevant official Swiss government premium dataset. Live price search and production deployment remain blocked until the ingestion adapter is implemented and validated.
+The repository contains the product and UX requirements, a guided Next.js frontend, a layered FastAPI/LangChain backend, tested domain comparison rules, and a documented copy of the relevant official Swiss government premium dataset. The frontend and API scaffold are deployed on Vercel. Live price search remains blocked until the ingestion adapter is implemented and validated.
 
 ## Planned capabilities
 
@@ -60,6 +60,21 @@ the FastAPI service configured by `COMPARE_API_URL`. `OPENAI_API_KEY` and
 `OPENAI_MODEL` remain server-side. Copy `.env.example` to your local secret
 configuration without committing the resulting file.
 
+## Deployment
+
+- Frontend: <https://compare-insurance.vercel.app>
+- API health check: <https://compare-insurance-api.vercel.app/health>
+- GitHub Actions runs the backend, frontend, and pinned-data integrity gates on
+  pushes to `main` and on pull requests.
+
+The two applications are separate Vercel projects in this monorepo. The
+frontend production environment points to the API project. The chat assistant
+remains safely disabled until `OPENAI_API_KEY` is added to the API project's
+Vercel environment and that project is redeployed.
+
+Automatic Vercel deployments from Git require the Vercel GitHub App to be
+granted access to the private `dommalapatikk/compare-insurance` repository.
+
 ## Important
 
 This project is an informational comparison tool. It does not provide medical, legal, insurance, or financial advice. Premium results must retain their source year, retrieval date, eligibility assumptions, and accident-coverage status.
@@ -69,5 +84,5 @@ This project is an informational comparison tool. It does not provide medical, l
 1. Test-drive the BAG normalization and premium-repository adapter.
 2. Connect the tested repository to the existing comparison use case.
 3. Add API contract and end-to-end comparison tests.
-4. Add GitHub Actions quality gates.
-5. Connect preview and production deployment after review.
+4. Add end-to-end tests against the deployed API contract.
+5. Grant the Vercel GitHub App repository access for automatic deployments.
