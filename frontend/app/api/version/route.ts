@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { deploymentId } from "../../../lib/deployment-id";
-
 export const dynamic = "force-dynamic";
 
 export function GET() {
+  const deploymentId = process.env.NEXT_PUBLIC_DEPLOYMENT_ID;
   return NextResponse.json(
-    { deploymentId: deploymentId() },
+    { deploymentId: typeof deploymentId === "string" ? deploymentId : "" },
     { headers: { "Cache-Control": "no-store, max-age=0" } },
   );
 }
