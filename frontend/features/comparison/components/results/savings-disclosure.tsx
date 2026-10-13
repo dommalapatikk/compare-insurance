@@ -5,9 +5,11 @@ import type { ComparisonFlow } from "../../use-comparison-flow";
 
 function summaryText(explanation: NonNullable<ReturnType<typeof explainSavings>>) {
   if (explanation.relation === "same") {
-    return `Same monthly premium as the ${explanation.baseline} you entered`;
+    return "Same monthly premium";
   }
-  return `${explanation.monthlyDifference} ${explanation.relation} per month than the ${explanation.baseline} you entered`;
+  return explanation.relation === "less"
+    ? `You could save ${explanation.monthlyDifference}/month`
+    : `This plan costs ${explanation.monthlyDifference}/month more`;
 }
 
 export function SavingsDisclosure({ flow }: { flow: ComparisonFlow }) {
@@ -25,16 +27,18 @@ export function SavingsDisclosure({ flow }: { flow: ComparisonFlow }) {
       <h3 id="savings-title">
         {explanation
           ? summaryText(explanation)
-          : "Calculate your possible savings"}
+          : "Compare with your current premium"}
       </h3>
       <div className="savings-content">
         {explanation ? <p>
-          That is {explanation.annualDifference} {explanation.relation === "same" ? "difference" : `${explanation.relation} per year`}.
-          This compares premiums only, not your total healthcare costs.
-        </p> : <p>Enter your current monthly premium. We’ll compare premiums only.</p>}
+          {explanation.relation === "same"
+            ? `This matches the ${explanation.baseline} you entered.`
+            : `${explanation.annualDifference}/year ${explanation.relation} than the ${explanation.baseline} you entered.`}
+          {" "}Premiums only; healthcare costs are not included.
+        </p> : null}
         <form onSubmit={submit}>
-          <label htmlFor="current-premium">Your current monthly premium</label>
-          <div><span>CHF</span><input id="current-premium" inputMode="decimal" min="0" step="0.05" type="number" value={flow.currentPremium} onChange={(event) => flow.setCurrentPremium(event.target.value)} placeholder="e.g. 400.00" /><button disabled={flow.isSearching || !flow.currentPremium} type="submit">Update</button></div>
+          <label htmlFor="current-premium">Monthly premium before subsidies</label>
+          <div><span>CHF</span><input id="current-premium" inputMode="decimal" min="0" max="5000" step="0.05" type="number" value={flow.currentPremium} onChange={(event) => flow.setCurrentPremium(event.target.value)} placeholder="400.00" /><button disabled={flow.isSearching || !flow.currentPremium} type="submit">Calculate</button></div>
         </form>
       </div>
     </section>

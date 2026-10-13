@@ -16,9 +16,9 @@ export function ResultSummary({
   const cheapest = results.offers[0];
   const model = modelLabels[cheapest.insurance_model] || cheapest.insurance_model;
   return (
-    <article className="result-overview" aria-label="Lowest monthly premium for your choices">
+    <article className="result-overview" aria-label="Lowest monthly premium matching your choices">
       <div className="result-price">
-        <span>Lowest monthly premium</span>
+        <span>Lowest monthly premium matching your choices</span>
         <strong>{formatCurrency(Number(cheapest.monthly_premium_chf))}<small>/month</small></strong>
         <p>{formatCurrency(Number(cheapest.annual_premium_chf))} per year</p>
       </div>
@@ -32,7 +32,11 @@ export function ResultSummary({
         <div><dt>Franchise</dt><dd>{formatDeductible(cheapest.deductible_chf)}</dd></div>
         <div><dt>Accident cover</dt><dd>{accidentLabel}</dd></div>
       </dl>
-      <p className="result-profile"><strong>Your profile:</strong> {location} · {ageLabel}</p>
+      <p className="result-profile"><strong>Your choices:</strong> {location} · {ageLabel}</p>
+      <div className="result-source">
+        <span>Official BAG premium data · {results.source_year} · Before subsidies</span>
+        <a href="https://www.priminfo.admin.ch/" target="_blank" rel="noreferrer">Verify on Priminfo ↗</a>
+      </div>
     </article>
   );
 }

@@ -25,28 +25,28 @@ export function ageGroupForBirthYear(
 export const modelChoices: Choice[] = [
   {
     value: "standard",
-    label: "Standard",
-    description: "Free choice of doctor under the plan rules.",
+    label: "Free choice of doctor",
+    description: "Choose a doctor without a required first contact.",
   },
   {
     value: "flex",
-    label: "Flexible first contact (FLEX)",
-    description: "Choose between several defined first-contact options.",
+    label: "Flexible first contact",
+    description: "Choose from the contact options allowed by the plan.",
   },
   {
     value: "praxis",
-    label: "Family doctor / HMO (PRAXIS)",
-    description: "A designated doctor or medical practice is your first contact.",
+    label: "Family doctor / HMO",
+    description: "Contact a designated doctor or medical practice first.",
   },
   {
     value: "tel_dig",
-    label: "Telemedicine (TEL-DIG)",
-    description: "Your first contact is by phone, app or another digital service.",
+    label: "Telemedicine",
+    description: "Contact a medical advice service by phone or online first.",
   },
   {
     value: "pharm",
-    label: "Pharmacy first (PHARM)",
-    description: "A partner pharmacy is your first contact.",
+    label: "Pharmacy first",
+    description: "Contact a partner pharmacy first.",
   },
 ];
 

@@ -10,7 +10,7 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
   return (
     <section className="results-preview" ref={flow.resultsRef} tabIndex={-1} aria-labelledby="results-title">
       <div className="results-heading">
-        <h2 id="results-title">Your result</h2>
+        <h2 id="results-title">Your results</h2>
         <span>2027 monthly premiums before subsidies</span>
       </div>
 
@@ -18,10 +18,6 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
       {!flow.isSearching && flow.searchNotice && !flow.results?.offers.length && <div className="result-state error" role="alert">{flow.searchNotice}</div>}
       {flow.results && flow.results.offers.length > 0 && <>
         <ResultSummary results={flow.results} location={flow.location} ageLabel={flow.ageLabel} accidentLabel={flow.accidentLabel} />
-        <div className="source-bar">
-          <p><b>Premium data:</b> BAG 2027 catalogue · Before subsidies</p>
-          <a href="https://www.priminfo.admin.ch/" target="_blank" rel="noreferrer">Check on Priminfo ↗</a>
-        </div>
         <SavingsDisclosure flow={flow} />
         <ResultsExplorer results={flow.results} />
         <BeforeSwitching />

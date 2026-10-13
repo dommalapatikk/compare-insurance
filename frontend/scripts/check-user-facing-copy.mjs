@@ -47,6 +47,11 @@ const bannedCopy = [
   "franchise × model",
   "compare the lowest premium with what you pay now",
   "enter five details",
+  "confirm whom you must contact first under the insurance model",
+  "lowest monthly premium first",
+  "10 lowest offers",
+  "calculate your possible savings",
+  "we’ll match it to the correct municipality and premium region",
 ];
 
 const violations = [];

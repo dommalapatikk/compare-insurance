@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
-import type { FormEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { modelChoices } from "../config";
 import type { ComparisonFlow } from "../use-comparison-flow";
 import { AdvisorComposer } from "./advisor-composer";
 import { JourneySummary } from "./journey-summary";
 
-function Question({ title, children }: { title: string; children: ReactNode }) {
+function Question({ title, children }: { title: string; children?: ReactNode }) {
   return <div className="assistant-prompt"><h3 tabIndex={-1}>{title}</h3>{children}</div>;
 }
 
@@ -40,27 +40,24 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
     }
   }, [flow.journeyStage]);
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    void flow.comparePlans();
-  }
-
   const showWorkspace = flow.journeyStage !== "results";
+  const showContextualHelp = (["accident", "models", "deductibles"] as string[])
+    .includes(flow.journeyStage);
   return (
     <section className="guided-advisor" id="guided-comparison" aria-label="Premium comparison">
-      <div className="journey-topline">
-        <span>Your details</span>
-        {Object.values(flow.completedStages).some(Boolean) && <button onClick={flow.restartJourney} type="button">Start over</button>}
-      </div>
+      {Object.values(flow.completedStages).some(Boolean) && <div className="journey-topline">
+        <button onClick={flow.restartJourney} type="button">Start over</button>
+      </div>}
       <JourneySummary flow={flow} />
 
       {showWorkspace && <div className="advisor-workspace" ref={workspaceRef}>
         {flow.journeyStage === "location" && <div className="journey-step">
-          <Question title="Your postcode"><p>We’ll match it to the correct municipality and premium region.</p></Question>
-          <div className="step-control location-combobox">
-            <label htmlFor="location-search">Postcode</label>
-            <input
-              id="location-search" type="search" role="combobox" autoComplete="off"
+          <Question title="Where do you live?" />
+          <div className="location-actions">
+            <div className="step-control location-combobox">
+              <label htmlFor="location-search">Postcode</label>
+              <input
+              id="location-search" type="text" role="combobox" autoComplete="postal-code" inputMode="numeric" maxLength={4}
               aria-autocomplete="list" aria-controls="location-suggestions"
               aria-expanded={flow.showLocationSuggestions && flow.locationSuggestions.length > 0}
               aria-activedescendant={flow.activeLocationIndex >= 0 ? `location-option-${flow.activeLocationIndex}` : undefined}
@@ -72,8 +69,8 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
                 if (event.key === "ArrowUp") { event.preventDefault(); flow.moveLocationSelection(-1); }
                 if (event.key === "Enter" && flow.showLocationSuggestions) { event.preventDefault(); flow.chooseActiveLocation(); }
                 if (event.key === "Escape") flow.setShowLocationSuggestions(false);
-              }} placeholder="e.g. 3011"
-            />
+              }} placeholder="3011"
+              />
             {flow.showLocationSuggestions && flow.locationSuggestions.length > 0 && <ul id="location-suggestions" className="location-suggestions" role="listbox">
               {flow.locationSuggestions.map((item, index) => <li
                 key={`${item.postal_code}-${item.municipality_id}`} id={`location-option-${index}`}
@@ -82,9 +79,10 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
                 onClick={() => flow.chooseLocation(item)}
               ><strong>{item.postal_code} {item.locality}</strong><small>{item.municipality_name}, {item.canton}</small></li>)}
             </ul>}
-            <small aria-live="polite">{flow.isLoadingLocations ? "Searching…" : flow.selectedLocation ? `Found ${flow.selectedLocation.label}` : flow.locationNotice || "Choose a result to confirm your municipality."}</small>
+              <small aria-live="polite">{flow.isLoadingLocations ? "Searching postcodes…" : flow.selectedLocation ? `Selected: ${flow.selectedLocation.label}` : flow.locationNotice || "Enter a 4-digit Swiss postcode."}</small>
+            </div>
+            <ContinueButton disabled={!flow.selectedLocation} onClick={() => flow.goToStage("birth_year")} />
           </div>
-          <ContinueButton disabled={!flow.selectedLocation} onClick={() => flow.goToStage("birth_year")} />
         </div>}
 
         {flow.journeyStage === "birth_year" && <div className="journey-step">
@@ -105,10 +103,10 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
         {flow.journeyStage === "models" && <div className="journey-step">
           <BackButton onClick={() => flow.goToStage("accident")} />
-          <Question title="Which insurance models should we compare?"><p>Compare all if you’re unsure. Each model changes whom you contact first for care.</p></Question>
+          <Question title="Which insurance models would you consider?"><p>Compare only models you would be comfortable using.</p></Question>
           <div className="selection-mode" aria-label="Insurance model selection">
-            <button aria-pressed={flow.models.length === flow.allModelCount} onClick={flow.selectAllModels} type="button"><span aria-hidden="true">{flow.models.length === flow.allModelCount ? "✓" : ""}</span><strong>Compare all models</strong><small>See every available model.</small></button>
-            <button aria-pressed={flow.models.length !== flow.allModelCount} onClick={flow.chooseSpecificModels} type="button"><span aria-hidden="true">{flow.models.length !== flow.allModelCount ? "✓" : ""}</span><strong>Choose models</strong><small>Limit the comparison.</small></button>
+            <button aria-pressed={flow.models.length === flow.allModelCount} onClick={flow.selectAllModels} type="button"><span aria-hidden="true">{flow.models.length === flow.allModelCount ? "✓" : ""}</span><strong>Compare all models</strong><small>Include every available model.</small></button>
+            <button aria-pressed={flow.models.length !== flow.allModelCount} onClick={flow.chooseSpecificModels} type="button"><span aria-hidden="true">{flow.models.length !== flow.allModelCount ? "✓" : ""}</span><strong>Choose models</strong><small>Only include models you would use.</small></button>
           </div>
           {flow.models.length !== flow.allModelCount && <div className="choice-cards models">{modelChoices.map((choice) => <label key={choice.value}><input type="checkbox" checked={flow.models.some((value) => value === choice.value)} onChange={() => flow.toggleModel(choice.value)} /><span><strong>{choice.label}</strong><small>{choice.description}</small></span></label>)}</div>}
           <ContinueButton disabled={!flow.models.length} onClick={() => flow.goToStage("deductibles")} />
@@ -126,13 +124,10 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
           <ContinueButton disabled={!flow.deductibles.length || flow.isSearching} onClick={() => void flow.comparePlans()}>{flow.isSearching ? "Comparing…" : "Show lowest premiums"}</ContinueButton>
         </div>}
 
-        {flow.journeyStage === "review" && <form className="journey-step final-action" onSubmit={submit}>
-          <BackButton onClick={() => flow.goToStage("deductibles")} />
-          <button className="continue-button" disabled={flow.isSearching} type="submit">{flow.isSearching ? "Comparing…" : "Show lowest premiums"}<span aria-hidden="true">→</span></button>
-        </form>}
+        {flow.journeyStage === "review" && <div className="journey-step comparison-loading" role="status">Comparing premiums…</div>}
 
-        {!(["review", "welcome"] as string[]).includes(flow.journeyStage) && <details className="advisor-help-disclosure">
-          <summary>Need help choosing? Ask the guide</summary>
+        {showContextualHelp && <details className="advisor-help-disclosure">
+          <summary>Need help with this choice?</summary>
           <AdvisorComposer flow={flow} suggestions={suggestionsFor(flow.journeyStage)} />
         </details>}
       </div>}

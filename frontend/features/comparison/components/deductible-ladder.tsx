@@ -10,12 +10,12 @@ export function DeductibleLadder({ offers }: { offers: CategoryMinimum[] }) {
   return (
     <div className="comparison-scroll">
       <table className="comparison-table franchise-table">
-        <caption>Lowest matching premium at each franchise</caption>
-        <thead><tr><th>Franchise</th><th>Monthly premium</th><th>Insurer and plan</th><th>Insurance model</th><th>Difference</th></tr></thead>
+        <caption>Lowest-priced matching plan for each franchise</caption>
+        <thead><tr><th scope="col">Franchise</th><th scope="col">Monthly premium</th><th scope="col">Insurer and plan</th><th scope="col">Insurance model</th><th scope="col">Difference</th></tr></thead>
         <tbody>{ordered.map((offer) => {
           const difference = Number(offer.monthly_premium_chf) - lowest;
           return <tr className={difference === 0 ? "best-row" : ""} key={offer.deductible_chf}>
-            <th>{formatDeductible(offer.deductible_chf)}</th>
+            <th scope="row">{formatDeductible(offer.deductible_chf)}</th>
             <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>
             <td><strong>{offer.insurer_name}</strong><small>{offer.product_name}</small></td>
             <td>{modelLabels[offer.insurance_model] || offer.insurance_model}</td>

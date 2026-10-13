@@ -49,7 +49,7 @@ export function JourneySummary({ flow }: { flow: ComparisonFlow }) {
                 onClick={() => flow.goToStage(stage)}
                 type="button"
               >
-                <span>{String(index + 1).padStart(2, "0")}</span>
+                <span>{index + 1}</span>
                 <small>{label}</small>
                 <strong>{value || (isCurrent ? "Answer now" : "Not answered")}</strong>
                 <i className="sr-only">{isCurrent ? "Current step" : value ? "Completed; edit answer" : "Not completed"}</i>

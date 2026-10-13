@@ -3,10 +3,9 @@
   min-height: 38px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   border-top: 1px solid var(--line);
 }
-.journey-topline span { color: var(--muted); font-size: .76rem; }
 .journey-topline button {
   padding: 4px 0;
   color: var(--action-ink);
@@ -54,7 +53,7 @@
   cursor: pointer;
 }
 .journey-summary button:disabled { color: inherit; cursor: default; }
-.journey-summary button > span { grid-row: 1 / 3; align-self: center; color: #9b908c; font-size: .68rem; font-weight: 750; }
+.journey-summary button > span { grid-row: 1 / 3; align-self: center; color: #77716f; font-size: .95rem; font-weight: 750; }
 .journey-summary small { color: var(--muted); font-size: .66rem; font-weight: 700; letter-spacing: .055em; text-transform: uppercase; }
 .journey-summary strong { overflow: hidden; font-size: .8rem; text-overflow: ellipsis; white-space: nowrap; }
 .journey-summary li.complete button > span { color: var(--action-ink); }
@@ -87,7 +86,11 @@
   font-size: .94rem;
 }
 .step-control > small, label.step-control > small { color: var(--muted); font-size: .76rem; font-weight: 500; }
-.compact-control, .location-combobox { max-width: 460px; }
+.compact-control { max-width: 260px; }
+.location-actions { display: flex; align-items: flex-start; gap: 12px; }
+.location-actions .continue-button { width: 160px; margin-top: 27px; }
+.location-combobox { width: min(100%, 352px); }
+.location-combobox > input { width: 160px; }
 .continue-button {
   width: min(100%, 210px);
   min-height: 44px;
@@ -106,6 +109,7 @@
 .continue-button:hover { background: var(--action-dark); }
 .continue-button:disabled { opacity: .42; cursor: not-allowed; }
 .final-action { min-height: 84px; align-content: center; }
+.comparison-loading { min-height: 84px; align-content: center; color: var(--muted); font-weight: 650; }
 .form-error { margin: 0; color: var(--warning); font-size: .82rem; font-weight: 650; }
 
 .location-combobox { position: relative; }

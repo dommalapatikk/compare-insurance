@@ -9,9 +9,9 @@ import { ModelComparison } from "./model-comparison";
 import { RankedPlans } from "./ranked-plans";
 
 const tabs = [
-  { id: "franchise", label: "Franchises" },
-  { id: "model", label: "Insurance models" },
-  { id: "offers", label: "10 lowest offers" },
+  { id: "franchise", label: "By franchise" },
+  { id: "model", label: "By insurance model" },
+  { id: "offers", label: "Lowest-priced plans" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -33,7 +33,7 @@ export function ResultsExplorer({ results }: { results: PremiumSearchResponse })
   return (
     <section className="results-explorer" aria-labelledby="explorer-title">
       <div className="explorer-heading">
-        <h3 id="explorer-title">Compare by</h3>
+        <h3 id="explorer-title">Compare your results</h3>
       </div>
       <div className="result-tabs" role="tablist" aria-label="Result views">
         {tabs.map((tab, index) => <button
@@ -47,7 +47,7 @@ export function ResultsExplorer({ results }: { results: PremiumSearchResponse })
         <DeductibleLadder offers={results.cheapest_by_deductible} />
       </div>
       <div aria-labelledby="model-tab" hidden={activeTab !== "model"} id="model-panel" role="tabpanel" tabIndex={0}>
-        <ModelComparison offers={results.cheapest_by_model} />
+        <ModelComparison offers={results.cheapest_by_deductible_and_model} defaultDeductible={results.offers[0]?.deductible_chf} />
       </div>
       <div aria-labelledby="offers-tab" hidden={activeTab !== "offers"} id="offers-panel" role="tabpanel" tabIndex={0}>
         <RankedPlans offers={results.offers} source={results.source_name} />

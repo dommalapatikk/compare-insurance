@@ -16,7 +16,7 @@ export function useLocationPicker() {
 
   useEffect(() => {
     const query = locationQuery.trim();
-    if (query.length < 2 || selectedLocation?.label === query) {
+    if (query.length < 2 || selectedLocation?.postal_code === query) {
       setLocationSuggestions([]);
       setActiveLocationIndex(-1);
       setLocationNotice("");
@@ -47,14 +47,14 @@ export function useLocationPicker() {
 
   function updateLocationQuery(value: string) {
     setLocationQuery(value);
-    if (value !== selectedLocation?.label) setSelectedLocation(null);
+    if (value !== selectedLocation?.postal_code) setSelectedLocation(null);
     setShowLocationSuggestions(true);
     setActiveLocationIndex(-1);
   }
 
   function chooseLocation(value: LocationSuggestion) {
     setSelectedLocation(value);
-    setLocationQuery(value.label);
+    setLocationQuery(value.postal_code);
     setLocationSuggestions([]);
     setActiveLocationIndex(-1);
     setLocationNotice("");

@@ -6,7 +6,7 @@ const answers = [
   {
     question: "What changed in 2027?",
     answer:
-      "The average monthly premium is CHF 412, which is 5.0% higher than in 2026. To change insurer or insurance model for 1 January 2027, your request must generally reach your insurer by 30 November 2026.",
+      "The average monthly premium is CHF 412, which is 5.0% higher than in 2026. To change basic insurer for 1 January 2027, your cancellation must reach your current insurer by 30 November 2026.",
     source: BAG_2027,
     sourceLabel: "BAG",
   },

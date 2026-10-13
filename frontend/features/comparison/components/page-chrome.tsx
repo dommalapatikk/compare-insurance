@@ -5,7 +5,7 @@ export function SiteHeader() {
         <span className="brand-mark" aria-hidden="true" />
         <span>Compare Insurance</span>
       </a>
-      <span className="source-status">Uses BAG premium data</span>
+      <span className="source-status">Basic insurance · 2027</span>
     </header>
   );
 }
@@ -17,7 +17,7 @@ export function Intro() {
         <p className="eyebrow">Swiss health insurance</p>
         <h1 id="page-title">Compare health insurance premiums</h1>
         <p className="intro-description">
-          Start with your postcode. We’ll show the lowest published 2027 premiums available for you.
+          Enter your postcode and preferences to see the lowest published premiums matching your choices.
         </p>
       </div>
     </section>
