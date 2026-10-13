@@ -40,7 +40,9 @@ const suppliedDeploymentId = [
   process.env.VERCEL_GIT_COMMIT_SHA,
   process.env.VERCEL_URL,
 ].find((value): value is string => typeof value === "string" && value.length > 0);
-const deploymentId = suppliedDeploymentId ?? sourceFingerprint();
+const deploymentId = suppliedDeploymentId
+  ? createHash("sha256").update(suppliedDeploymentId).digest("hex").slice(0, 20)
+  : sourceFingerprint();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
