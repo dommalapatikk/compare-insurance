@@ -13,18 +13,11 @@ export function CategoryMatrix({ offers }: { offers: CategoryMinimum[] }) {
   const cells = new Map(offers.map((offer) => [key(offer.deductible_chf, offer.insurance_model), offer]));
 
   return (
-    <section className="matrix-section" aria-labelledby="matrix-title">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Compare options</p>
-          <h3 id="matrix-title">Lowest premium by deductible and model</h3>
-        </div>
-        <p>The lowest monthly premium for each selected combination.</p>
-      </div>
+    <div className="matrix-section">
       <div className="matrix-scroll">
         <table className="matrix-table">
-          <caption>Lowest monthly premium by deductible and insurance model</caption>
-          <thead><tr><th>Annual deductible</th>{models.map((model) => <th key={model}>{modelLabels[model]}</th>)}</tr></thead>
+          <caption>Lowest monthly premium by franchise and insurance model</caption>
+          <thead><tr><th>Franchise</th>{models.map((model) => <th key={model}>{modelLabels[model]}</th>)}</tr></thead>
           <tbody>
             {deductibles.map((deductible) => {
               const rowOffers = models.map((model) => cells.get(key(deductible, model))).filter(Boolean) as CategoryMinimum[];
@@ -50,13 +43,13 @@ export function CategoryMatrix({ offers }: { offers: CategoryMinimum[] }) {
           </tbody>
         </table>
       </div>
-      <div className="matrix-mobile" aria-label="Lowest monthly premiums by deductible and model">
+      <div className="matrix-mobile" aria-label="Lowest monthly premiums by franchise and insurance model">
         {deductibles.map((deductible) => {
           const rowOffers = models.map((model) => cells.get(key(deductible, model))).filter(Boolean) as CategoryMinimum[];
           const rowMinimum = Math.min(...rowOffers.map((offer) => Number(offer.monthly_premium_chf)));
           return (
             <details key={deductible}>
-              <summary>{formatDeductible(deductible)} deductible</summary>
+              <summary>{formatDeductible(deductible)} franchise</summary>
               <div>
                 {models.map((model) => {
                   const offer = cells.get(key(deductible, model));
@@ -71,8 +64,8 @@ export function CategoryMatrix({ offers }: { offers: CategoryMinimum[] }) {
         })}
       </div>
       <p className="matrix-note">
-        Premiums only. A higher deductible can mean paying more yourself when you need care.
+        Premiums only. A higher franchise can mean paying more yourself when you need care.
       </p>
-    </section>
+    </div>
   );
 }

@@ -5,12 +5,14 @@ import type { KeyboardEvent } from "react";
 
 import { DeductibleLadder } from "../deductible-ladder";
 import type { PremiumSearchResponse } from "../../types";
+import { CategoryMatrix } from "./category-matrix";
 import { ModelComparison } from "./model-comparison";
 import { RankedPlans } from "./ranked-plans";
 
 const tabs = [
   { id: "franchise", label: "By franchise" },
-  { id: "model", label: "By care model" },
+  { id: "model", label: "By model" },
+  { id: "matrix", label: "Franchise × model" },
   { id: "offers", label: "Top 10" },
 ] as const;
 
@@ -33,8 +35,8 @@ export function ResultsExplorer({ results }: { results: PremiumSearchResponse })
   return (
     <section className="results-explorer" aria-labelledby="explorer-title">
       <div className="explorer-heading">
-        <h3 id="explorer-title">Compare your results</h3>
-        <p>See the cheapest match at each franchise or within each care model.</p>
+        <h3 id="explorer-title">Compare premiums</h3>
+        <p>Switch views without changing your answers.</p>
       </div>
       <div className="result-tabs" role="tablist" aria-label="Result views">
         {tabs.map((tab, index) => <button
@@ -49,6 +51,9 @@ export function ResultsExplorer({ results }: { results: PremiumSearchResponse })
       </div>
       <div aria-labelledby="model-tab" hidden={activeTab !== "model"} id="model-panel" role="tabpanel" tabIndex={0}>
         <ModelComparison offers={results.cheapest_by_model} />
+      </div>
+      <div aria-labelledby="matrix-tab" hidden={activeTab !== "matrix"} id="matrix-panel" role="tabpanel" tabIndex={0}>
+        <CategoryMatrix offers={results.cheapest_by_deductible_and_model} />
       </div>
       <div aria-labelledby="offers-tab" hidden={activeTab !== "offers"} id="offers-panel" role="tabpanel" tabIndex={0}>
         <RankedPlans offers={results.offers} source={results.source_name} />

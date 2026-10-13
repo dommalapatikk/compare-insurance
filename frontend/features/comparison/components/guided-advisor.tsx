@@ -56,9 +56,9 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
       {showWorkspace && <div className="advisor-workspace" ref={workspaceRef}>
         {flow.journeyStage === "location" && <div className="journey-step">
-          <Question title="Where do you live?"><p>Enter your postcode. We’ll find your municipality and premium region.</p></Question>
+          <Question title="Your postcode"><p>We’ll match it to the correct municipality and premium region.</p></Question>
           <div className="step-control location-combobox">
-            <label htmlFor="location-search">Postcode or municipality</label>
+            <label htmlFor="location-search">Postcode</label>
             <input
               id="location-search" type="search" role="combobox" autoComplete="off"
               aria-autocomplete="list" aria-controls="location-suggestions"
@@ -72,7 +72,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
                 if (event.key === "ArrowUp") { event.preventDefault(); flow.moveLocationSelection(-1); }
                 if (event.key === "Enter" && flow.showLocationSuggestions) { event.preventDefault(); flow.chooseActiveLocation(); }
                 if (event.key === "Escape") flow.setShowLocationSuggestions(false);
-              }} placeholder="e.g. 3011 Bern"
+              }} placeholder="e.g. 3011"
             />
             {flow.showLocationSuggestions && flow.locationSuggestions.length > 0 && <ul id="location-suggestions" className="location-suggestions" role="listbox">
               {flow.locationSuggestions.map((item, index) => <li
@@ -105,8 +105,8 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
         {flow.journeyStage === "models" && <div className="journey-step">
           <BackButton onClick={() => flow.goToStage("accident")} />
-          <Question title="Which care models should we compare?"><p>Compare all if you’re unsure. Each model changes whom you contact first for care.</p></Question>
-          <div className="selection-mode" aria-label="Care model selection">
+          <Question title="Which insurance models should we compare?"><p>Compare all if you’re unsure. Each model changes whom you contact first for care.</p></Question>
+          <div className="selection-mode" aria-label="Insurance model selection">
             <button aria-pressed={flow.models.length === flow.allModelCount} onClick={flow.selectAllModels} type="button"><span aria-hidden="true">{flow.models.length === flow.allModelCount ? "✓" : ""}</span><strong>Compare all models</strong><small>See every available model.</small></button>
             <button aria-pressed={flow.models.length !== flow.allModelCount} onClick={flow.chooseSpecificModels} type="button"><span aria-hidden="true">{flow.models.length !== flow.allModelCount ? "✓" : ""}</span><strong>Choose models</strong><small>Limit the comparison.</small></button>
           </div>

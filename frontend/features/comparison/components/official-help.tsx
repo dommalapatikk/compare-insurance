@@ -3,16 +3,16 @@ const BAG_MODELS = "https://www.bag.admin.ch/de/krankenversicherung-versicherung
 const PRIMINFO = "https://www.priminfo.admin.ch/de/praemien/";
 const answers = [
   {
-    question: "What is a deductible (franchise)?",
+    question: "What is a franchise?",
     answer:
-      "The deductible is the amount you pay each year towards covered healthcare before basic insurance starts contributing. Adults can choose CHF 300, 500, 1,000, 1,500, 2,000 or 2,500.",
+      "The franchise is the amount you pay each year towards covered healthcare before basic insurance starts contributing. Adults can choose CHF 300, 500, 1,000, 1,500, 2,000 or 2,500.",
     source: CH_COSTS,
     sourceLabel: "CH.CH",
   },
   {
-    question: "Is a higher deductible always cheaper?",
+    question: "Does a higher franchise always save money?",
     answer:
-      "It lowers your premium but can increase what you pay when you need care. With a CHF 2,500 deductible, an adult may pay up to CHF 3,200 for the deductible and co-payment, plus any hospital contribution.",
+      "It lowers your premium but can increase what you pay when you need care. With a CHF 2,500 franchise, an adult may pay up to CHF 3,200 for the franchise and co-payment, plus any hospital contribution.",
     source: CH_COSTS,
     sourceLabel: "CH.CH",
   },
@@ -43,7 +43,7 @@ export function OfficialHelp() {
   return (
     <section className="official-help" aria-labelledby="help-title">
       <div className="section-heading">
-        <div><p className="eyebrow">Good to know</p><h2 id="help-title">Health insurance basics</h2></div>
+        <div><h2 id="help-title">Understand your choices</h2><p>Short answers from official Swiss sources.</p></div>
       </div>
       <div className="faq-list">
         {answers.map((item) => (

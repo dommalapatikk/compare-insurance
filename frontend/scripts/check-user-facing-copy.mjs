@@ -38,6 +38,12 @@ const bannedCopy = [
   "exact database filters",
   "telmed",
   "other models",
+  "good to know",
+  "care model",
+  "detailed model",
+  "compare options",
+  "lowest premium by deductible",
+  "annual deductible",
 ];
 
 const violations = [];
@@ -64,7 +70,7 @@ for (const label of ["Premium region", "Which age group"]) {
 if (/label[^>]*>\s*Gender\b/i.test(profileSource) || /name=["']gender["']/i.test(profileSource)) {
   violations.push("guided-advisor.tsx must not contain a gender input");
 }
-for (const requiredLabel of ["Postcode or municipality", "Birth year"]) {
+for (const requiredLabel of ["Postcode", "Birth year"]) {
   if (!profileSource.includes(requiredLabel)) {
     violations.push(`guided-advisor.tsx is missing “${requiredLabel}”`);
   }

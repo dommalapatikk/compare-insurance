@@ -1,6 +1,5 @@
 import type { ComparisonFlow } from "../use-comparison-flow";
 import { BeforeSwitching } from "./results/before-switching";
-import { CategoryMatrix } from "./results/category-matrix";
 import { ResultSummary } from "./results/result-summary";
 import { ResultsExplorer } from "./results/results-explorer";
 import { SavingsDisclosure } from "./results/savings-disclosure";
@@ -21,10 +20,6 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
         <ResultSummary results={flow.results} location={flow.location} ageLabel={flow.ageLabel} accidentLabel={flow.accidentLabel} />
         <SavingsDisclosure flow={flow} />
         <ResultsExplorer results={flow.results} />
-        <details className="result-disclosure matrix-disclosure">
-          <summary>Detailed model × franchise table</summary>
-          <CategoryMatrix offers={flow.results.cheapest_by_deductible_and_model} />
-        </details>
         <details className="result-disclosure">
           <summary>Before you switch</summary>
           <BeforeSwitching />

@@ -13,8 +13,8 @@ export function ModelComparison({ offers }: { offers: CategoryMinimum[] }) {
   return (
     <div className="comparison-scroll">
       <table className="comparison-table model-table">
-        <caption>Lowest matching premium in each care model</caption>
-        <thead><tr><th>Care model</th><th>Monthly premium</th><th>Franchise</th><th>Insurer and plan</th></tr></thead>
+        <caption>Lowest matching premium in each insurance model</caption>
+        <thead><tr><th>Insurance model</th><th>Monthly premium</th><th>Franchise</th><th>Insurer and plan</th></tr></thead>
         <tbody>{ordered.map((offer) => <tr key={offer.insurance_model}>
           <th>{labels.get(offer.insurance_model) || offer.insurance_model}</th>
           <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>

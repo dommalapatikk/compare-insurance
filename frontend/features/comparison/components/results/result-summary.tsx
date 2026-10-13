@@ -25,7 +25,7 @@ export function ResultSummary({
       <div className="result-plan">
         <strong>{cheapest.insurer_name}</strong>
         <span>{cheapest.product_name}</span>
-        <p>{model} care model · {formatDeductible(cheapest.deductible_chf)} franchise · Accident {accidentLabel.toLowerCase()}</p>
+        <p>{model} insurance model · {formatDeductible(cheapest.deductible_chf)} franchise · Accident {accidentLabel.toLowerCase()}</p>
       </div>
       <p className="result-profile">{location} · {ageLabel}</p>
     </article>

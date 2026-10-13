@@ -6,7 +6,7 @@ const stages: Array<{ stage: SummaryStage; label: string }> = [
   { stage: "location", label: "Location" },
   { stage: "birth_year", label: "Birth year" },
   { stage: "accident", label: "Accident" },
-  { stage: "models", label: "Models" },
+  { stage: "models", label: "Insurance models" },
   { stage: "deductibles", label: "Franchise" },
 ];
 
