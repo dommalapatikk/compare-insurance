@@ -1,5 +1,5 @@
 .results-preview { margin-bottom: 52px; scroll-margin-top: 20px; }
-.results-preview:focus { outline: none; }
+.results-preview:focus-visible { outline: 3px solid rgba(8, 101, 76, .25); outline-offset: 6px; }
 .results-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
 .results-heading h2 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: -.045em; }
 .results-heading > span { color: var(--muted); font-size: .75rem; }
@@ -25,15 +25,19 @@
 .saving-block > strong { color: var(--accent); font-size: 1.5rem; }
 .query-chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 7px; padding: 11px 18px; border-top: 1px solid rgba(255,255,255,.16); }
 .query-chips span { margin: 0; padding: 6px 9px; color: white; background: rgba(255,255,255,.1); border-radius: 999px; font-size: .66rem; letter-spacing: 0; text-transform: none; }
+.query-chips .result-provenance { margin-left: auto; color: var(--accent); background: transparent; }
+.query-chips a { align-self: center; color: white; font-size: .68rem; font-weight: 750; }
 
-.deductible-ladder, .matrix-section, .ranked-results { margin-top: 16px; padding: 24px; background: white; border: 1px solid var(--line); border-radius: 16px; }
+.deductible-ladder, .model-comparison, .matrix-section, .ranked-results { margin-top: 16px; padding: 24px; background: white; border: 1px solid var(--line); border-radius: 16px; }
 .ladder-rows { display: grid; gap: 3px; margin-top: 18px; }
 .ladder-rows article { display: grid; grid-template-columns: minmax(240px, 1.1fr) minmax(180px, 1fr) 145px; gap: 20px; align-items: center; padding: 13px 0; border-top: 1px solid var(--line); }
 .ladder-label { min-width: 0; }
 .ladder-label strong { display: block; font-size: .8rem; }
 .ladder-label span { display: block; margin-top: 4px; overflow: hidden; color: var(--muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
 .ladder-track { height: 8px; overflow: hidden; background: #e7ede8; border-radius: 999px; }
-.ladder-track span { height: 100%; display: block; background: var(--green); border-radius: inherit; }
+.ladder-track span { height: 100%; display: block; border-radius: inherit; }
+.ladder-track .difference-bar { background: #92a19a; }
+.ladder-track .lowest { min-width: 8px; background: var(--accent); box-shadow: inset 0 0 0 1px var(--green); }
 .ladder-price { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .ladder-price strong { font-size: .82rem; }
 .ladder-price span { color: var(--muted); font-size: .64rem; font-weight: 750; }
@@ -53,6 +57,14 @@
 .matrix-table td.unavailable { color: #9ba49f; text-align: center; }
 .best-label { float: right; margin-left: 6px; padding: 3px 5px; color: var(--green-dark); background: var(--accent); border-radius: 4px; font-size: .55rem; text-transform: uppercase; }
 .matrix-note { margin: 12px 0 0; color: var(--muted); font-size: .72rem; }
+.model-rows { margin-top: 18px; border-top: 1px solid var(--line); }
+.model-rows article { min-width: 0; display: grid; grid-template-columns: minmax(220px, 1.4fr) minmax(150px, .7fr) auto; gap: 20px; align-items: center; min-height: 66px; border-bottom: 1px solid var(--line); }
+.model-rows article > div { min-width: 0; }
+.model-rows article > div strong { display: block; font-size: .8rem; }
+.model-rows article > div span { display: block; margin-top: 4px; overflow: hidden; color: var(--muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+.model-rows article > span { color: var(--muted); font-size: .72rem; }
+.model-rows article > strong { font-size: .85rem; white-space: nowrap; }
+.model-rows article > strong small { margin-left: 3px; color: var(--muted); font-size: .66rem; font-weight: 500; }
 .matrix-mobile, .plan-cards { display: none; }
 
 .plans-table { min-width: 1000px; }

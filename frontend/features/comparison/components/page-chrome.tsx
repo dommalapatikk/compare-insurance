@@ -16,11 +16,14 @@ export function Intro() {
       <div className="intro-copy">
         <p className="eyebrow">2027 Swiss basic health insurance</p>
         <h1 id="page-title">Your premium deserves a second look.</h1>
-        <p>
+        <p className="intro-description">
           Tell us where you live and what matters to you. Your guide will take
           you through the choices, then compare the official published premiums.
         </p>
         <a className="intro-action" href="#guided-comparison">Check my 2027 premiums <span aria-hidden="true">→</span></a>
+        <p className="intro-trust" aria-label="Comparison assurances">
+          <span>Official BAG data</span><span>No sign-up</span><span>Gender is not used</span>
+        </p>
       </div>
       <aside className="premium-context" aria-label="Official 2027 premium information">
         <div><strong>5.0%</strong><span>average premium increase for 2027</span></div>

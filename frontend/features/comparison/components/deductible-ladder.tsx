@@ -30,7 +30,7 @@ export function DeductibleLadder({ offers }: { offers: CategoryMinimum[] }) {
                 <span>{offer.insurer_name} · {modelLabels[offer.insurance_model] || offer.insurance_model}</span>
               </div>
               <div className="ladder-track" aria-hidden="true">
-                <span style={{ width: `${width}%` }} />
+                <span className={difference === 0 ? "lowest" : "difference-bar"} style={{ width: `${width}%` }} />
               </div>
               <div className="ladder-price">
                 <strong>{formatCurrency(price)}</strong>
@@ -41,7 +41,7 @@ export function DeductibleLadder({ offers }: { offers: CategoryMinimum[] }) {
         })}
       </div>
       <p className="matrix-note">
-        Premiums only. A higher franchise can mean paying more yourself when you need care.
+        Bars show the monthly amount above the lowest premium. A higher franchise can mean paying more yourself when you need care.
       </p>
     </section>
   );

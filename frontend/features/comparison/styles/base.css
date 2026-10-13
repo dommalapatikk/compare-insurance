@@ -96,10 +96,11 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 .intro h1 {
   margin: 0;
   font-size: clamp(2.25rem, 5vw, 4rem);
-  line-height: 1.02;
-  letter-spacing: -.055em;
+  line-height: 1.04;
+  letter-spacing: -.035em;
 }
-.intro-copy > p:last-of-type {
+.intro-copy, .premium-context { min-width: 0; }
+.intro-description {
   max-width: 670px;
   margin: 13px 0 0;
   color: var(--muted);
@@ -121,6 +122,9 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   font-weight: 800;
 }
 .intro-action:hover { background: var(--green); }
+.intro-trust { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 13px 0 0; color: var(--muted); font-size: .75rem; }
+.intro-trust span { position: relative; }
+.intro-trust span + span::before { content: "·"; position: absolute; left: -9px; }
 .premium-context { padding-left: 24px; border-left: 1px solid var(--line); }
 .premium-context > div { display: grid; grid-template-columns: 105px 1fr; align-items: baseline; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .premium-context strong { font-size: 1.55rem; letter-spacing: -.045em; }

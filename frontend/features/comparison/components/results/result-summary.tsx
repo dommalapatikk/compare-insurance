@@ -40,7 +40,9 @@ export function ResultSummary({
       )}
       <div className="query-chips" aria-label="Comparison profile">
         <span>{location}</span><span>{ageLabel}</span><span>Accident {accidentLabel.toLowerCase()}</span>
-        <span>{results.total_eligible_offers} matching plans</span>
+        <span>{results.total_eligible_offers} premium combinations checked</span>
+        <span className="result-provenance">✓ Official BAG data · {results.source_year} · Independent comparison</span>
+        <a href="https://www.priminfo.admin.ch/" target="_blank" rel="noreferrer">Verify on Priminfo ↗</a>
       </div>
     </div>
   );

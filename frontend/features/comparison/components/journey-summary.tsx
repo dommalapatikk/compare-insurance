@@ -20,26 +20,39 @@ export function JourneySummary({ flow }: { flow: ComparisonFlow }) {
       ? "All franchises"
       : `${flow.deductibles.length} selected`,
   };
+  const currentIndex = stages.findIndex(({ stage }) => stage === flow.journeyStage);
+  const progressValue = flow.journeyStage === "welcome"
+    ? 0
+    : currentIndex >= 0 ? currentIndex + 1 : stages.length;
+  const progressLabel = currentIndex >= 0
+    ? stages[currentIndex].label
+    : flow.journeyStage === "welcome" ? "Ready to begin" : "Review your answers";
 
   return (
-    <ol className="journey-summary" aria-label="Your comparison answers">
-      {stages.map(({ stage, label }, index) => {
-        const value = flow.completedStages[stage] ? values[stage] : "";
-        const isCurrent = flow.journeyStage === stage;
-        return (
-          <li className={value ? "complete" : isCurrent ? "current" : ""} key={stage}>
-            <button
-              disabled={!value && !isCurrent}
-              onClick={() => flow.goToStage(stage)}
-              type="button"
-            >
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <small>{label}</small>
-              <strong>{value || (isCurrent ? "Answer now" : "Not answered")}</strong>
-            </button>
-          </li>
-        );
-      })}
-    </ol>
+    <nav className="journey-navigation" aria-label="Comparison progress">
+      <div className="mobile-progress">
+        <div>
+          <span>{progressValue ? `Step ${progressValue} of ${stages.length}` : "Five short steps"}</span>
+          <strong>{progressLabel}</strong>
+        </div>
+        <progress max={stages.length} value={progressValue}>{progressValue} of {stages.length}</progress>
+      </div>
+      <ol className="journey-summary" aria-label="Your comparison answers">
+        {stages.map(({ stage, label }, index) => {
+          const value = flow.completedStages[stage] ? values[stage] : "";
+          const isCurrent = flow.journeyStage === stage;
+          return (
+            <li aria-current={isCurrent ? "step" : undefined} className={value ? "complete" : isCurrent ? "current" : ""} key={stage}>
+              <button disabled={!value || isCurrent} onClick={() => flow.goToStage(stage)} type="button">
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <small>{label}</small>
+                <strong>{value || (isCurrent ? "Answer now" : "Not answered")}</strong>
+                <i className="sr-only">{isCurrent ? "Current step" : value ? "Completed; edit answer" : "Not completed"}</i>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }

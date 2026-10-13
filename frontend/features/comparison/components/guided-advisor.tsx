@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import { modelChoices } from "../config";
@@ -9,7 +10,7 @@ function AssistantPrompt({ title, children }: { title: string; children: ReactNo
   return (
     <div className="assistant-prompt">
       <span className="assistant-mark" aria-hidden="true">CI</span>
-      <div><p className="eyebrow">Your comparison guide</p><h2>{title}</h2>{children}</div>
+      <div><p className="eyebrow">Your comparison guide</p><h3 tabIndex={-1}>{title}</h3>{children}</div>
     </div>
   );
 }
@@ -22,7 +23,21 @@ function ContinueButton({ disabled, onClick, children = "Continue" }: {
   return <button className="continue-button" disabled={disabled} onClick={onClick} type="button">{children}<span aria-hidden="true">→</span></button>;
 }
 
+function BackButton({ onClick }: { onClick: () => void }) {
+  return <button className="back-button" onClick={onClick} type="button"><span aria-hidden="true">←</span> Back</button>;
+}
+
 export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const previousStage = useRef(flow.journeyStage);
+
+  useEffect(() => {
+    if (previousStage.current !== flow.journeyStage) {
+      workspaceRef.current?.querySelector<HTMLElement>(".journey-step h3")?.focus();
+      previousStage.current = flow.journeyStage;
+    }
+  }, [flow.journeyStage]);
+
   function submit(event: FormEvent) {
     event.preventDefault();
     void flow.comparePlans();
@@ -34,7 +49,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
         <div><p className="eyebrow">Guided comparison</p><h2 id="advisor-title">Find your lowest published premiums</h2></div>
         <div className="advisor-heading-actions">
           <span>Five short decisions · no sign-up</span>
-          {(flow.journeyStage !== "welcome" || flow.messages.length > 0) && (
+          {(Object.values(flow.completedStages).some(Boolean) || flow.messages.length > 0) && (
             <button onClick={flow.restartJourney} type="button">Start over</button>
           )}
         </div>
@@ -42,19 +57,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
       <JourneySummary flow={flow} />
 
-      <div className="advisor-workspace">
-        <AdvisorComposer flow={flow} />
-        <div className="guided-divider"><span>or answer one question at a time</span></div>
-
-        {flow.journeyStage === "welcome" && (
-          <div className="journey-step">
-            <AssistantPrompt title="Ready when you are.">
-              <p>I’ll use only the details needed for a Swiss basic-insurance comparison, then show the lowest official 2027 premiums.</p>
-            </AssistantPrompt>
-            <ContinueButton onClick={flow.startJourney}>Start guided comparison</ContinueButton>
-          </div>
-        )}
-
+      <div className="advisor-workspace" ref={workspaceRef}>
         {flow.journeyStage === "location" && (
           <div className="journey-step">
             <AssistantPrompt title="Where do you live?">
@@ -106,6 +109,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
         {flow.journeyStage === "birth_year" && (
           <div className="journey-step">
+            <BackButton onClick={() => flow.goToStage("location")} />
             <AssistantPrompt title="What year were you born?">
               <p>This selects the official child, young-adult or adult premium category. Gender does not affect basic-insurance premiums.</p>
             </AssistantPrompt>
@@ -116,6 +120,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
         {flow.journeyStage === "accident" && (
           <div className="journey-step">
+            <BackButton onClick={() => flow.goToStage("birth_year")} />
             <AssistantPrompt title="Should the premium include accident cover?">
               <p>If you work at least eight hours a week for one employer, accident insurance is usually provided through work. Check before excluding it.</p>
             </AssistantPrompt>
@@ -128,34 +133,63 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
         {flow.journeyStage === "models" && (
           <div className="journey-step">
+            <BackButton onClick={() => flow.goToStage("accident")} />
             <AssistantPrompt title="How would you like to access care?">
               <p>If you’re unsure, compare every model. PRAXIS includes family-doctor and HMO-style plans from 2027.</p>
             </AssistantPrompt>
-            <button className="select-all" onClick={flow.selectAllModels} type="button">Compare all models <span>{flow.models.length === flow.allModelCount ? "✓" : ""}</span></button>
-            <div className="choice-cards models">{modelChoices.map((choice) => <label key={choice.value}><input type="checkbox" checked={flow.models.some((value) => value === choice.value)} onChange={() => flow.toggleModel(choice.value)} /><span><strong>{choice.label}</strong><small>{choice.description}</small></span></label>)}</div>
+            <div className="selection-mode" aria-label="Care model selection">
+              <button aria-pressed={flow.models.length === flow.allModelCount} onClick={flow.selectAllModels} type="button"><span aria-hidden="true">{flow.models.length === flow.allModelCount ? "✓" : ""}</span><strong>Compare all models</strong><small>Recommended if you are unsure.</small></button>
+              <button aria-pressed={flow.models.length !== flow.allModelCount} onClick={flow.chooseSpecificModels} type="button"><span aria-hidden="true">{flow.models.length !== flow.allModelCount ? "✓" : ""}</span><strong>Choose specific models</strong><small>Only show the models you select.</small></button>
+            </div>
+            {flow.models.length !== flow.allModelCount && (
+              <div className="choice-cards models">{modelChoices.map((choice) => <label key={choice.value}><input type="checkbox" checked={flow.models.some((value) => value === choice.value)} onChange={() => flow.toggleModel(choice.value)} /><span><strong>{choice.label}</strong><small>{choice.description}</small></span></label>)}</div>
+            )}
             <ContinueButton disabled={!flow.models.length} onClick={() => flow.goToStage("deductibles")} />
           </div>
         )}
 
         {flow.journeyStage === "deductibles" && (
           <div className="journey-step">
+            <BackButton onClick={() => flow.goToStage("models")} />
             <AssistantPrompt title="Which deductible (franchise) should we compare?">
               <p>A higher franchise can lower the premium but increase what you pay when you need care. Compare all if you are unsure.</p>
             </AssistantPrompt>
-            <button className="select-all" onClick={flow.selectAllDeductibles} type="button">Compare every franchise <span>{flow.deductibles.length === flow.availableDeductibles.length ? "✓" : ""}</span></button>
-            <div className="deductible-choices">{flow.availableDeductibles.map((value) => <label key={value}><input type="checkbox" checked={flow.deductibles.includes(value)} onChange={() => flow.toggleDeductible(value)} /><span>CHF {value.toLocaleString("en-CH")}</span></label>)}</div>
+            <div className="selection-mode" aria-label="Franchise selection">
+              <button aria-pressed={flow.deductibles.length === flow.availableDeductibles.length} onClick={flow.selectAllDeductibles} type="button"><span aria-hidden="true">{flow.deductibles.length === flow.availableDeductibles.length ? "✓" : ""}</span><strong>Compare every franchise</strong><small>See the lowest premium at each level.</small></button>
+              <button aria-pressed={flow.deductibles.length !== flow.availableDeductibles.length} onClick={flow.chooseSpecificDeductibles} type="button"><span aria-hidden="true">{flow.deductibles.length !== flow.availableDeductibles.length ? "✓" : ""}</span><strong>Choose specific franchises</strong><small>Only compare the levels you select.</small></button>
+            </div>
+            {flow.deductibles.length !== flow.availableDeductibles.length && (
+              <div className="deductible-choices">{flow.availableDeductibles.map((value) => <label key={value}><input type="checkbox" checked={flow.deductibles.includes(value)} onChange={() => flow.toggleDeductible(value)} /><span>CHF {value.toLocaleString("en-CH")}</span></label>)}</div>
+            )}
             <ContinueButton disabled={!flow.deductibles.length} onClick={() => flow.goToStage("review")}>Review comparison</ContinueButton>
           </div>
         )}
 
         {flow.journeyStage === "review" && (
           <form className="journey-step" onSubmit={submit}>
+            <BackButton onClick={() => flow.goToStage("deductibles")} />
             <AssistantPrompt title="Everything is ready."><p>Review your answers, then I’ll compare the official premiums and show the lowest option at every franchise.</p></AssistantPrompt>
-            <div className="review-line"><strong>{flow.location}</strong><span>{flow.ageLabel}</span><span>Accident {flow.accidentLabel.toLowerCase()}</span><span>{flow.models.length === flow.allModelCount ? "All models" : `${flow.models.length} models`}</span><span>{flow.deductibles.length === flow.availableDeductibles.length ? "All franchises" : `${flow.deductibles.length} franchises`}</span></div>
+            <dl className="review-list">
+              <div><dt>Location</dt><dd>{flow.location}</dd><button onClick={() => flow.goToStage("location")} type="button">Edit</button></div>
+              <div><dt>Age category</dt><dd>{flow.birthYear} · {flow.ageLabel}</dd><button onClick={() => flow.goToStage("birth_year")} type="button">Edit</button></div>
+              <div><dt>Accident cover</dt><dd>{flow.accidentLabel}</dd><button onClick={() => flow.goToStage("accident")} type="button">Edit</button></div>
+              <div><dt>Care models</dt><dd>{flow.models.length === flow.allModelCount ? "All models" : `${flow.models.length} selected`}</dd><button onClick={() => flow.goToStage("models")} type="button">Edit</button></div>
+              <div><dt>Franchises</dt><dd>{flow.deductibles.length === flow.availableDeductibles.length ? "All franchises" : `${flow.deductibles.length} selected`}</dd><button onClick={() => flow.goToStage("deductibles")} type="button">Edit</button></div>
+            </dl>
+            <p className="review-source"><span aria-hidden="true">✓</span> Prices and rankings come from the official BAG 2027 premium catalogue.</p>
             {flow.formError && <p className="form-error" role="alert">{flow.formError}</p>}
-            <ContinueButton disabled={flow.isSearching} onClick={() => void flow.comparePlans()}>{flow.isSearching ? "Comparing…" : "Compare 2027 premiums"}</ContinueButton>
+            <button className="continue-button review-submit" disabled={flow.isSearching} type="submit">{flow.isSearching ? "Comparing…" : "Compare 2027 premiums"}<span aria-hidden="true">→</span></button>
           </form>
         )}
+
+        <section className="advisor-help" aria-labelledby="advisor-help-title">
+          <div>
+            <p className="eyebrow">Need help?</p>
+            <h3 id="advisor-help-title">Ask about this choice</h3>
+            <p>Get a plain-language explanation or describe what you need.</p>
+          </div>
+          <AdvisorComposer flow={flow} />
+        </section>
       </div>
       {flow.restoredNotice && <p className="restore-notice" role="status">{flow.restoredNotice}</p>}
     </section>

@@ -5,6 +5,7 @@ import {
   allSelection,
   createJourneyState,
   isJourneyReady,
+  isPreviousOrCurrentStage,
   journeyReducer,
   resolveDeductibles,
   resolveModels,
@@ -24,7 +25,7 @@ const bern: LocationSuggestion = {
 };
 
 function throughAccident(): JourneyState {
-  let state = journeyReducer(createJourneyState(), { type: "start" });
+  let state = createJourneyState();
   state = journeyReducer(state, { type: "set_location", location: bern });
   state = journeyReducer(state, { type: "set_birth_year", birthYear: 1980 });
   return journeyReducer(state, { type: "set_accident", accident: "excluded" });
@@ -33,9 +34,6 @@ function throughAccident(): JourneyState {
 describe("guided comparison journey", () => {
   it("moves through every requested stage without a gender step", () => {
     let state = createJourneyState();
-    expect(state.stage).toBe("welcome");
-
-    state = journeyReducer(state, { type: "start" });
     expect(state.stage).toBe("location");
     state = journeyReducer(state, { type: "set_location", location: bern });
     expect(state.stage).toBe("birth_year");
@@ -97,5 +95,11 @@ describe("guided comparison journey", () => {
 
     state = journeyReducer(state, { type: "restart" });
     expect(state).toEqual(createJourneyState());
+  });
+
+  it("distinguishes backward edits from forward continuation", () => {
+    expect(isPreviousOrCurrentStage("birth_year", "location")).toBe(true);
+    expect(isPreviousOrCurrentStage("birth_year", "accident")).toBe(false);
+    expect(isPreviousOrCurrentStage("results", "models")).toBe(true);
   });
 });

@@ -7,8 +7,8 @@ import { clearConversationState, loadConversationState, saveConversationState } 
 import { adultDeductibles, ageChoices, ageGroupForBirthYear, childDeductibles, modelChoices } from "./config";
 import { clearJourneyState, loadJourneyState, saveJourneyState } from "./journey-storage";
 import {
-  allSelection, createJourneyState, journeyReducer, resolveDeductibles,
-  resolveModels, selectedValues,
+  allSelection, createJourneyState, isPreviousOrCurrentStage, journeyReducer,
+  resolveDeductibles, resolveModels, selectedValues,
 } from "./journey-machine";
 import type { InsuranceModel, JourneyAction, JourneyStage } from "./journey-machine";
 import type { AccidentChoice, ChatProfile, LocationSuggestion, Message, PremiumSearchResponse } from "./types";
@@ -56,9 +56,12 @@ export function useComparisonFlow() {
       const savedJourney = loadJourneyState(window.sessionStorage);
       const savedConversation = loadConversationState(window.sessionStorage);
       if (savedJourney) {
-        const restored = savedJourney.stage === "results"
-          ? journeyReducer(savedJourney, { type: "edit", stage: "review" })
+        const currentJourney = savedJourney.stage === "welcome"
+          ? journeyReducer(savedJourney, { type: "start" })
           : savedJourney;
+        const restored = currentJourney.stage === "results"
+          ? journeyReducer(currentJourney, { type: "edit", stage: "review" })
+          : currentJourney;
         setJourney(restored);
         const profile = restored.profile;
         if (profile.location) locationPicker.chooseLocation(profile.location);
@@ -115,7 +118,7 @@ export function useComparisonFlow() {
   function goToStage(target: JourneyStage) {
     setFormError("");
     setSearchNotice("");
-    if (journey.stage === "results" || target === journey.stage) {
+    if (journey.stage === "results" || isPreviousOrCurrentStage(journey.stage, target)) {
       if (target !== "welcome" && target !== "results") reduce({ type: "edit", stage: target });
       if (target !== "results") setResults(null);
       return;
@@ -215,6 +218,8 @@ export function useComparisonFlow() {
     setCurrentPremium, setDraft, startJourney: () => reduce({ type: "start" }), threadId,
     toggleDeductible, toggleModel, selectAllModels: () => setModels(modelChoices.map(({ value }) => value as InsuranceModel)),
     selectAllDeductibles: () => setDeductibles(availableDeductibles),
+    chooseSpecificModels: () => setModels((current) => current.length === modelChoices.length ? [] : current),
+    chooseSpecificDeductibles: () => setDeductibles((current) => current.length === availableDeductibles.length ? [] : current),
   };
 }
 

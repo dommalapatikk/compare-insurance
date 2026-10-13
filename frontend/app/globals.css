@@ -1,4 +1,5 @@
 @import "../features/comparison/styles/base.css";
 @import "../features/comparison/styles/guide.css";
+@import "../features/comparison/styles/guide-selections.css";
 @import "../features/comparison/styles/results.css";
 @import "../features/comparison/styles/responsive.css";

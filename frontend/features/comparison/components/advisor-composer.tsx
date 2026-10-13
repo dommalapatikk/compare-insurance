@@ -12,7 +12,7 @@ export function AdvisorComposer({ flow }: { flow: ComparisonFlow }) {
   return (
     <div className="advisor-conversation">
       {flow.messages.length > 0 && (
-        <div className="advisor-transcript" aria-live="polite">
+        <div className="advisor-transcript" aria-live="polite" aria-relevant="additions text" role="log">
           {flow.messages.map((message) => (
             <div className={`advisor-message ${message.role}`} key={message.id}>
               <span>{message.role === "assistant" ? "Guide" : "You"}</span>
@@ -32,7 +32,7 @@ export function AdvisorComposer({ flow }: { flow: ComparisonFlow }) {
       )}
 
       <form className="advisor-composer" onSubmit={submit}>
-        <label htmlFor="advisor-message">Tell me in your own words</label>
+        <label htmlFor="advisor-message">Ask about this step or describe your situation</label>
         <div>
           <textarea
             id="advisor-message"

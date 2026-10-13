@@ -66,7 +66,7 @@ export function selectedValues<T extends string | number>(
 
 export function createJourneyState(): JourneyState {
   return {
-    stage: "welcome",
+    stage: "location",
     profile: {
       location: null,
       birthYear: null,
@@ -76,6 +76,13 @@ export function createJourneyState(): JourneyState {
       deductibles: null,
     },
   };
+}
+
+export function isPreviousOrCurrentStage(
+  current: JourneyStage,
+  target: JourneyStage,
+): boolean {
+  return journeyStages.indexOf(target) <= journeyStages.indexOf(current);
 }
 
 export function resolveModels(profile: JourneyProfile): InsuranceModel[] {

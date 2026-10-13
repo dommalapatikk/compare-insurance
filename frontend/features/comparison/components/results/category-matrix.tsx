@@ -38,7 +38,7 @@ export function CategoryMatrix({ offers }: { offers: CategoryMinimum[] }) {
                     const isLowest = Number(offer.monthly_premium_chf) === rowMinimum;
                     return (
                       <td key={model} className={isLowest ? "cell-lowest" : ""}>
-                        {isLowest && <b className="best-label">Lowest</b>}
+                        {isLowest && <b className="best-label">Lowest for this franchise</b>}
                         <strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong>
                         <span>{offer.insurer_name}</span>
                       </td>
@@ -62,7 +62,7 @@ export function CategoryMatrix({ offers }: { offers: CategoryMinimum[] }) {
                   const offer = cells.get(key(deductible, model));
                   return <article key={model}>
                     <span>{modelLabels[model]}</span>
-                    {offer ? <><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>{offer.insurer_name}{Number(offer.monthly_premium_chf) === rowMinimum ? " · Lowest" : ""}</small></> : <small>Not offered</small>}
+                    {offer ? <><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>{offer.insurer_name}{Number(offer.monthly_premium_chf) === rowMinimum ? " · Lowest for this franchise" : ""}</small></> : <small>Not offered</small>}
                   </article>;
                 })}
               </div>

@@ -4,6 +4,7 @@ import { BeforeSwitching } from "./results/before-switching";
 import { DeductibleLadder } from "./deductible-ladder";
 import { RankedPlans } from "./results/ranked-plans";
 import { ResultSummary } from "./results/result-summary";
+import { ModelComparison } from "./results/model-comparison";
 
 export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
   if (!flow.results && !flow.searchNotice && !flow.isSearching) return null;
@@ -36,11 +37,12 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
             accidentLabel={flow.accidentLabel}
           />
           <DeductibleLadder offers={flow.results.cheapest_by_deductible} />
+          <ModelComparison offers={flow.results.cheapest_by_model} />
+          <RankedPlans offers={flow.results.offers} source={flow.results.source_name} />
           <details className="matrix-disclosure">
             <summary>View every model × franchise combination</summary>
             <CategoryMatrix offers={flow.results.cheapest_by_deductible_and_model} />
           </details>
-          <RankedPlans offers={flow.results.offers} source={flow.results.source_name} />
           <section className="result-refinement" aria-labelledby="result-refinement-title">
             <div>
               <p className="eyebrow">Keep exploring</p>
