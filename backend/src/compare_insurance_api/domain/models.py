@@ -32,6 +32,25 @@ class AgeCategory(str, Enum):
         }[self]
 
 
+def age_category_for_birth_year(
+    birth_year: int,
+    *,
+    premium_year: int,
+) -> AgeCategory:
+    """Return the statutory category based on age at the end of the premium year."""
+
+    if birth_year < 1900 or birth_year > premium_year:
+        raise DomainValidationError(
+            "birth_year must be between 1900 and the premium year"
+        )
+    age = premium_year - birth_year
+    if age <= 18:
+        return AgeCategory.CHILD
+    if age <= 25:
+        return AgeCategory.YOUNG_ADULT
+    return AgeCategory.ADULT
+
+
 class InsuranceModel(str, Enum):
     STANDARD = "standard"
     FLEX = "flex"
@@ -96,6 +115,47 @@ def valid_deductibles(age_category: AgeCategory) -> frozenset[Deductible]:
     if age_category is AgeCategory.CHILD:
         return CHILD_DEDUCTIBLES
     return ADULT_DEDUCTIBLES
+
+
+@dataclass(frozen=True, slots=True)
+class PremiumLocation:
+    """A postcode/locality resolved to the official premium region."""
+
+    postal_code: str
+    locality: str
+    municipality_id: str
+    municipality_name: str
+    canton: str
+    premium_region: str
+
+    def __post_init__(self) -> None:
+        postal_code = self.postal_code.strip()
+        if len(postal_code) != 4 or not postal_code.isdigit():
+            raise DomainValidationError("postal_code must contain four digits")
+        object.__setattr__(self, "postal_code", postal_code)
+
+        for field_name in ("locality", "municipality_id", "municipality_name"):
+            value = getattr(self, field_name).strip()
+            if not value:
+                raise DomainValidationError(f"{field_name} cannot be blank")
+            object.__setattr__(self, field_name, value)
+
+        canton = self.canton.strip().upper()
+        if len(canton) != 2 or not canton.isalpha():
+            raise DomainValidationError("canton must be a two-letter code")
+        object.__setattr__(self, "canton", canton)
+
+        premium_region = self.premium_region.removeprefix("PR_REG_").strip()
+        if premium_region not in {"0", "1", "2", "3"}:
+            raise DomainValidationError("premium_region must be 0, 1, 2, or 3")
+        object.__setattr__(self, "premium_region", premium_region)
+
+    @property
+    def label(self) -> str:
+        municipality = ""
+        if self.locality.casefold() != self.municipality_name.casefold():
+            municipality = f" ({self.municipality_name})"
+        return f"{self.postal_code} {self.locality}{municipality}, {self.canton}"
 
 
 @dataclass(frozen=True, slots=True)

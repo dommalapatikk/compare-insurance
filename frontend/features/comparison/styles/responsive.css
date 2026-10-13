@@ -18,7 +18,7 @@
   .intro { padding: 34px 0 22px; }
   .intro h1 { font-size: 2.5rem; }
   .intro > p:last-child { font-size: .92rem; }
-  .profile-form { margin-bottom: 42px; padding: 20px 16px; border-radius: 14px; }
+  .profile-form { margin-bottom: 42px; padding: 20px 0; }
   .form-heading { display: block; }
   .form-heading h2 { font-size: 1.25rem; }
   .form-heading > span { display: block; margin-top: 6px; }
@@ -59,11 +59,6 @@
   .support-panel { margin-bottom: 42px; }
   .site-footer { flex-direction: column; gap: 7px; }
   .chat-composer textarea, select, input { font-size: 16px; }
-}
-
-@media (max-width: 390px) {
-  .select-row { grid-template-columns: 1fr; }
-  .segmented.three { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

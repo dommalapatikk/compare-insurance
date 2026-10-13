@@ -4,7 +4,7 @@
 **Market:** Switzerland  
 **Insurance scope:** Compulsory health insurance (OKP / Grundversicherung / assurance de base)  
 **Status:** Draft for MVP  
-**Last updated:** 12 October 2026  
+**Last updated:** 13 October 2026
 **Owner:** Product team
 
 ## 1. Product summary
@@ -58,7 +58,7 @@ Age affects the statutory premium category rather than producing a unique premiu
 - young adults; and
 - adults.
 
-The calculation must follow the source year's official calendar-year transition rules. The UI may request birth year or age, but should derive the category locally and send only the category to the comparison API where practical.
+The calculation must follow the source year's official calendar-year transition rules. The UI requests birth year, displays the derived category, and sends the birth year to the comparison API so the same domain rule is enforced server-side.
 
 ### 5.3 Place of residence
 
@@ -84,7 +84,7 @@ A working adult who knows their municipality and current monthly premium, wants 
 
 ### Persona B — New or relocating resident
 
-A person choosing Swiss basic insurance for the first time or after a move. They need simple explanations of premium region, deductible, model, and accident coverage.
+A person choosing Swiss basic insurance for the first time or after a move. They need simple explanations of location matching, deductible, model, and accident coverage.
 
 ### Persona C — Annual switcher
 
@@ -128,6 +128,10 @@ As a resident, I want a compact matrix with exact values and a ranked table so t
 
 As a resident, I want each result to show the provider's official name, BAG insurer number, exact product, plan identifier, and regional availability context so that I can identify and verify the company and offer before making a decision.
 
+### US-10 — Understand the family-doctor model
+
+As a resident, I want a plain-language explanation of how the family-doctor model works, including the first-contact and referral obligation, so that I understand the care-access trade-off before choosing a lower premium.
+
 ## 8. Core user experience
 
 1. The landing page states that the tool compares Swiss compulsory basic insurance using official premium data.
@@ -149,12 +153,13 @@ As a resident, I want each result to show the provider's official name, BAG insu
 - Provide type-ahead search by municipality name and postal code.
 - Map the confirmed municipality to the official canton and premium region for the selected year.
 - Disambiguate duplicate municipality names and postal codes with canton and municipality labels.
+- Keep premium-region resolution behind the scenes; the customer must not be asked to know or select the region code.
 - Do not infer the premium region from GPS coordinates alone.
 - Show a clear no-results state if the location cannot be resolved.
 
 ### FR-2 — Profile inputs
 
-- Accept age or birth year and derive the official premium age category for the selected year.
+- Accept birth year and derive the official premium age category for the selected year in the domain layer.
 - Require an explicit accident-coverage selection.
 - Do not require or use gender.
 - Validate inputs before requesting comparisons.
@@ -210,7 +215,7 @@ As a resident, I want each result to show the provider's official name, BAG insu
 The implementation may vary, but the product needs equivalent read capabilities:
 
 - `GET /api/v1/metadata` — available premium years, active dataset version, source, and import timestamp.
-- `GET /api/v1/locations?q=` — matching municipality, postal code, canton, and stable municipality identifier.
+- `GET /v1/locations?q=` — matching postcode/locality, canton, stable municipality identifier, and internally resolved premium region.
 - `GET /api/v1/options?year=&municipality_id=&age_group=` — valid deductibles, model categories, and accident options.
 - `GET /api/v1/plans?year=&municipality_id=&age_group=&accident=&deductible=&model=&limit=10` — eligible ranked plan combinations.
 - `GET /api/v1/plans/{plan_id}` — plan detail and provenance.
@@ -471,7 +476,7 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 17. All required pricing inputs are available as native form controls in one compact comparison form, and every answer remains visible and editable before resubmission.
 18. Every result chart exposes the same values in a navigable table and never implies plan quality, endorsement, or total healthcare cost.
 19. While the comparison endpoint is unavailable, the production product shows no sample, fixture, or plausible price data as a real result and instead presents a concise retry state.
-20. The default form requires no more than location, age category, and accident coverage; all valid franchises and models are preselected and editable.
+20. The default form requires no more than postcode/municipality, birth year, and accident coverage; all valid franchises and models are preselected and editable.
 21. Every franchise/model matrix cell is computed from all eligible source rows for that exact pair, not from the displayed top-ten rows.
 22. Each ranked result shows the provider's official name and exact product name; an expandable detail exposes the BAG insurer number and source plan identifier.
 23. The language model cannot access the database directly, produce premium values, or determine ordering; disabling it does not prevent a comparison.

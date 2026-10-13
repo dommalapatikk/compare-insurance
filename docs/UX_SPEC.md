@@ -2,7 +2,7 @@
 
 **Scope:** MVP web experience for Swiss compulsory basic insurance  
 **Status:** Implementation-ready design direction  
-**Last updated:** 12 October 2026
+**Last updated:** 13 October 2026
 
 ## 1. Experience goal
 
@@ -10,7 +10,7 @@ Help a person move from “I do not know which inputs matter” to a trustworthy
 
 Success means the user can:
 
-- confirm the correct municipality and official premium region;
+- confirm the correct postcode/locality and municipality while the premium region is resolved behind the scenes;
 - understand each choice before committing it;
 - compare up to ten eligible plan combinations at a glance;
 - distinguish premium savings from possible healthcare costs; and
@@ -23,7 +23,7 @@ Do not request gender. It is not a pricing dimension for compulsory basic insura
 Use one task-focused page with four layers:
 
 1. **Compact trust header** — product name, independent-comparison status, and premium year.
-2. **Comparison form** — location, age group, and accident cover are visible together; deductible, model, and current-premium controls use progressive disclosure.
+2. **Comparison form** — postcode/municipality, birth year, and accident cover are visible together; deductible, model, and current-premium controls use progressive disclosure.
 3. **Results workspace** — lowest-price summary, deductible/model comparison, ranked top-ten list, and a before-switching checklist.
 4. **Help and provenance** — CH.CH guidance and optional question-and-answer help follow the task; technical identifiers and methodology stay in expandable details.
 
@@ -37,13 +37,12 @@ The comparison form is the only way to submit pricing inputs. Free text is avail
 
 1. **Location**
    - Ask for municipality or four-digit postal code.
-   - Use an accessible type-ahead combobox showing municipality, canton, postal code, and premium region when known.
+   - Use one accessible type-ahead combobox showing postcode, locality, municipality, and canton. Do not ask users to know or select a premium region.
    - If a postal code maps to multiple municipalities, require an explicit choice. Never select by proximity or GPS alone.
-   - Confirmation example: “Zürich (ZH) · Premium region 1.”
-2. **Age category**
-   - Prefer birth year as the privacy-minimizing input; derive and display the official category for the selected premium year.
-   - Offer “Child,” “Young adult,” and “Adult” directly when birth year is not required by the engine.
-   - Explain the derived category inline and provide an “Edit” action.
+   - Confirmation example: “3011 Bern, BE.” The premium-region code remains an internal pricing dimension.
+2. **Birth year**
+   - Ask for the four-digit birth year and derive the official child, young-adult, or adult category for the selected premium year.
+   - Show the derived category inline. Do not make the user choose an age category and do not request gender.
 3. **Accident coverage**
    - Present “Include” and “Exclude” as radios, with “I’m not sure” opening a short explanation.
    - Do not make the legal decision for the user. Require an explicit include/exclude choice before comparison.
@@ -54,7 +53,8 @@ The comparison form is the only way to submit pricing inputs. Free text is avail
 5. **Insurance model**
    - Default to “Compare all models.”
    - Allow multi-select for the official 2027 categories: Standard, FLEX, PRAXIS, TEL-DIG, and PHARM.
-   - Explain the first-contact distinction in plain language: PRAXIS uses a designated medical practice, TEL-DIG starts by phone or digitally, PHARM uses a partner pharmacy, and FLEX offers several defined options.
+   - Explain the first-contact distinction in plain language: PRAXIS uses a designated family doctor or medical practice, TEL-DIG starts by phone or digitally, PHARM uses a partner pharmacy, and FLEX offers several defined options.
+   - Explain that the former family-doctor and HMO categories are grouped under PRAXIS from 2027 and that the selected practice normally coordinates treatment and referrals.
    - Each option has a one-sentence care-access description. Preserve the insurer’s exact product name in results.
 6. **Current premium (optional)**
    - Ask “What do you pay now each month?” with CHF prefix and “Skip.”
@@ -84,7 +84,7 @@ Show:
 - **Cheapest eligible premium:** CHF X.XX/month and CHF X,XXX.XX/year;
 - **Potential savings:** only if a current monthly premium was supplied and the result is cheaper;
 - number of eligible combinations and number displayed;
-- premium year, confirmed municipality/premium region, and accident choice; and
+- premium year, confirmed postcode/municipality, derived age category, and accident choice; and
 - “Premium data: FOPH/BAG” with import/update date, without implying that this independent product is an official federal calculator.
 
 The main callout is the exact monthly premium, not an AI-written recommendation. Phrase the outcome as “Lowest premium for these filters,” not “Best insurance.”
@@ -149,7 +149,7 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 
 ### Location ambiguity
 
-- State “We found more than one municipality for 8001” and render explicit options with canton/municipality context.
+- For a location such as “3174 Thörishaus,” render each municipality match with its canton and require an explicit choice.
 - Return focus to the choice list and do not proceed until confirmed.
 
 ### No matching plans
@@ -206,7 +206,7 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 - Do not encode cheapest/more expensive states by green/red alone; pair colour with text, icons, and signs.
 - Charts require a concise accessible summary and the same values in a navigable table. Tooltips must work by keyboard and touch.
 - Respect reduced-motion and high-contrast preferences. Do not auto-scroll if the user has scrolled away from the latest chat turn; offer a “New message” control instead.
-- Use plain language and define “deductible (franchise),” “premium region,” and restricted models on first use.
+- Use plain language and define “deductible (franchise)” and restricted models on first use. Do not expose premium-region terminology in the main customer flow.
 
 ## 10. Production data policy
 
@@ -217,7 +217,7 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 
 ## 11. Acceptance criteria
 
-- A user can complete the comparison using the compact structured form without opening help.
+- A user can complete the comparison using one postcode/municipality search, birth year, and accident choice without opening help.
 - A user can edit any answer in place and sees which dependent choices were reset.
 - Location ambiguity, age-dependent deductibles, and accident coverage require explicit confirmation.
 - Results visually and textually identify the lowest premium, exact monthly/annual amounts, and the reference used for any claimed savings.

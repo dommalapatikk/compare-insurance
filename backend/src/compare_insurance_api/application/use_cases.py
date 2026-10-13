@@ -2,8 +2,18 @@
 
 from dataclasses import dataclass
 
-from compare_insurance_api.application.ports import InsuranceGuide, PremiumRepository
-from compare_insurance_api.domain.models import PremiumOffer, RankedPremiumOffer, SearchCriteria
+from compare_insurance_api.application.ports import (
+    InsuranceGuide,
+    LocationRepository,
+    PremiumRepository,
+)
+from compare_insurance_api.domain.models import (
+    DomainValidationError,
+    PremiumLocation,
+    PremiumOffer,
+    RankedPremiumOffer,
+    SearchCriteria,
+)
 from compare_insurance_api.domain.services import (
     cheapest_offers_by_deductible,
     cheapest_offers_by_deductible_and_model,
@@ -45,6 +55,26 @@ class ComparePremiums:
                 cheapest_offers_by_deductible_and_model(eligible_offers)
             ),
         )
+
+
+class SearchLocations:
+    """Validate a customer query before searching the official location catalogue."""
+
+    def __init__(self, repository: LocationRepository) -> None:
+        self._repository = repository
+
+    async def execute(
+        self,
+        query: str,
+        *,
+        limit: int = 8,
+    ) -> tuple[PremiumLocation, ...]:
+        normalized_query = " ".join(query.split())
+        if len(normalized_query) < 2:
+            raise DomainValidationError("location query must contain at least 2 characters")
+        if not 1 <= limit <= 20:
+            raise DomainValidationError("location result limit must be between 1 and 20")
+        return tuple(await self._repository.search(normalized_query, limit=limit))
 
 
 class ExplainInsuranceChoices:

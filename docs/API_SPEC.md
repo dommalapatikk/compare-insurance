@@ -19,6 +19,36 @@ Returns HTTP `200` when the API process is available.
 {"status": "ok"}
 ```
 
+### `GET /v1/locations`
+
+Searches the pinned official postcode/locality catalogue and resolves every suggestion to its 2027 BAG premium region. The customer searches one field; canton and premium-region codes are returned for the pricing request and are not separate customer inputs.
+
+| Parameter | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `q` | string, 2–100 characters | Yes | Postcode, locality, or municipality text. |
+| `limit` | integer, 1–20 | No | Maximum suggestions; defaults to 8. |
+
+```json
+{
+  "query": "3011",
+  "premium_year": 2027,
+  "source_name": "swisstopo and Swiss Federal Office of Public Health (BAG)",
+  "locations": [
+    {
+      "postal_code": "3011",
+      "locality": "Bern",
+      "municipality_id": "351",
+      "municipality_name": "Bern",
+      "canton": "BE",
+      "premium_region": "1",
+      "label": "3011 Bern, BE"
+    }
+  ]
+}
+```
+
+When one postcode/locality intersects more than one municipality, the endpoint returns each municipality separately. The UI must require a selection and must not guess.
+
 ### `POST /v1/chat`
 
 Continues a short-lived LangChain conversation about compulsory basic-insurance
@@ -61,7 +91,8 @@ Ties use insurer name and stable source identifiers for deterministic ordering.
 | --- | --- | --- | --- |
 | `canton` | string | Yes | Two-letter canton code, normalized to uppercase. |
 | `region` | string | Yes | Official premium-region code `0`, `1`, `2`, or `3`. |
-| `age_category` | string | Yes | `child`, `young_adult`, or `adult`. Ordinary child premiums use BAG subgroup `K1`; optional multi-child discounts are not mixed into results. |
+| `birth_year` | integer | Conditional | Preferred customer input. The API derives `child`, `young_adult`, or `adult` for the premium year. |
+| `age_category` | string | Conditional | Backward-compatible direct category input. Required only when `birth_year` is omitted. If both are supplied, they must agree. |
 | `deductible` | repeated integer | No | One or more of `300`, `500`, `1000`, `1500`, `2000`, `2500` CHF. Omission searches all six values. |
 | `accident_coverage` | boolean | No | Whether accident coverage is included; defaults to `true`. |
 | `insurance_model` | repeated string | No | One or more of the official 2027 categories: `standard`, `flex`, `praxis`, `tel_dig`, or `pharm`. Omission searches all models. |
@@ -75,7 +106,7 @@ dimension for Swiss compulsory basic insurance.
 Repeated deductible example:
 
 ```text
-/v1/premiums/search?canton=ZH&region=1&age_category=adult&deductible=300&deductible=2500&top_n=10
+/v1/premiums/search?canton=ZH&region=1&birth_year=1984&deductible=300&deductible=2500&top_n=10
 ```
 
 #### Successful response
@@ -86,6 +117,7 @@ Repeated deductible example:
     "canton": "ZH",
     "region": "1",
     "age_category": "adult",
+    "birth_year": 1984,
     "deductibles": [300, 2500],
     "accident_coverage": true,
     "insurance_models": ["standard", "praxis"],

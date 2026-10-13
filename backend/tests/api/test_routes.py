@@ -6,6 +6,7 @@ from compare_insurance_api.agent import get_insurance_agent
 from compare_insurance_api.api.dependencies import (
     get_compare_premiums,
     get_explain_insurance_choices,
+    get_search_locations,
 )
 from compare_insurance_api.application.use_cases import PremiumComparison
 from compare_insurance_api.domain.models import (
@@ -14,6 +15,7 @@ from compare_insurance_api.domain.models import (
     Deductible,
     InsuranceModel,
     PremiumOffer,
+    PremiumLocation,
     RankedPremiumOffer,
     ReferenceComparison,
     SearchCriteria,
@@ -76,11 +78,53 @@ class UnconfiguredComparePremiums:
         raise RuntimeError("Supabase is not configured")
 
 
+class StubSearchLocations:
+    async def execute(self, query: str, *, limit: int):
+        assert query == "3011"
+        assert limit == 8
+        return (
+            PremiumLocation(
+                postal_code="3011",
+                locality="Bern",
+                municipality_id="351",
+                municipality_name="Bern",
+                canton="BE",
+                premium_region="1",
+            ),
+        )
+
+
 def test_health() -> None:
     response = client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_location_search_resolves_postcode_to_premium_region() -> None:
+    app.dependency_overrides[get_search_locations] = lambda: StubSearchLocations()
+    try:
+        response = client.get("/v1/locations", params={"q": "3011"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "query": "3011",
+        "premium_year": 2027,
+        "source_name": "swisstopo and Swiss Federal Office of Public Health (BAG)",
+        "locations": [
+            {
+                "postal_code": "3011",
+                "locality": "Bern",
+                "municipality_id": "351",
+                "municipality_name": "Bern",
+                "canton": "BE",
+                "premium_region": "1",
+                "label": "3011 Bern, BE",
+            }
+        ],
+    }
 
 
 def test_premium_search_maps_ranked_offers_to_the_http_contract() -> None:
@@ -136,6 +180,50 @@ def test_premium_search_requires_source_filters() -> None:
     response = client.get("/v1/premiums/search")
 
     assert response.status_code == 422
+
+
+def test_premium_search_derives_age_category_from_birth_year() -> None:
+    app.dependency_overrides[get_compare_premiums] = lambda: StubComparePremiums()
+    try:
+        response = client.get(
+            "/v1/premiums/search",
+            params={
+                "canton": "BE",
+                "region": "1",
+                "birth_year": 2008,
+                "deductible": 2500,
+                "insurance_model": "praxis",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["query"]["age_category"] == "young_adult"
+    assert response.json()["query"]["birth_year"] == 2008
+
+
+def test_premium_search_rejects_age_category_that_conflicts_with_birth_year() -> None:
+    app.dependency_overrides[get_compare_premiums] = lambda: StubComparePremiums()
+    try:
+        response = client.get(
+            "/v1/premiums/search",
+            params={
+                "canton": "BE",
+                "region": "1",
+                "birth_year": 2008,
+                "age_category": "adult",
+                "deductible": 2500,
+                "insurance_model": "praxis",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "age_category does not match birth_year for the premium year"
+    )
 
 
 def test_premium_search_serializes_reference_savings() -> None:

@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   adultDeductibles,
+  ageGroupForBirthYear,
   ageChoices,
   childDeductibles,
   modelChoices,
-  premiumRegionsFor,
 } from "./config";
 import type {
   AccidentChoice,
-  AgeGroup,
+  LocationSearchResponse,
+  LocationSuggestion,
   Message,
   PremiumSearchResponse,
 } from "./types";
@@ -25,9 +26,14 @@ export function useComparisonFlow() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [canton, setCanton] = useState("");
-  const [region, setRegion] = useState("");
-  const [ageGroup, setAgeGroup] = useState<AgeGroup>("adult");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const [locationNotice, setLocationNotice] = useState("");
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [activeLocationIndex, setActiveLocationIndex] = useState(-1);
+  const [birthYear, setBirthYearValue] = useState("");
   const [accident, setAccident] = useState<AccidentChoice>("");
   const [deductibles, setDeductibles] = useState<number[]>(adultDeductibles);
   const [models, setModels] = useState<string[]>(modelChoices.map(({ value }) => value));
@@ -43,22 +49,94 @@ export function useComparisonFlow() {
     if (results || searchNotice) resultsRef.current?.focus();
   }, [results, searchNotice]);
 
-  const availableDeductibles = ageGroup === "child" ? childDeductibles : adultDeductibles;
-  const availableRegions = premiumRegionsFor(canton);
-  const ageLabel = ageChoices.find(({ value }) => value === ageGroup)?.label || "Not chosen";
-  const accidentLabel = accident === "included" ? "Included" : "Excluded";
-  const location = canton && region ? `${canton} · premium region ${region}` : "";
+  useEffect(() => {
+    const query = locationQuery.trim();
+    if (query.length < 2 || selectedLocation?.label === query) {
+      setLocationSuggestions([]);
+      setActiveLocationIndex(-1);
+      setLocationNotice("");
+      setIsLoadingLocations(false);
+      return;
+    }
 
-  function chooseCanton(value: string) {
-    const regions = premiumRegionsFor(value);
-    setCanton(value);
-    setRegion(regions.length === 1 ? regions[0] : "");
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      setIsLoadingLocations(true);
+      setLocationNotice("");
+      try {
+        const response = await fetch(`/api/locations?q=${encodeURIComponent(query)}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as LocationSearchResponse & { detail?: string };
+        if (!response.ok) throw new Error(payload.detail || "Location search is unavailable.");
+        setLocationSuggestions(payload.locations);
+        setActiveLocationIndex(payload.locations.length ? 0 : -1);
+        setLocationNotice(payload.locations.length ? "" : "No Swiss postcode or municipality found.");
+        setShowLocationSuggestions(true);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setLocationSuggestions([]);
+        setActiveLocationIndex(-1);
+        setLocationNotice("Location search is unavailable. Please try again.");
+      } finally {
+        if (!controller.signal.aborted) setIsLoadingLocations(false);
+      }
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [locationQuery, selectedLocation]);
+
+  const ageGroup = ageGroupForBirthYear(birthYear);
+  const availableDeductibles = ageGroup === "child" ? childDeductibles : adultDeductibles;
+  const ageLabel = ageChoices.find(({ value }) => value === ageGroup)?.label || "Not chosen";
+  const accidentLabel = accident === "included"
+    ? "Included"
+    : accident === "excluded" ? "Excluded" : "Not chosen";
+  const location = selectedLocation?.label || "";
+
+  function updateLocationQuery(value: string) {
+    setLocationQuery(value);
+    if (value !== selectedLocation?.label) setSelectedLocation(null);
+    setShowLocationSuggestions(true);
+    setActiveLocationIndex(-1);
     setFormError("");
   }
 
-  function chooseAge(value: AgeGroup) {
-    setAgeGroup(value);
-    setDeductibles(value === "child" ? childDeductibles : adultDeductibles);
+  function chooseLocation(value: LocationSuggestion) {
+    setSelectedLocation(value);
+    setLocationQuery(value.label);
+    setLocationSuggestions([]);
+    setActiveLocationIndex(-1);
+    setLocationNotice("");
+    setShowLocationSuggestions(false);
+    setFormError("");
+  }
+
+  function moveLocationSelection(direction: 1 | -1) {
+    if (!locationSuggestions.length) return;
+    setShowLocationSuggestions(true);
+    setActiveLocationIndex((current) => {
+      if (current < 0) return direction === 1 ? 0 : locationSuggestions.length - 1;
+      return (current + direction + locationSuggestions.length) % locationSuggestions.length;
+    });
+  }
+
+  function chooseActiveLocation() {
+    const location = locationSuggestions[activeLocationIndex];
+    if (showLocationSuggestions && location) chooseLocation(location);
+  }
+
+  function setBirthYear(value: string) {
+    const previousAgeGroup = ageGroup;
+    const nextAgeGroup = ageGroupForBirthYear(value);
+    setBirthYearValue(value);
+    if (nextAgeGroup && nextAgeGroup !== previousAgeGroup) {
+      setDeductibles(nextAgeGroup === "child" ? childDeductibles : adultDeductibles);
+    }
     setFormError("");
   }
 
@@ -107,8 +185,8 @@ export function useComparisonFlow() {
   }
 
   async function comparePlans() {
-    if (!canton || !region || !ageGroup || !accident) {
-      setFormError("Choose your location, age group and accident cover.");
+    if (!selectedLocation || !ageGroup || !birthYear || !accident) {
+      setFormError("Choose your location, enter your birth year and select accident cover.");
       return;
     }
     if (!deductibles.length || !models.length) {
@@ -120,9 +198,9 @@ export function useComparisonFlow() {
     setSearchNotice("");
     setResults(null);
     const params = new URLSearchParams({
-      canton,
-      region,
-      age_category: ageGroup,
+      canton: selectedLocation.canton,
+      region: selectedLocation.premium_region,
+      birth_year: birthYear,
       accident_coverage: String(accident === "included"),
       year: "2027",
       top_n: "10",
@@ -149,11 +227,16 @@ export function useComparisonFlow() {
   }
 
   return {
-    accident, accidentLabel, ageGroup, ageLabel, availableDeductibles, availableRegions,
-    canton, chooseAge, chooseCanton, comparePlans, currentPremium, deductibles, draft,
-    formError, isSearching, isSending, location, messages, models, region, results,
-    resultsRef, searchNotice, sendMessage, setAccident, setCurrentPremium, setDraft,
-    setModels, setRegion, threadId, toggleDeductible, toggleModel,
+    accident, accidentLabel, activeLocationIndex, ageGroup, ageLabel,
+    availableDeductibles, birthYear, chooseActiveLocation, chooseLocation,
+    comparePlans, currentPremium, deductibles, draft, formError,
+    isLoadingLocations, isSearching, isSending, location, locationNotice,
+    locationQuery, locationSuggestions, messages, models, results, resultsRef,
+    searchNotice, selectedLocation, sendMessage, setAccident, setBirthYear,
+    setActiveLocationIndex, setCurrentPremium, setDraft, setModels,
+    setShowLocationSuggestions,
+    showLocationSuggestions, threadId, toggleDeductible, toggleModel,
+    updateLocationQuery, moveLocationSelection,
   };
 }
 

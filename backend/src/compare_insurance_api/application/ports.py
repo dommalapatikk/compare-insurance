@@ -3,7 +3,11 @@
 from collections.abc import Sequence
 from typing import Protocol
 
-from compare_insurance_api.domain.models import PremiumOffer, SearchCriteria
+from compare_insurance_api.domain.models import (
+    PremiumLocation,
+    PremiumOffer,
+    SearchCriteria,
+)
 
 
 class PremiumRepository(Protocol):
@@ -12,6 +16,16 @@ class PremiumRepository(Protocol):
         criteria: SearchCriteria,
     ) -> Sequence[PremiumOffer]:
         """Return source-backed offers eligible for the confirmed criteria."""
+
+
+class LocationRepository(Protocol):
+    async def search(
+        self,
+        query: str,
+        *,
+        limit: int,
+    ) -> Sequence[PremiumLocation]:
+        """Return official postcode/municipality matches for a user query."""
 
 
 class InsuranceGuide(Protocol):

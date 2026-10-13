@@ -43,6 +43,15 @@ The PostgREST adapter implements the premium-repository port defined by the
 application layer. The checked-in snapshot is validated fully before a remote
 write begins.
 
+### Location resolution — supporting domain
+
+Joins the pinned swisstopo postcode/locality directory to the BAG 2027
+municipality and premium-region rules by BFS municipality number. The
+`SearchLocations` use case depends on a location-repository port; the packaged
+CSV adapter provides deterministic type-ahead matches without a live third-party
+lookup. Ambiguous postcode/locality matches stay separate until the user chooses
+the correct municipality.
+
 ### Conversational guidance — supporting domain
 
 Explains concepts and collects user intent. LangChain is an adapter behind the
@@ -89,6 +98,8 @@ backend/src/compare_insurance_api/
   infrastructure/
     bag_ingestion.py          reproducible source loading and upload
     bag_normalization.py      source-code mappings and validation
+    location_catalogue.py     postcode/BFS/premium-region build rules
+    location_repository.py    packaged LocationRepository CSV adapter
     supabase_repository.py    PremiumRepository PostgREST adapter
     langchain_tools.py        read-only deterministic comparison tool
     langchain_guide.py        LangChain agent adapter
@@ -136,12 +147,16 @@ privacy boundary, service objectives, and test requirements.
 ```text
 Browser
   -> Next.js guided comparison and chat
-  -> same-origin /api/premiums and /api/chat
+  -> same-origin /api/locations, /api/premiums, and /api/chat
   -> FastAPI API controller
+  -> SearchLocations -> LocationRepository -> packaged official-data catalogue
   -> ComparePremiums -> PremiumRepository -> Supabase
   -> ExplainInsuranceChoices -> LangChain -> comparison tool
 
-Official BAG raw data
+Official swisstopo + BAG raw data
+  -> tested postcode/municipality/premium-region build
+  -> packaged location catalogue
+Official BAG premium data
   -> tested import/validation adapter
   -> normalized Supabase catalogue
   -> pure domain ranking and difference calculations

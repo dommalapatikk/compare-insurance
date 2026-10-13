@@ -1,6 +1,6 @@
 # Data sources
 
-Retrieved on **2026-10-12**. All files are first-party publications of the Swiss Federal Office of Public Health (Bundesamt für Gesundheit, BAG/FOPH) or are linked from the official Swiss open-data catalogue.
+Retrieved on **2026-10-12 and 2026-10-13**. All files are first-party publications of the Swiss Federal Office of Public Health (Bundesamt für Gesundheit, BAG/FOPH), the Federal Office of Topography (swisstopo), or are linked from the official Swiss open-data catalogue.
 
 ## Current premium year
 
@@ -22,6 +22,7 @@ The current files are live resources whose contents are replaced during the annu
 | `raw/praemiendaten_field_notes_2027.xlsx` | [`Erläuterungen zu den Prämiendaten.xlsx`](https://opendata.swiss/de/dataset/health-insurance-premiums/resource/e2d5b3fc-07a1-447e-8ee1-c813bb81f0cc) | XLSX | 21,815 | `cffea26d28a735e6cc624beec1618dae95f88891ff81a90d87590148cfa03727` |
 | `raw/praemienregionen_2027.xlsx` | [Prämienregionen, valid from 2027-01-01](https://www.bag.admin.ch/de/krankenversicherung-praemienregionen) | XLSX | 68,119 | `9ca00b8e2a05ccbd85e27341eafadcb31b9573adc638114b56f6631bd2bdbceb` |
 | `raw/zugelassene_krankenversicherer_2026-10-01.xlsx` | [Register of authorised health insurers, 2026-10-01](https://www.bag.admin.ch/de/verzeichnisse-der-zugelassenen-kranken-und-rueckversicherer) | XLSX | 49,233 | `b5c2e33a27453c744c4f2d949660f111f59d471707390b6a3184d6b9250adc69` |
+| `raw/ortschaftenverzeichnis_plz_2026-10-01.csv` | [Official index of cities and towns with postal codes](https://www.swisstopo.admin.ch/de/amtliches-ortschaftenverzeichnis) | UTF-8 CSV with BOM, semicolon-delimited | 503,281 | `ae33ad60171374afcb39ddd9cc5268a1fe5b71f40bf21961373f4e6fb65abe02` |
 
 Exact download URLs used:
 
@@ -30,6 +31,7 @@ Exact download URLs used:
 - Field notes: <https://opendata.bagnet.ch/?r=/download&path=L1ByYWVtaWVuL0VybMOkdXRlcnVuZ2VuIHp1IGRlbiBQcsOkbWllbmRhdGVuLnhsc3g%3D>
 - 2027 premium regions: <https://www.bag.admin.ch/dam/de/sd-web/Xm8w51dMKXLP/Pr%C3%A4mienregionen%20(g%C3%BCltig%20ab%201.1.2027).xlsx>
 - Insurer register: <https://www.bag.admin.ch/dam/de/sd-web/pigYvqGTcJOi/Zugelassene%20Krankenversicherer_1.10.2026.xlsx>
+- Official postcode/locality CSV (LV95): <https://data.geo.admin.ch/ch.swisstopo-vd.ortschaftenverzeichnis_plz/ortschaftenverzeichnis_plz/ortschaftenverzeichnis_plz_2056.csv.zip>
 
 `opendata.bagnet.ch` is the download host supplied by the opendata.swiss BAG resource records.
 
@@ -74,7 +76,13 @@ All tariff and age-subgroup keys used by `praemien_ch_2027.csv` resolve in this 
 
 The `Anhang EDI Ver. über die PR` sheet maps **1,495 municipalities** in the 11 multi-region cantons to a unique BFS municipality number and premium region 1, 2 or 3. The other 15 cantons use `PR_REG_0` and are intentionally absent from this table. The `Mutationen` sheet lists municipality mergers and new municipalities for the 2027 revision.
 
-The workbook itself warns that it is a machine-readable aid and that the EDI ordinance prevails if the workbook and ordinance conflict. It contains municipality names and BFS numbers, but no postal-code column; a separate authoritative postcode-to-municipality source will be needed for postcode search.
+The workbook itself warns that it is a machine-readable aid and that the EDI ordinance prevails if the workbook and ordinance conflict. It contains municipality names and BFS numbers, but no postal-code column. The application joins it to the swisstopo locality directory by BFS municipality number.
+
+### `ortschaftenverzeichnis_plz_2026-10-01.csv`
+
+The swisstopo directory contains the official four-digit postcode, locality name, municipality name, BFS municipality number, canton, and address share for every published postcode/locality perimeter. The pinned 2026-10-01 snapshot has 5,716 source rows, including 5,696 Swiss rows. A postcode/locality can intersect more than one municipality, so the product preserves those alternatives and asks the user to choose the municipality rather than guessing.
+
+`backend/scripts/build_location_catalogue.py` joins these rows to the 2027 BAG premium-region workbook. It applies the workbook's 2027 municipality-merger mapping, assigns region 0 only to cantons that BAG does not subdivide, excludes two non-residential special municipal territories without a BAG premium region, and generates 5,694 tested application mappings.
 
 ### `zugelassene_krankenversicherer_2026-10-01.xlsx`
 
@@ -92,6 +100,7 @@ BAG's German/French field dictionary for the 2027 CH and EU premium exports. It 
 - Every premium-table insurer number exists in the BAG insurer register.
 - All three XLSX files identify as Office Open XML spreadsheets, pass ZIP integrity checks, and their worksheets/XML were parsed. They are not HTML error responses.
 - File sizes and SHA-256 hashes were recorded after validation.
+- The postcode catalogue was joined to 2027 premium regions by BFS municipality number; every residential row in a subdivided canton resolved after applying the BAG mutation table.
 
 ## Important limitations
 
@@ -100,7 +109,7 @@ BAG's German/French field dictionary for the 2027 CH and EU premium exports. It 
 - There is no sex/gender field. BAG explains that, for a person aged 26 or older, the same insurer, premium region and model has the same premium regardless of age, sex or health status. Gender should therefore not alter the price query.
 - `ZE` and `ZR` are BAG special/pseudo-territorial codes, not Swiss cantons and not represented by Swiss municipalities in the premium-region workbook. Exclude them from ordinary Swiss-resident location search unless their special population is explicitly supported.
 - The premium-region workbook covers only municipalities in cantons subdivided into regions. Treat all municipalities in the other Swiss cantons as region 0.
-- The region workbook has no postcode data, and postal codes do not always map one-to-one to municipalities. Do not guess a premium region from a postal code alone.
+- Postal codes do not always map one-to-one to municipalities. The product must preserve municipality alternatives and resolve the premium region only after the user selects the correct municipality.
 - BAG/Priminfo notes that an insurer can restrict its activity area to particular regions or municipalities. Premium rows and the register are necessary inputs, but a production eligibility check may also require BAG's current catchment/activity-area data and confirmation from the insurer.
 - `Prämie` is the gross approved monthly premium. It does not subtract cantonal premium reductions/subsidies, and it does not estimate annual out-of-pocket medical costs. "Savings" must state the chosen comparison baseline and whether it is monthly (`difference`) or annual (`difference × 12`).
 - The raw resources are annual snapshots and can be corrected by BAG. On refresh, record a new retrieval date and checksum rather than silently replacing a pinned file.

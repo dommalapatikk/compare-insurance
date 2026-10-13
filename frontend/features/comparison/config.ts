@@ -1,4 +1,4 @@
-import type { Choice } from "./types";
+import type { AgeGroup, Choice } from "./types";
 
 export const adultDeductibles = [300, 500, 1000, 1500, 2000, 2500];
 export const childDeductibles = [0, 100, 200, 300, 400, 500, 600];
@@ -8,6 +8,19 @@ export const ageChoices: Choice[] = [
   { value: "young_adult", label: "Young adult", description: "Age 19–25" },
   { value: "adult", label: "Adult", description: "Age 26+" },
 ];
+
+export function ageGroupForBirthYear(
+  birthYear: string,
+  premiumYear = 2027,
+): AgeGroup {
+  if (!/^\d{4}$/.test(birthYear)) return "";
+  const year = Number(birthYear);
+  if (year < 1900 || year > premiumYear) return "";
+  const age = premiumYear - year;
+  if (age <= 18) return "child";
+  if (age <= 25) return "young_adult";
+  return "adult";
+}
 
 export const modelChoices: Choice[] = [
   {
@@ -40,34 +53,10 @@ export const modelChoices: Choice[] = [
 export const quickQuestions = [
   "What does the deductible mean?",
   "Should I include accident cover?",
-  "How do the insurance models differ?",
+  "What does the family-doctor model mean?",
 ];
 
 export const modelLabels: Record<string, string> = Object.fromEntries(
   modelChoices.map(({ value, label }) => [value, label]),
 );
-
-export const cantonChoices = [
-  "AG", "AI", "AR", "BE", "BL", "BS", "FR", "GE", "GL", "GR", "JU",
-  "LU", "NE", "NW", "OW", "SG", "SH", "SO", "SZ", "TG", "TI", "UR",
-  "VD", "VS", "ZG", "ZH",
-];
-
-const subdividedPremiumRegions: Record<string, string[]> = {
-  BE: ["1", "2", "3"],
-  BL: ["1", "2"],
-  FR: ["1", "2"],
-  GR: ["1", "2", "3"],
-  LU: ["1", "2", "3"],
-  SG: ["1", "2", "3"],
-  SH: ["1", "2"],
-  TI: ["1", "2"],
-  VD: ["1", "2"],
-  VS: ["1", "2"],
-  ZH: ["1", "2", "3"],
-};
-
-export function premiumRegionsFor(canton: string) {
-  return canton ? subdividedPremiumRegions[canton] || ["0"] : [];
-}
 

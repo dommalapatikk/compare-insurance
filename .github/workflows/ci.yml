@@ -31,6 +31,8 @@ jobs:
         run: python -m pytest -q backend/tests
       - name: Validate BAG normalization
         run: python backend/scripts/ingest_bag_to_supabase.py --validate-only
+      - name: Validate postcode and premium-region catalogue
+        run: python backend/scripts/build_location_catalogue.py --check
       - name: Compile backend
         run: python -m compileall -q backend/src backend/tests
 

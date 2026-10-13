@@ -22,6 +22,7 @@ class PremiumSearchRequest(BaseModel):
     canton: str = Field(min_length=2, max_length=2)
     region: str = Field(min_length=1, max_length=8)
     age_category: AgeCategory
+    birth_year: int | None = Field(default=None, ge=1900, le=2100)
     deductibles: list[Deductible] = Field(min_length=1)
     accident_coverage: bool = True
     insurance_models: list[InsuranceModel] = Field(min_length=1)
@@ -81,6 +82,23 @@ class PremiumSearchResponse(BaseModel):
     cheapest_by_deductible: list[CategoryMinimumResponse]
     cheapest_by_model: list[CategoryMinimumResponse]
     cheapest_by_deductible_and_model: list[CategoryMinimumResponse]
+
+
+class LocationResponse(BaseModel):
+    postal_code: str
+    locality: str
+    municipality_id: str
+    municipality_name: str
+    canton: str
+    premium_region: str
+    label: str
+
+
+class LocationSearchResponse(BaseModel):
+    query: str
+    premium_year: int
+    source_name: str
+    locations: list[LocationResponse]
 
 
 class ChatRequest(BaseModel):

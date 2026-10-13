@@ -14,6 +14,23 @@ export type AgeGroup = "" | "child" | "young_adult" | "adult";
 
 export type AccidentChoice = "" | "included" | "excluded";
 
+export type LocationSuggestion = {
+  postal_code: string;
+  locality: string;
+  municipality_id: string;
+  municipality_name: string;
+  canton: string;
+  premium_region: string;
+  label: string;
+};
+
+export type LocationSearchResponse = {
+  query: string;
+  premium_year: number;
+  source_name: string;
+  locations: LocationSuggestion[];
+};
+
 export type PremiumOffer = {
   rank: number;
   insurer_id: string;

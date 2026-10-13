@@ -8,17 +8,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from compare_insurance_api.api.dependencies import (
     get_compare_premiums,
     get_explain_insurance_choices,
+    get_search_locations,
 )
 from compare_insurance_api.api.schemas import (
     ChatRequest,
     ChatResponse,
     HealthResponse,
+    LocationSearchResponse,
     PremiumSearchRequest,
     PremiumSearchResponse,
 )
 from compare_insurance_api.application.use_cases import (
     ComparePremiums,
     ExplainInsuranceChoices,
+    SearchLocations,
 )
 from compare_insurance_api.domain.models import (
     AgeCategory,
@@ -27,6 +30,7 @@ from compare_insurance_api.domain.models import (
     InsuranceModel,
     PremiumOffer,
     SearchCriteria,
+    age_category_for_birth_year,
     valid_deductibles,
 )
 
@@ -53,6 +57,42 @@ def _minimum_response(offer: PremiumOffer) -> dict[str, object]:
 @router.get("/health", response_model=HealthResponse, tags=["system"])
 async def health() -> HealthResponse:
     return HealthResponse(status="ok")
+
+
+@router.get(
+    "/v1/locations",
+    response_model=LocationSearchResponse,
+    tags=["locations"],
+)
+async def search_locations(
+    use_case: Annotated[SearchLocations, Depends(get_search_locations)],
+    q: Annotated[str, Query(min_length=2, max_length=100)],
+    limit: Annotated[int, Query(ge=1, le=20)] = 8,
+) -> LocationSearchResponse:
+    try:
+        locations = await use_case.execute(q, limit=limit)
+    except DomainValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
+    return LocationSearchResponse(
+        query=" ".join(q.split()),
+        premium_year=2027,
+        source_name="swisstopo and Swiss Federal Office of Public Health (BAG)",
+        locations=[
+            {
+                "postal_code": location.postal_code,
+                "locality": location.locality,
+                "municipality_id": location.municipality_id,
+                "municipality_name": location.municipality_name,
+                "canton": location.canton,
+                "premium_region": location.premium_region,
+                "label": location.label,
+            }
+            for location in locations
+        ],
+    )
 
 
 @router.post("/v1/chat", response_model=ChatResponse, tags=["assistant"])
@@ -97,7 +137,8 @@ async def search_premiums(
     use_case: Annotated[ComparePremiums, Depends(get_compare_premiums)],
     canton: Annotated[str, Query(min_length=2, max_length=2)],
     region: Annotated[str, Query(min_length=1, max_length=8)],
-    age_category: AgeCategory,
+    age_category: AgeCategory | None = None,
+    birth_year: Annotated[int | None, Query(ge=1900, le=2100)] = None,
     deductible: Annotated[list[Deductible] | None, Query()] = None,
     accident_coverage: bool = True,
     insurance_model: Annotated[list[InsuranceModel] | None, Query()] = None,
@@ -105,23 +146,38 @@ async def search_premiums(
     top_n: Annotated[int, Query(ge=1, le=10)] = 10,
     reference_monthly_premium_chf: Annotated[Decimal | None, Query(ge=0)] = None,
 ) -> PremiumSearchResponse:
-    selected_deductibles = deductible or sorted(
-        valid_deductibles(age_category),
-        key=int,
-    )
-    selected_models = insurance_model or list(InsuranceModel)
-    request = PremiumSearchRequest(
-        canton=canton,
-        region=region,
-        age_category=age_category,
-        deductibles=selected_deductibles,
-        accident_coverage=accident_coverage,
-        insurance_models=selected_models,
-        year=year,
-        top_n=top_n,
-        reference_monthly_premium_chf=reference_monthly_premium_chf,
-    )
     try:
+        if birth_year is not None:
+            derived_age_category = age_category_for_birth_year(
+                birth_year,
+                premium_year=year,
+            )
+            if age_category is not None and age_category is not derived_age_category:
+                raise DomainValidationError(
+                    "age_category does not match birth_year for the premium year"
+                )
+        elif age_category is not None:
+            derived_age_category = age_category
+        else:
+            raise DomainValidationError("birth_year or age_category is required")
+
+        selected_deductibles = deductible or sorted(
+            valid_deductibles(derived_age_category),
+            key=int,
+        )
+        selected_models = insurance_model or list(InsuranceModel)
+        request = PremiumSearchRequest(
+            canton=canton,
+            region=region,
+            age_category=derived_age_category,
+            birth_year=birth_year,
+            deductibles=selected_deductibles,
+            accident_coverage=accident_coverage,
+            insurance_models=selected_models,
+            year=year,
+            top_n=top_n,
+            reference_monthly_premium_chf=reference_monthly_premium_chf,
+        )
         criteria = SearchCriteria(
             canton=request.canton,
             region=request.region,
@@ -136,7 +192,7 @@ async def search_premiums(
         comparison = await use_case.execute(criteria)
     except DomainValidationError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     except RuntimeError as exc:

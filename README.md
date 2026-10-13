@@ -4,12 +4,12 @@ Compare Insurance is an early-stage Swiss compulsory health-insurance comparison
 
 ## Project status
 
-The repository contains the product and UX requirements, a guided Next.js frontend, a layered FastAPI/LangChain backend, tested deterministic comparison rules, and a documented official Swiss government premium snapshot. A dedicated Supabase catalogue stores the normalized 2027 data, and the same comparison use case powers the HTTP API and the LangChain tool.
+The repository contains the product and UX requirements, a guided Next.js frontend, a layered FastAPI/LangChain backend, tested deterministic comparison rules, and documented official Swiss government data snapshots. A dedicated Supabase catalogue stores the normalized 2027 premiums. A packaged location catalogue joins official swisstopo postcodes to BAG premium regions, and the same comparison use case powers the HTTP API and the LangChain tool.
 
-## Planned capabilities
+## Current capabilities
 
-- Search by Swiss place of residence and premium region.
-- Account for age category and other premium-relevant inputs.
+- Search by Swiss postcode or municipality while resolving the premium region behind the scenes.
+- Derive the official child, young-adult, or adult category from birth year; gender is not collected.
 - Compare deductibles of CHF 300, 500, 1,000, 1,500, 2,000, and 2,500 where eligible.
 - Compare the official 2027 Priminfo categories: Standard, FLEX, PRAXIS, TEL-DIG, and PHARM where offers exist.
 - Rank up to ten suitable offers and show savings against a clearly defined comparison baseline.
@@ -32,6 +32,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev,data]'
 .venv/bin/python -m pytest -q
 .venv/bin/python scripts/ingest_bag_to_supabase.py --validate-only
+.venv/bin/python scripts/build_location_catalogue.py --check
 .venv/bin/python scripts/check_priminfo_parity.py
 .venv/bin/uvicorn compare_insurance_api.main:app --reload
 ```
@@ -44,8 +45,9 @@ and TEL-DIG—and it can also be run manually through the `Priminfo parity`
 workflow. PHARM remains a supported official category but has no row in the
 pinned 2027 premium snapshot.
 
-The API provides `GET /health`, data-backed `GET /v1/premiums/search`, and the
-LangChain-backed `POST /v1/chat` route.
+The API provides `GET /health`, official-data-backed `GET /v1/locations`,
+data-backed `GET /v1/premiums/search`, and the LangChain-backed `POST /v1/chat`
+route.
 
 ## Development approach
 
@@ -93,8 +95,6 @@ This project is an informational comparison tool. It does not provide medical, l
 
 ## Next milestones
 
-1. Add municipality lookup from the pinned BAG premium-region workbook.
-2. Add source-version metadata and atomic catalogue promotion.
-3. Add deployed end-to-end browser tests.
-4. Add privacy-safe OpenTelemetry instrumentation.
-5. Grant the Vercel GitHub App repository access for automatic deployments.
+1. Add source-version metadata and atomic catalogue promotion.
+2. Add deployed end-to-end browser tests.
+3. Add privacy-safe OpenTelemetry instrumentation.

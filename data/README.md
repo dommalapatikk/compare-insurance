@@ -4,7 +4,7 @@ This directory separates immutable source snapshots from application-ready data.
 
 ## `raw/`
 
-Files downloaded directly from BAG/Priminfo and opendata.swiss live here. Keep them byte-for-byte unchanged after download so checksums, provenance and later results remain reproducible.
+Files downloaded directly from BAG/Priminfo, swisstopo, and opendata.swiss live here. Keep them byte-for-byte unchanged after download so checksums, provenance and later results remain reproducible.
 
 Git stores the pinned source snapshot. GitHub Actions verifies every raw file
 against [`SHA256SUMS`](./SHA256SUMS) on pushes and pull requests; it does not
@@ -26,6 +26,14 @@ Generated, application-ready outputs belong here. Expected processing work inclu
 - deriving monthly and annual savings from an explicitly defined baseline.
 
 Processed data must be reproducible from `raw/` and should never be edited by hand. Processing code fails loudly on an unknown year, insurer, model, age code, deductible, or premium region rather than silently dropping the row.
+
+The deployable postcode catalogue is generated from the pinned swisstopo CSV and BAG premium-region workbook with:
+
+```bash
+backend/.venv/bin/python backend/scripts/build_location_catalogue.py
+```
+
+It is packaged with the API at `backend/src/compare_insurance_api/infrastructure/data/locations_2027.csv`; CI regenerates it in a temporary directory and checks that the committed output is current.
 
 The application-ready catalogue is generated directly into the dedicated
 Supabase `premium_offers` table. Run

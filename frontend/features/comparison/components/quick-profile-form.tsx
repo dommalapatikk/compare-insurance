@@ -1,7 +1,6 @@
 import type { FormEvent } from "react";
 
-import { ageChoices, cantonChoices, modelChoices } from "../config";
-import type { AgeGroup } from "../types";
+import { modelChoices } from "../config";
 import type { ComparisonFlow } from "../use-comparison-flow";
 
 export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
@@ -21,53 +20,94 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
       </div>
 
       <div className="primary-fields">
-        <fieldset className="field-group location-group">
-          <legend>1. Where do you live? *</legend>
-          <div className="select-row">
-            <label>
-              <span>Canton</span>
-              <select value={flow.canton} onChange={(event) => flow.chooseCanton(event.target.value)}>
-                <option value="">Choose</option>
-                {cantonChoices.map((value) => <option key={value}>{value}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>Premium region</span>
-              <select
-                value={flow.region}
-                disabled={!flow.canton}
-                onChange={(event) => flow.setRegion(event.target.value)}
-              >
-                <option value="">Choose</option>
-                {flow.availableRegions.map((value) => (
-                  <option key={value} value={value}>Region {value}</option>
+        <div className="field-group location-group">
+          <label className="field-label" htmlFor="location-search">
+            1. Postcode or municipality *
+          </label>
+          <div className="location-combobox">
+            <input
+              id="location-search"
+              type="search"
+              role="combobox"
+              autoComplete="off"
+              aria-autocomplete="list"
+              aria-controls="location-suggestions"
+              aria-expanded={flow.showLocationSuggestions && flow.locationSuggestions.length > 0}
+              aria-activedescendant={
+                flow.activeLocationIndex >= 0
+                  ? `location-option-${flow.activeLocationIndex}`
+                  : undefined
+              }
+              value={flow.locationQuery}
+              onChange={(event) => flow.updateLocationQuery(event.target.value)}
+              onFocus={() => flow.setShowLocationSuggestions(true)}
+              onBlur={() => window.setTimeout(() => flow.setShowLocationSuggestions(false), 120)}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  flow.moveLocationSelection(1);
+                } else if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  flow.moveLocationSelection(-1);
+                } else if (event.key === "Enter" && flow.showLocationSuggestions) {
+                  event.preventDefault();
+                  flow.chooseActiveLocation();
+                } else if (event.key === "Escape") {
+                  flow.setShowLocationSuggestions(false);
+                }
+              }}
+              placeholder="e.g. 3011 Bern"
+            />
+            <span className="location-state" aria-hidden="true">
+              {flow.isLoadingLocations ? "…" : flow.selectedLocation ? "✓" : ""}
+            </span>
+            {flow.showLocationSuggestions && flow.locationSuggestions.length > 0 && (
+              <ul id="location-suggestions" className="location-suggestions" role="listbox">
+                {flow.locationSuggestions.map((item, index) => (
+                  <li
+                    key={`${item.postal_code}-${item.locality}-${item.municipality_id}`}
+                    id={`location-option-${index}`}
+                    role="option"
+                    aria-selected={flow.activeLocationIndex === index}
+                    aria-label={item.label}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onMouseEnter={() => flow.setActiveLocationIndex(index)}
+                    onClick={() => flow.chooseLocation(item)}
+                  >
+                    <strong>{item.postal_code} {item.locality}</strong>
+                    <small>{item.municipality_name}, {item.canton}</small>
+                  </li>
                 ))}
-              </select>
-            </label>
+              </ul>
+            )}
           </div>
-          <small>Choose the premium region for your registered municipality.</small>
-        </fieldset>
+          <small aria-live="polite">
+            {flow.selectedLocation
+              ? `Municipality: ${flow.selectedLocation.municipality_name}, ${flow.selectedLocation.canton}`
+              : flow.locationNotice || "We use your municipality to find the correct local premiums."}
+          </small>
+        </div>
+
+        <label className="field-group birth-year-group">
+          <span className="field-label">2. Birth year *</span>
+          <input
+            inputMode="numeric"
+            min="1900"
+            max="2027"
+            type="number"
+            value={flow.birthYear}
+            onChange={(event) => flow.setBirthYear(event.target.value)}
+            placeholder="e.g. 1984"
+          />
+          <small>
+            {flow.ageGroup
+              ? `2027 category: ${flow.ageLabel}`
+              : "Used to select the official 2027 age category."}
+          </small>
+        </label>
 
         <fieldset className="field-group">
-          <legend>2. Which age group applies in 2027? *</legend>
-          <div className="segmented three">
-            {ageChoices.map((choice) => (
-              <label key={choice.value}>
-                <input
-                  type="radio"
-                  name="age"
-                  checked={flow.ageGroup === choice.value}
-                  onChange={() => flow.chooseAge(choice.value as AgeGroup)}
-                />
-                <span><strong>{choice.label}</strong><small>{choice.description}</small></span>
-              </label>
-            ))}
-          </div>
-          <small>Choose the age you will be on 31 December 2027.</small>
-        </fieldset>
-
-        <fieldset className="field-group">
-          <legend>3. Include accident cover? *</legend>
+          <legend>3. Accident cover *</legend>
           <div className="segmented">
             {(["excluded", "included"] as const).map((value) => (
               <label key={value}>
@@ -82,8 +122,8 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
             ))}
           </div>
           <small>
-            If you work at least 8 hours a week for the same employer, accident
-            cover is usually provided through work. Check before excluding it.
+            Working at least 8 hours a week for one employer? You are usually
+            covered through work. Check before excluding it.
           </small>
         </fieldset>
       </div>
