@@ -18,7 +18,8 @@
   font-weight: 800;
 }
 .field-group > small { display: block; margin-top: 8px; color: var(--muted); font-size: .72rem; line-height: 1.4; }
-.select-row { display: grid; grid-template-columns: .75fr 1.25fr; gap: 8px; }
+.select-row { display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); gap: 8px; }
+.select-row label { min-width: 0; }
 .select-row label > span { display: block; margin-bottom: 5px; color: var(--muted); font-size: .7rem; }
 select {
   width: 100%;
@@ -30,8 +31,8 @@ select {
   border-radius: 9px;
 }
 select:disabled { color: #9ba49f; background: #f2f4f1; }
-.segmented { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
-.segmented.three { grid-template-columns: repeat(3, 1fr); }
+.segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.segmented.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .segmented label { position: relative; min-width: 0; cursor: pointer; }
 .segmented input, .chip-grid input { position: absolute; opacity: 0; pointer-events: none; }
 .segmented label > span {
