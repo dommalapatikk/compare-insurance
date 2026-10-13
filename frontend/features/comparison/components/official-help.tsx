@@ -1,7 +1,15 @@
 const CH_COSTS = "https://www.ch.ch/en/health/health-insurance/health-insurance-costs/";
 const BAG_MODELS = "https://www.bag.admin.ch/de/krankenversicherung-versicherungsmodelle-mit-eingeschraenkter-wahl-der-leistungserbringer";
 const PRIMINFO = "https://www.priminfo.admin.ch/de/praemien/";
+const BAG_2027 = "https://www.bag.admin.ch/de/newnsb/BfuGvedj0OOX";
 const answers = [
+  {
+    question: "What changed in 2027?",
+    answer:
+      "The average monthly premium is CHF 412, which is 5.0% higher than in 2026. To change insurer or insurance model for 1 January 2027, your request must generally reach your insurer by 30 November 2026.",
+    source: BAG_2027,
+    sourceLabel: "BAG",
+  },
   {
     question: "What is a franchise?",
     answer:

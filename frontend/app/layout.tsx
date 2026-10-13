@@ -1,15 +1,7 @@
 import type { Metadata } from "next";
-import { Libre_Franklin } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "./globals.css";
-
-const libreFranklin = Libre_Franklin({
-  display: "swap",
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: "variable",
-});
 
 export const metadata: Metadata = {
   title: "Compare Swiss health insurance premiums | Compare Insurance",
@@ -19,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html className={libreFranklin.variable} lang="en">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

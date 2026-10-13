@@ -44,6 +44,9 @@ const bannedCopy = [
   "compare options",
   "lowest premium by deductible",
   "annual deductible",
+  "franchise × model",
+  "compare the lowest premium with what you pay now",
+  "enter five details",
 ];
 
 const violations = [];

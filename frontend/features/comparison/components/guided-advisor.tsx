@@ -49,7 +49,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
   return (
     <section className="guided-advisor" id="guided-comparison" aria-label="Premium comparison">
       <div className="journey-topline">
-        <span>Five short steps</span>
+        <span>Your details</span>
         {Object.values(flow.completedStages).some(Boolean) && <button onClick={flow.restartJourney} type="button">Start over</button>}
       </div>
       <JourneySummary flow={flow} />

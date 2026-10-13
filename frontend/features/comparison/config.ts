@@ -30,22 +30,22 @@ export const modelChoices: Choice[] = [
   },
   {
     value: "flex",
-    label: "FLEX",
+    label: "Flexible first contact (FLEX)",
     description: "Choose between several defined first-contact options.",
   },
   {
     value: "praxis",
-    label: "PRAXIS",
+    label: "Family doctor / HMO (PRAXIS)",
     description: "A designated doctor or medical practice is your first contact.",
   },
   {
     value: "tel_dig",
-    label: "TEL-DIG",
+    label: "Telemedicine (TEL-DIG)",
     description: "Your first contact is by phone, app or another digital service.",
   },
   {
     value: "pharm",
-    label: "PHARM",
+    label: "Pharmacy first (PHARM)",
     description: "A partner pharmacy is your first contact.",
   },
 ];

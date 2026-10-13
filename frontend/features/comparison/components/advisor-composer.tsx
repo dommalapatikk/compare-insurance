@@ -18,7 +18,7 @@ export function AdvisorComposer({
     <div className="advisor-conversation">
       {flow.messages.length > 0 && (
         <div className="advisor-transcript" aria-live="polite" aria-relevant="additions text" role="log">
-          {flow.messages.map((message) => (
+          {flow.messages.slice(-3).map((message) => (
             <div className={`advisor-message ${message.role}`} key={message.id}>
               <span>{message.role === "assistant" ? "Guide" : "You"}</span>
               <p>{message.content}</p>

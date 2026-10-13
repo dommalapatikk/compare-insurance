@@ -11,10 +11,10 @@
   text-align: left;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
 }
-.selection-mode button[aria-pressed="true"] { background: var(--brand-pale); border-color: var(--brand); }
+.selection-mode button[aria-pressed="true"] { background: var(--action-pale); border-color: var(--action); }
 .selection-mode button > span {
   grid-row: 1 / 3;
   width: 17px;
@@ -23,11 +23,11 @@
   place-items: center;
   align-self: center;
   color: white;
-  background: var(--brand);
+  background: var(--action);
   border-radius: 50%;
   font-size: .62rem;
 }
-.selection-mode button[aria-pressed="false"] > span { background: transparent; border: 1px solid #b8aca7; }
+.selection-mode button[aria-pressed="false"] > span { background: transparent; border: 1px solid #a9a9a5; }
 .selection-mode strong { font-size: .86rem; }
 .selection-mode small { color: var(--muted); font-size: .78rem; line-height: 1.35; }
 .deductible-choices { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -39,7 +39,7 @@
   padding: 0 14px;
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 4px;
   font-size: .8rem;
   font-weight: 700;
 }

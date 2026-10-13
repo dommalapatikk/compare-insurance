@@ -69,9 +69,12 @@ export function useComparisonFlow() {
         if (profile.accident) setAccidentValue(profile.accident);
         if (profile.models) setModels(resolveModels(profile));
         if (profile.deductibles) setDeductibles(resolveDeductibles(profile));
-        setRestoredNotice(savedJourney.stage === "results"
-          ? "Your answers were restored. Compare again to refresh the official premiums."
-          : "Your answers were restored for this browser tab.");
+        const hasSavedAnswers = Object.values(savedJourney.profile).some((value) => value !== null);
+        if (hasSavedAnswers) {
+          setRestoredNotice(savedJourney.stage === "results"
+            ? "Your answers were restored. Compare again to refresh the official premiums."
+            : "Your answers were restored for this browser tab.");
+        }
       }
       if (savedConversation) {
         setThreadId(savedConversation.threadId);

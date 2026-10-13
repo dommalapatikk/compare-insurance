@@ -1,7 +1,7 @@
 export function BeforeSwitching() {
   return (
     <section className="before-switching" aria-labelledby="before-switching-title">
-      <h3 id="before-switching-title">Check these three things</h3>
+      <h3 id="before-switching-title">Before you switch</h3>
       <ul>
         <li>Confirm whom you must contact first under the insurance model.</li>
         <li>Confirm the plan is still available with the insurer.</li>

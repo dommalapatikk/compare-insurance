@@ -32,7 +32,7 @@ export function JourneySummary({ flow }: { flow: ComparisonFlow }) {
     <nav className="journey-navigation" aria-label="Comparison progress">
       <div className="mobile-progress">
         <div>
-          <span>{progressValue ? `Step ${progressValue} of ${stages.length}` : "Five short steps"}</span>
+          <span>{progressValue ? `Step ${progressValue} of ${stages.length}` : "Get started"}</span>
           <strong>{progressLabel}</strong>
         </div>
         <progress max={stages.length} value={progressValue}>{progressValue} of {stages.length}</progress>
