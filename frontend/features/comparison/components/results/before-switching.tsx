@@ -6,7 +6,7 @@ export function BeforeSwitching() {
       <ul>
         <li>Confirm whom you must contact first under the insurance model.</li>
         <li>Confirm the plan is still available with the insurer.</li>
-        <li>Remember that a higher deductible can increase what you pay when you need care.</li>
+        <li>For a change on 1 January 2027, make sure your insurer receives it by 30 November 2026.</li>
       </ul>
     </section>
   );

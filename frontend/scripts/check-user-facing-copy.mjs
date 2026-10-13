@@ -53,17 +53,20 @@ for (const file of checkedFiles) {
 const profilePath = path.join(
   comparisonRoot,
   "components",
-  "quick-profile-form.tsx",
+  "guided-advisor.tsx",
 );
 const profileSource = await readFile(profilePath, "utf8");
-for (const label of ["Premium region", "Which age group", "Gender"]) {
+for (const label of ["Premium region", "Which age group"]) {
   if (profileSource.includes(label)) {
-    violations.push(`quick-profile-form.tsx must not ask the customer for “${label}”`);
+    violations.push(`guided-advisor.tsx must not ask the customer for “${label}”`);
   }
+}
+if (/label[^>]*>\s*Gender\b/i.test(profileSource) || /name=["']gender["']/i.test(profileSource)) {
+  violations.push("guided-advisor.tsx must not contain a gender input");
 }
 for (const requiredLabel of ["Postcode or municipality", "Birth year"]) {
   if (!profileSource.includes(requiredLabel)) {
-    violations.push(`quick-profile-form.tsx is missing “${requiredLabel}”`);
+    violations.push(`guided-advisor.tsx is missing “${requiredLabel}”`);
   }
 }
 

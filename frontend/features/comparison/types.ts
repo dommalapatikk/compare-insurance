@@ -2,6 +2,12 @@ export type Message = {
   id: string;
   role: "assistant" | "user";
   content: string;
+  citations?: ChatCitation[];
+};
+
+export type ChatCitation = {
+  title: string;
+  url: string;
 };
 
 export type Choice = {
@@ -68,6 +74,7 @@ export type CategoryMinimum = {
 };
 
 export type PremiumSearchResponse = {
+  query: PremiumSearchQuery;
   source_year: number;
   source_name: string;
   total_eligible_offers: number;
@@ -75,5 +82,39 @@ export type PremiumSearchResponse = {
   cheapest_by_deductible: CategoryMinimum[];
   cheapest_by_model: CategoryMinimum[];
   cheapest_by_deductible_and_model: CategoryMinimum[];
+};
+
+export type PremiumSearchQuery = {
+  canton: string;
+  region: string;
+  age_category: Exclude<AgeGroup, "">;
+  birth_year: number | null;
+  deductibles: number[];
+  accident_coverage: boolean;
+  insurance_models: string[];
+  year: number;
+  top_n: number;
+  reference_monthly_premium_chf: string | null;
+};
+
+export type ChatProfile = {
+  resolved_location?: Partial<LocationSuggestion> & Pick<
+    LocationSuggestion,
+    "label" | "canton" | "premium_region"
+  >;
+  birth_year?: number;
+  age_category?: Exclude<AgeGroup, "">;
+  accident_coverage?: boolean;
+  insurance_models?: string[];
+  deductibles?: number[];
+};
+
+export type ChatResponse = {
+  message?: string;
+  detail?: string;
+  thread_id?: string;
+  comparison?: PremiumSearchResponse;
+  citations?: ChatCitation[];
+  profile?: ChatProfile;
 };
 

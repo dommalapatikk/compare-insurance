@@ -1,17 +1,24 @@
-"""LangChain tools that delegate facts and calculations to application use cases."""
+"""LangChain tools that delegate facts and calculations to trusted sources."""
 
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from langchain_core.tools import BaseTool, tool
 
-from compare_insurance_api.application.use_cases import ComparePremiums
+from compare_insurance_api.application.serialization import (
+    premium_comparison_payload,
+)
+from compare_insurance_api.application.use_cases import (
+    ComparePremiums,
+    SearchLocations,
+)
 from compare_insurance_api.domain.models import (
-    AgeCategory,
     Deductible,
     InsuranceModel,
     SearchCriteria,
+    age_category_for_birth_year,
 )
+from compare_insurance_api.infrastructure.official_guidance import OFFICIAL_GUIDANCE
 
 
 def build_premium_comparison_tool(use_case: ComparePremiums) -> BaseTool:
@@ -21,7 +28,7 @@ def build_premium_comparison_tool(use_case: ComparePremiums) -> BaseTool:
     async def compare_swiss_health_insurance(
         canton: str,
         premium_region: str,
-        age_category: str,
+        birth_year: int,
         deductibles: list[int],
         accident_coverage: bool,
         insurance_models: list[str],
@@ -31,10 +38,14 @@ def build_premium_comparison_tool(use_case: ComparePremiums) -> BaseTool:
     ) -> dict[str, Any]:
         """Find and rank official Swiss basic-insurance premiums for exact filters."""
 
+        age_category = age_category_for_birth_year(
+            birth_year,
+            premium_year=premium_year,
+        )
         criteria = SearchCriteria(
             canton=canton,
             region=premium_region,
-            age_category=AgeCategory(age_category),
+            age_category=age_category,
             accident_coverage=accident_coverage,
             deductibles=tuple(Deductible(value) for value in deductibles),
             insurance_models=tuple(
@@ -49,31 +60,71 @@ def build_premium_comparison_tool(use_case: ComparePremiums) -> BaseTool:
             ),
         )
         comparison = await use_case.execute(criteria)
+        return premium_comparison_payload(comparison, birth_year=birth_year)
+
+    return compare_swiss_health_insurance
+
+
+def build_location_search_tool(use_case: SearchLocations) -> BaseTool:
+    """Build the official postcode/municipality resolution tool."""
+
+    @tool("search_swiss_locations")
+    async def search_swiss_locations(
+        query: str,
+        limit: int = 8,
+    ) -> dict[str, Any]:
+        """Resolve a Swiss postcode or municipality to official premium regions."""
+
+        locations = await use_case.execute(query, limit=limit)
         return {
-            "source": "Swiss Federal Office of Public Health (BAG)",
-            "source_year": criteria.premium_year,
-            "total_eligible_offers": comparison.total_eligible_offers,
-            "offers": [
+            "source": "swisstopo and Swiss Federal Office of Public Health (BAG)",
+            "source_year": 2027,
+            "citations": [
                 {
-                    "rank": ranked.rank,
-                    "insurer_id": ranked.offer.insurer_id,
-                    "insurer_name": ranked.offer.insurer_name,
-                    "plan_id": ranked.offer.plan_id,
-                    "product_name": ranked.offer.product_name,
-                    "deductible_chf": int(ranked.offer.deductible),
-                    "insurance_model": ranked.offer.insurance_model.value,
-                    "accident_coverage": ranked.offer.accident_coverage,
-                    "monthly_premium_chf": str(ranked.offer.monthly_premium_chf),
-                    "annual_premium_chf": str(ranked.offer.annual_premium_chf),
-                    "monthly_difference_from_cheapest_chf": str(
-                        ranked.monthly_difference_from_cheapest_chf
-                    ),
-                    "annual_difference_from_cheapest_chf": str(
-                        ranked.annual_difference_from_cheapest_chf
-                    ),
+                    "title": "swisstopo official locality and postcode directory",
+                    "url": "https://www.swisstopo.admin.ch/en/official-directory-of-towns-and-cities",
                 }
-                for ranked in comparison.offers
+            ],
+            "locations": [
+                {
+                    "postal_code": location.postal_code,
+                    "locality": location.locality,
+                    "municipality_id": location.municipality_id,
+                    "municipality_name": location.municipality_name,
+                    "canton": location.canton,
+                    "premium_region": location.premium_region,
+                    "label": location.label,
+                }
+                for location in locations
             ],
         }
 
-    return compare_swiss_health_insurance
+    return search_swiss_locations
+
+
+GuidanceTopic = Literal[
+    "2027_premiums",
+    "deductible",
+    "accident_coverage",
+    "insurance_models",
+    "switching",
+]
+
+
+def build_official_guidance_tool() -> BaseTool:
+    """Build a read-only tool over the reviewed official guidance catalogue."""
+
+    @tool("get_official_insurance_guidance")
+    async def get_official_insurance_guidance(
+        topic: GuidanceTopic,
+    ) -> dict[str, Any]:
+        """Return reviewed Swiss-government guidance for one supported topic."""
+
+        entry = OFFICIAL_GUIDANCE[topic]
+        return {
+            "topic": topic,
+            "content": entry.content,
+            "citations": [{"title": entry.title, "url": entry.url}],
+        }
+
+    return get_official_insurance_guidance

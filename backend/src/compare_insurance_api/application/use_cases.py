@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 
 from compare_insurance_api.application.ports import (
+    ChatHistoryMessage,
+    GuideReply,
     InsuranceGuide,
     LocationRepository,
     PremiumRepository,
@@ -83,7 +85,18 @@ class ExplainInsuranceChoices:
     def __init__(self, guide: InsuranceGuide) -> None:
         self._guide = guide
 
-    async def execute(self, *, message: str, thread_id: str) -> str:
-        return await self._guide.reply(message=message, thread_id=thread_id)
+    async def execute(
+        self,
+        *,
+        message: str,
+        thread_id: str,
+        history: tuple[ChatHistoryMessage, ...] = (),
+    ) -> GuideReply:
+        bounded_history = tuple(history[-12:])
+        return await self._guide.reply(
+            message=message,
+            thread_id=thread_id,
+            history=bounded_history,
+        )
 
 

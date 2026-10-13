@@ -11,7 +11,7 @@ HTTP / Next.js / LangChain / BAG files
                  |
           infrastructure + API
                  |
-          application use cases
+      application use cases + workflow
                  |
               domain
 ```
@@ -52,18 +52,37 @@ CSV adapter provides deterministic type-ahead matches without a live third-party
 lookup. Ambiguous postcode/locality matches stay separate until the user chooses
 the correct municipality.
 
-### Conversational guidance — supporting domain
+### Guided comparison — supporting domain
 
-Explains concepts and collects user intent. LangChain is an adapter behind the
-`InsuranceGuide` port. Its read-only comparison tool calls the same
-`ComparePremiums` use case as HTTP, so it never owns eligibility, prices,
-ranking, or savings.
+Collects comparison intent one validated decision at a time, explains concepts,
+and coordinates typed application tools. The assistant is the primary customer
+interface, but it is not the source of canonical workflow state or factual
+results.
+
+The presentation layer owns a framework-free `JourneyState` containing the
+current step and confirmed profile values. LangChain is an adapter behind the
+`InsuranceGuide` port: it interprets free text and selects tools. Tool results
+return optional structured profile and comparison artifacts alongside generated
+prose. Native UI controls reach the same location and premium application use
+cases through typed HTTP endpoints without requiring a model call.
+
+The agent tool boundary includes:
+
+- location resolution through `SearchLocations`;
+- premium comparison through `ComparePremiums`;
+- versioned official insurance explanations; and
+- versioned premium context and switching deadlines.
+
+The agent never owns eligibility, insurer/product identity, prices, category
+minima, ranking, differences, deadlines, or savings. Generated prose and typed
+facts remain separate throughout the API and presentation layers.
 
 ### Web experience — presentation
 
-The Next.js application presents guided inputs, accessible comparisons, and
-source provenance. It consumes API contracts and does not duplicate core
-pricing rules.
+The Next.js application presents one agent-led guided journey, accessible native
+controls, structured comparisons, and source provenance. The page does not
+render a traditional form plus a separate chat. It consumes typed API contracts
+and does not duplicate core pricing rules.
 
 The frontend is organized by feature rather than as a single route component:
 
@@ -73,10 +92,10 @@ frontend/
   features/comparison/
     config.ts                  immutable input choices
     types.ts                   feature language
-    use-comparison-flow.ts     client-side workflow state and actions
+    use-comparison-flow.ts     validated client workflow and actions
     components/
-      steps/                   one component per guided decision
-      results/                 one component per visualization/result module
+      steps/                   one native control per guided decision
+      results/                 structured fact and visualization modules
     styles/                    base, guide, results, and responsive concerns
 ```
 
@@ -84,6 +103,32 @@ Route files remain thin composition entries. Components own one interaction or
 presentation concern, shared feature state stays in one hook, and transport
 details remain in `app/api`. The architecture check limits feature files to 250
 lines and prevents feature modules from depending on the Next.js delivery layer.
+
+The presentation order is fixed by product semantics rather than generated
+prose: lowest overall, lowest by franchise, model comparison, then top ten.
+The frontend renders those values from structured response fields and never
+extracts a price, rank, insurer, deadline, or calculation from assistant text.
+
+### Browser session persistence — presentation adapter
+
+The anonymous MVP uses browser `sessionStorage` to recover from a refresh in
+the same tab. A versioned, bounded record may contain:
+
+- opaque thread/session identifier;
+- current guided step;
+- confirmed comparison profile;
+- bounded, sanitized visible transcript or conversation summary; and
+- timestamp/schema version.
+
+It must not contain credentials, hidden prompts, gender, health history, exact
+street address, policy number, payment data, or privileged source data. **Start
+over** deletes the record and creates a new opaque identifier. Closing the tab,
+another tab, another device, and long-term saved
+comparisons are outside the MVP contract.
+
+Server-side checkpointer memory is an optimization, not the canonical session.
+Every assistant request carries sufficient validated profile and bounded context
+to continue when a Vercel serverless process changes or restarts.
 
 ## Backend layers
 
@@ -94,7 +139,7 @@ backend/src/compare_insurance_api/
     services.py        pure ranking and comparison rules
   application/
     ports.py           repository and guide interfaces
-    use_cases.py       comparison and explanation orchestration
+    use_cases.py       comparison, location, and explanation orchestration
   infrastructure/
     bag_ingestion.py          reproducible source loading and upload
     bag_normalization.py      source-code mappings and validation
@@ -119,6 +164,13 @@ the application `InsuranceGuide` port rather than importing LangChain directly.
   specific year, municipality region, age category, deductible, and accident
   choice.
 - **Comparison criteria:** confirmed, normalized inputs for a single search.
+- **Comparison session:** current guided step plus confirmed, validated profile
+  values; it is independent of an LLM provider. The MVP represents it as a pure
+  frontend journey state and validates pricing criteria again on the server.
+- **Assistant guidance:** generated plain-language content that can explain or
+  request information but is not a price, ranking, deadline, or calculation.
+- **Structured result:** typed source-backed facts produced by application use
+  cases and rendered independently from assistant guidance.
 - **Cheapest:** the lowest approved monthly gross premium for the exact
   criteria—not a quality or total-cost recommendation.
 - **Difference from cheapest:** a non-negative price delta for another offer.
@@ -146,12 +198,14 @@ privacy boundary, service objectives, and test requirements.
 
 ```text
 Browser
-  -> Next.js guided comparison and chat
-  -> same-origin /api/locations, /api/premiums, and /api/chat
+  -> Next.js agent-led guided comparison
+  -> sessionStorage adapter restores same-tab workflow after refresh
+  -> same-origin /api/chat, /api/locations, and /api/premiums
   -> FastAPI API controller
+  -> ExplainInsuranceChoices -> InsuranceGuide -> LangChain/OpenAI
+  -> assistant message + optional profile/comparison/citations artifacts
   -> SearchLocations -> LocationRepository -> packaged official-data catalogue
   -> ComparePremiums -> PremiumRepository -> Supabase
-  -> ExplainInsuranceChoices -> LangChain -> comparison tool
 
 Official swisstopo + BAG raw data
   -> tested postcode/municipality/premium-region build
@@ -185,9 +239,15 @@ Rules for future work:
 
 - A pricing, eligibility, ranking, or savings rule starts with a domain test.
 - A workflow starts with an application test using a fake port.
+- A guided-step transition starts with a pure journey-state test proving valid
+  transitions, compare-all defaults, dependent resets, and restart behavior.
 - An endpoint change includes an API contract test.
 - A BAG schema mapping includes representative fixture and rejection tests.
 - LLM calls are never required by the default test suite.
+- Agent contract tests assert that generated prose and structured factual data
+  use separate fields and that price rendering never depends on prose parsing.
+- Frontend persistence tests cover refresh rehydration, schema/version rejection,
+  bounded transcript retention, and **Start over** clearing `sessionStorage`.
 - Production defects receive a failing regression test before the fix.
 - Tests must assert behavior and business language, not framework internals.
 - Architecture fitness tests prevent framework and outer-layer imports from
@@ -216,6 +276,12 @@ The frontend and FastAPI/LangChain runtime are deployed as separate Vercel
 projects from the same monorepo. `backend/src/index.py` is the thin Vercel
 Python-runtime entry point and only re-exports the existing FastAPI composition
 root. The frontend reaches that service through its same-origin proxy route.
+
+The browser owns only the recoverable same-tab presentation snapshot. The chat
+request sends a bounded, sanitized history, and the deterministic journey sends
+validated pricing criteria to the comparison endpoint. No correctness or
+continuity guarantee depends on a specific serverless instance or
+`InMemorySaver`. Durable accounts and cross-device history are deferred.
 
 Supabase is server-only: browser code reaches it through FastAPI, row-level
 security is enabled, and the service-role key is stored only in deployment and

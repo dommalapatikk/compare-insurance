@@ -18,6 +18,7 @@ from compare_insurance_api.api.schemas import (
     PremiumSearchRequest,
     PremiumSearchResponse,
 )
+from compare_insurance_api.application.ports import ChatHistoryMessage
 from compare_insurance_api.application.use_cases import (
     ComparePremiums,
     ExplainInsuranceChoices,
@@ -95,7 +96,12 @@ async def search_locations(
     )
 
 
-@router.post("/v1/chat", response_model=ChatResponse, tags=["assistant"])
+@router.post(
+    "/v1/chat",
+    response_model=ChatResponse,
+    response_model_exclude_none=True,
+    tags=["assistant"],
+)
 async def chat(
     request: ChatRequest,
     use_case: Annotated[
@@ -104,9 +110,13 @@ async def chat(
     ],
 ) -> ChatResponse:
     try:
-        message = await use_case.execute(
+        reply = await use_case.execute(
             message=request.message,
             thread_id=request.thread_id,
+            history=tuple(
+                ChatHistoryMessage(role=item.role, content=item.content)
+                for item in request.history
+            ),
         )
     except RuntimeError as exc:
         detail = str(exc)
@@ -125,7 +135,19 @@ async def chat(
             detail="The insurance chat assistant could not complete the request.",
         ) from exc
 
-    return ChatResponse(message=message, thread_id=request.thread_id)
+    return ChatResponse(
+        message=reply.message,
+        thread_id=request.thread_id,
+        comparison=reply.comparison,
+        citations=(
+            [
+                {"title": citation.title, "url": citation.url}
+                for citation in reply.citations
+            ]
+            or None
+        ),
+        profile=reply.profile,
+    )
 
 
 @router.get(

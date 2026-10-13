@@ -18,9 +18,10 @@ export function ResultSummary({
   return (
     <div className="lowest-result">
       <div className="lowest-price">
-        <span>Lowest monthly premium</span>
+        <span>Lowest published premium</span>
         <strong>{formatCurrency(Number(cheapest.monthly_premium_chf))}<small>/month</small></strong>
         <p>{formatCurrency(Number(cheapest.annual_premium_chf))} per year</p>
+        <small>Lowest for these filters—not necessarily the lowest total healthcare cost.</small>
       </div>
       <div className="lowest-provider">
         <span>Insurer and model</span>

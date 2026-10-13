@@ -9,7 +9,7 @@
 
 ## 1. Product summary
 
-Compare Insurance helps people living in Switzerland identify and compare the lowest-priced compulsory basic health-insurance plans available for their place of residence. A user enters their municipality or postal code, age information, desired deductible ("franchise"), insurance model, and accident-coverage preference. The product returns up to ten eligible plans ranked by approved premium and clearly shows possible monthly and annual premium savings.
+Compare Insurance is an agent-led guide for people living in Switzerland who want to identify and compare the lowest-priced compulsory basic health-insurance plans available for their place of residence. The guided assistant collects only the inputs needed for a valid comparison, explains unfamiliar choices in plain language, invokes typed application tools, and presents structured results. The product shows the lowest approved premium for every selected franchise, comparisons across insurance models, and up to ten eligible plan combinations ranked by approved premium.
 
 The first release is a neutral comparison tool. It does not sell insurance, determine eligibility for premium subsidies, or compare supplementary insurance.
 
@@ -17,7 +17,7 @@ The first release is a neutral comparison tool. It does not sell insurance, dete
 
 Swiss basic-insurance premiums vary across insurers, premium regions, age groups, deductibles, insurance models, accident coverage, and insurance years. Official data is available, but the number of combinations and unfamiliar terminology make it difficult for a person to answer a simple question: "What is the cheapest valid option for me, and how much could I save?"
 
-The product should turn official premium data into a fast, understandable comparison without implying that the lowest premium is automatically the best overall financial or care choice.
+The product should turn official premium data into a fast, understandable comparison without implying that the lowest premium is automatically the best overall financial or care choice. For 2027, the national mean premium is CHF 412 per month and is expected to rise by 5.0% compared with 2026; an individual's actual premium and change can differ materially. A person changing insurer or insurance model for 1 January 2027 must ensure the request reaches the current insurer by 30 November 2026.
 
 ## 3. Product goals
 
@@ -27,6 +27,9 @@ The product should turn official premium data into a fast, understandable compar
 - Show the ten lowest-premium eligible plan combinations with transparent ranking and savings calculations.
 - Use approved, traceable Federal Office of Public Health (FOPH/BAG) data and make the applicable premium year visible.
 - Explain the practical trade-offs behind deductibles, restricted-provider models, and accident coverage.
+- Make the guided assistant the primary interaction surface while preserving native, keyboard-accessible controls for every pricing input.
+- Complete the default comparison in under 60 seconds by selecting all valid franchises and all models unless the user narrows them.
+- Keep AI-written guidance visually and structurally separate from source-backed prices, rankings, deadlines, and calculations.
 
 ## 4. Non-goals
 
@@ -76,6 +79,18 @@ Accident inclusion can change the premium. It is therefore a required comparison
 
 All authorised insurers providing compulsory basic insurance cover the legally defined basic benefits and must accept eligible applicants within their area of activity, subject to the applicable rules. Restricted-provider models can differ materially in how care is accessed, so the result must not imply that model constraints are identical.
 
+### 5.7 2027 context and switching dates
+
+The FOPH/BAG states that the national mean premium for 2027 is CHF 412 per month, 5.0% above the 2026 mean. These values describe a national average, not a forecast or result for an individual profile. Product copy must pair the statistic with a reminder that location, age category, franchise, accident cover, insurer, and insurance model determine an individual's premium.
+
+For changes effective 1 January 2027:
+
+- a change of insurer or insurance model must reach the current insurer by 30 November 2026;
+- a request for a lower franchise must reach the insurer by 30 November 2026; and
+- a higher franchise can be requested in writing by 31 December 2026.
+
+Deadline copy must show the absolute date, be derived from versioned official content, and stop using urgency language after the applicable date. The product does not submit, cancel, or change policies in the MVP.
+
 ## 6. Personas
 
 ### Persona A — Price-conscious resident
@@ -116,13 +131,13 @@ As a policyholder, I want to select or enter my current plan premium and see the
 
 As a user, I want to see the official data source, premium year, update date, and assumptions so that I know what the comparison represents.
 
-### US-7 — Ask a conversational guide
+### US-7 — Complete a guided comparison
 
-As a resident, I want to describe my situation or ask questions in a chat window so that I can understand deductibles, insurance models, accident coverage, and the inputs required for an accurate comparison without learning specialist terminology first.
+As a resident, I want to describe my situation or use clear native controls in a guided conversation so that I can complete a valid comparison without learning specialist terminology first.
 
 ### US-8 — Understand the comparison visually
 
-As a resident, I want a compact matrix with exact values and a ranked table so that I can identify the cheapest offer by franchise and insurance model without interpreting a dense report.
+As a resident, I want to see the cheapest offer at each franchise first, then compare insurance models and the ten lowest-priced plans, so that I can understand the result without interpreting a dense report.
 
 ### US-9 — Understand the insurance provider
 
@@ -132,19 +147,24 @@ As a resident, I want each result to show the provider's official name, BAG insu
 
 As a resident, I want a plain-language explanation of how the family-doctor model works, including the first-contact and referral obligation, so that I understand the care-access trade-off before choosing a lower premium.
 
+### US-11 — Resume after a refresh
+
+As an anonymous user, I want my current guided comparison and visible conversation to survive a page refresh in the same browser tab so that an accidental refresh does not make me start again.
+
 ## 8. Core user experience
 
-1. The landing page states that the tool compares Swiss compulsory basic insurance using official premium data.
-2. The user selects the premium year, if more than one year is available; otherwise the current available year is preselected and visible.
-3. The user searches by postal code or municipality and confirms the municipality.
-4. The user enters age or birth year; the interface shows the derived official age category.
-5. The user chooses accident coverage: included or excluded, with explanatory help text.
-6. The user selects one deductible, multiple deductibles, or "compare all valid deductibles."
-7. The user selects one or more model types, or "all models."
-8. Optionally, the user selects their current plan or enters the current monthly premium for a savings comparison.
-9. The page presents location, age category, and accident coverage together in one compact form. All valid franchises and models are selected by default and remain editable under one disclosure.
-10. The results page shows the lowest matching premium, a franchise-by-model matrix of exact category minima, and the top ten matching plan combinations in a compact table.
-11. The user can change a filter without re-entering the other inputs, inspect plan details, and open the insurer's official site or neutral next-step guidance.
+1. A compact opening states that 2027 national mean premiums are expected to rise by 5.0% to CHF 412 per month, makes clear that an individual's change may differ, and shows the 30 November 2026 insurer/model-change deadline.
+2. The guided assistant explains that it will ask a few short questions and then show official published premiums. The premium year is preselected and visible when only one year is available.
+3. The assistant asks one question at a time while rendering native controls. The user may use those controls or type a natural-language answer.
+4. The user searches by postal code or municipality and confirms the municipality when the location is ambiguous.
+5. The user enters birth year; the interface derives and confirms the official child, young-adult, or adult category. Gender is never requested or retained.
+6. The user explicitly includes or excludes accident coverage, with an accessible "Help me decide" explanation.
+7. The assistant asks how the user prefers to access care. "Compare all models" is selected by default; the user may narrow the official 2027 model categories.
+8. The assistant asks which franchises to compare. "Compare every valid franchise" is selected by default; the user may select one or more valid values.
+9. The user confirms one compact, editable profile summary and requests the comparison.
+10. Structured results appear in this order: lowest published premium, lowest premium at every selected franchise, model comparison, and the ten lowest-priced eligible plan combinations.
+11. After results, the user may enter a current monthly premium to calculate gross-premium differences, ask a follow-up question, or refine a preference without re-entering valid inputs.
+12. The current profile and bounded, sanitized visible transcript survive a page refresh in the same tab through `sessionStorage`; starting over clears them.
 
 ## 9. Functional requirements
 
@@ -185,7 +205,9 @@ As a resident, I want a plain-language explanation of how the family-doctor mode
 - For each result, show insurer, product/model, model category, deductible, accident option, monthly premium, annual premium, and calculated savings where a valid reference exists.
 - Allow sorting by monthly premium and filtering by insurer, deductible, and model without changing the underlying eligibility rules.
 - Show all money values in CHF with two decimals.
-- Visualize the difference from the cheapest plan with ranked horizontal bars and show deductible premiums with a focused column comparison.
+- Present the overall lowest published premium first, followed by the lowest eligible premium at every selected franchise, model comparisons, and the ranked top ten.
+- Use an accessible price ladder for franchise minima, with one row per franchise showing the exact premium, insurer, model, and difference from the overall cheapest. Keep the complete franchise-by-model matrix as a secondary detail view.
+- Visualize the difference from the cheapest plan with ranked horizontal bars where useful, without exaggerating small differences.
 - Pair every graphical comparison with an equivalent accessible data table and exact numeric labels.
 - Do not use quality scores, gauges, or recommendation language unless a future validated quality dataset and ranking policy explicitly support them.
 
@@ -222,17 +244,19 @@ The implementation may vary, but the product needs equivalent read capabilities:
 
 The public API must reject unknown filter values, cap page size, and never accept gender as a pricing parameter.
 
-### FR-10 — Optional customer help
+### FR-10 — Guided assistant and session state
 
-- Keep the structured comparison form primary and the question-and-answer help secondary and initially collapsed.
-- Use static, source-linked CH.CH answers for common questions before invoking a language model.
+- Make the guided assistant the primary way to complete the comparison, while rendering every required pricing choice as a native form control within the conversation.
+- Accept natural-language answers as an alternative input path, but validate every proposed profile change through application/domain rules before confirmation.
 - Implement the assistant on the server with LangChain; provider credentials must never be sent to browser code. Framework and model names are implementation details and must not appear in customer-facing labels or status messages.
-- Keep conversation context within an opaque thread identifier and avoid collecting names, exact street addresses, health history, policy numbers, or payment details.
-- Let the help experience explain comparison concepts and summarize the user's selected inputs.
-- Give the agent access to premium results only through a validated, deterministic comparison tool once ingestion is complete.
+- Provide typed tools for location resolution, premium comparison, versioned official explanations, and switching-deadline facts. The assistant must not answer those facts from model memory when a tool is available.
+- Keep AI prose distinct from structured comparison data in the API and the UI. Insurer names, premiums, rankings, savings, deadlines, and source metadata must be rendered from typed application responses, never parsed from generated prose.
+- Give the agent access to premium results only through the validated `ComparePremiums` application use case.
 - The agent must not generate SQL, construct database filters, perform premium arithmetic, or receive direct database credentials. It may invoke only typed application tools whose repositories enforce exact filters.
 - The structured comparison service, not the language model, remains the source of truth for eligibility, premium values, ordering, and savings calculations.
-- Display a concise general-information disclaimer inside the help area and ensure the comparison controls remain usable when the conversational service is unavailable.
+- Persist the anonymous MVP profile, current workflow step, opaque thread identifier, and a bounded, sanitized visible transcript in browser `sessionStorage`. Restore them after a refresh in the same tab and remove them on **Start over**. Do not promise persistence after the tab or browser is closed.
+- Treat server-side model memory as an optimization, not the canonical session. Each request must contain enough validated profile and bounded context to continue after a serverless process restart.
+- Avoid collecting names, exact street addresses, health history, policy numbers, payment details, or gender. Display a concise general-information disclaimer and preserve a usable deterministic comparison fallback if the assistant is unavailable.
 
 ## 10. Ranking and calculation definitions
 
@@ -393,7 +417,9 @@ Raw source files must remain immutable. Normalized data must be reproducible fro
 
 - Minimize collection: no name, gender, health history, account, or exact street address is needed for comparison.
 - Prefer birth year/derived age category over storing a full date of birth.
-- Do not persist a user's inputs by default; disclose any local storage or analytics use.
+- For the anonymous MVP, persist only the current profile, workflow step, opaque thread identifier, and bounded, sanitized visible transcript in browser `sessionStorage` so a refresh in the same tab can be recovered.
+- Disclose this same-tab persistence, provide **Start over** to clear the comparison, and do not imply that it survives closing the tab or works across devices.
+- Do not put model credentials, database credentials, hidden prompts, or privileged source data in browser storage.
 - Avoid sending raw search profiles to third-party analytics. Aggregate location analytics to a suitable level.
 - Follow the Swiss Federal Act on Data Protection and, where applicable, GDPR principles.
 - Use HTTPS, input validation, dependency scanning, rate limits, safe error messages, and security headers.
@@ -430,6 +456,7 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 ### Included
 
 - Responsive web application.
+- Agent-led guided comparison with native controls and natural-language input.
 - Switzerland-wide municipality and premium-region lookup.
 - Official age-category handling.
 - Accident included/excluded comparison.
@@ -441,14 +468,15 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 - Source, premium year, update date, and calculation explanations.
 - Automated official-data ingestion, validation report, and atomic dataset promotion.
 - English UI with an architecture ready for DE/FR/IT localization.
-- Optional question-and-answer help with short-term thread context and a responsive, accessible interface; LangChain remains a server-side implementation detail.
-- Graphical price-difference and deductible comparisons with equivalent accessible tables.
+- Structured agent responses that keep generated guidance separate from verified profile and comparison data; LangChain remains a server-side implementation detail.
+- Same-tab refresh recovery through bounded `sessionStorage` state, with a clear start-over action.
+- A franchise-first price ladder, model comparison, and graphical price-difference views with equivalent accessible tables.
 
 ### Deferred
 
 - Expected-total-cost modelling based on anticipated healthcare spending.
 - Premium subsidies.
-- Accounts, saved comparisons, alerts, and reminders.
+- Accounts, durable cross-tab or cross-device saved comparisons, alerts, and reminders.
 - Direct application or switching workflows.
 - Insurer quality scores and provider-network search.
 - Household or family-bundle comparison.
@@ -473,13 +501,18 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 14. An invalid or incomplete dataset cannot be promoted to production; the last validated dataset remains available with an accurate label.
 15. Automated tests include at least one example from each official age category, every requested adult deductible, accident included/excluded, each normalized model category, a multi-region canton, an ambiguous postal code, and a ranking tie.
 16. Keyboard-only and screen-reader users can complete the input flow, understand validation errors, and read or navigate the ranked results.
-17. All required pricing inputs are available as native form controls in one compact comparison form, and every answer remains visible and editable before resubmission.
+17. All required pricing inputs are available as native form controls inside the guided conversation, and every confirmed answer remains visible and editable before resubmission.
 18. Every result chart exposes the same values in a navigable table and never implies plan quality, endorsement, or total healthcare cost.
 19. While the comparison endpoint is unavailable, the production product shows no sample, fixture, or plausible price data as a real result and instead presents a concise retry state.
-20. The default form requires no more than postcode/municipality, birth year, and accident coverage; all valid franchises and models are preselected and editable.
+20. The default guided flow requires no more than postcode/municipality, birth year, and accident coverage before accepting the compare-all defaults for franchises and models.
 21. Every franchise/model matrix cell is computed from all eligible source rows for that exact pair, not from the displayed top-ten rows.
 22. Each ranked result shows the provider's official name and exact product name; an expandable detail exposes the BAG insurer number and source plan identifier.
-23. The language model cannot access the database directly, produce premium values, or determine ordering; disabling it does not prevent a comparison.
+23. The language model cannot access the database directly, produce premium values, or determine ordering; if it is unavailable, the same native controls can still submit the deterministic comparison.
+24. The initial experience states that the national mean premium for 2027 is CHF 412 per month and is expected to rise by 5.0%, while explicitly warning that an individual's result may differ.
+25. Before 30 November 2026, the switching notice identifies that date as the deadline by which an insurer/model-change request must reach the current insurer; after that date, urgency wording is removed.
+26. Results are ordered as overall lowest premium, lowest premium by franchise, model comparison, and top ten; the primary franchise view remains usable without horizontal scrolling at 320 CSS px.
+27. Refreshing the page in the same tab restores the current guided step, confirmed profile, and bounded, sanitized visible transcript from `sessionStorage`; **Start over** clears that state.
+28. The assistant response contract provides generated prose and structured profile/comparison data in separate fields, and the frontend never extracts factual prices from prose.
 
 ## 16. Success metrics
 
@@ -533,10 +566,12 @@ Business conversion metrics such as outbound insurer visits may be measured late
 - [FOPH: Premiums and co-payment](https://www.bag.admin.ch/bag/en/home/versicherungen/krankenversicherung/krankenversicherung-versicherte-mit-wohnsitz-in-der-schweiz/praemien-kostenbeteiligung.html)
 - [FOPH: Optional deductibles](https://www.bag.admin.ch/en/health-insurance-optional-deductibles)
 - [FOPH: Premium regions](https://www.bag.admin.ch/en/health-insurance-premium-regions)
+- [FOPH: 2027 premiums rise by 5.0% on average](https://www.bag.admin.ch/de/newnsb/BfuGvedj0OOX)
+- [FOPH: Premium costs, switching deadlines, and FAQs](https://www.bag.admin.ch/en/premiums-and-costs-answers-to-frequently-asked-questions)
 - [FOPH: Risk compensation and standard-premium principle](https://www.bag.admin.ch/bag/en/home/versicherungen/krankenversicherung/krankenversicherung-versicherer-aufsicht/risikoausgleich.html)
 - [Priminfo: Official neutral premium calculator](https://www.priminfo.admin.ch/)
 - [opendata.swiss: Health insurance premiums](https://opendata.swiss/en/dataset/health-insurance-premiums)
 
 ## 20. Definition of done for MVP
 
-The MVP is done when a user can choose a valid Swiss municipality, official age category, accident option, deductible(s), and model(s), then receive an accurate and deterministic top-ten comparison sourced from a validated official premium dataset. The user can understand the premium year, model and deductible trade-offs, and any savings reference without gender being collected or used. The release has automated calculation/import tests, accessibility checks, monitoring, privacy disclosures, and a documented data-refresh runbook.
+The MVP is done when a user can complete an agent-led comparison in under 60 seconds by choosing a valid Swiss municipality, birth year, accident option, deductible(s), and model(s), then receive source-backed structured results in the agreed hierarchy: overall lowest premium, lowest by franchise, model comparison, and top ten. Generated guidance is kept separate from verified prices and ranking, refresh recovery works in the same tab, and gender is neither collected nor used. The release has automated domain, application, API, agent-contract, calculation/import, persistence, content, and accessibility tests; monitoring; privacy disclosures; and a documented data-refresh runbook.

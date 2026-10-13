@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ detail: "Invalid JSON request." }, { status: 400 });
   }
 
-  const body = payload as { message?: unknown; thread_id?: unknown };
+  const body = payload as { message?: unknown; thread_id?: unknown; history?: unknown };
   if (
     typeof body.message !== "string" ||
     !body.message.trim() ||
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         message: body.message.trim(),
         thread_id: body.thread_id,
+        history: Array.isArray(body.history) ? body.history : [],
       }),
       cache: "no-store",
       signal: AbortSignal.timeout(45_000),

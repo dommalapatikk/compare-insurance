@@ -2,41 +2,43 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { requestGuideReply, searchPremiums } from "./comparison-api";
+import { clearConversationState, loadConversationState, saveConversationState } from "./conversation-storage";
+import { adultDeductibles, ageChoices, ageGroupForBirthYear, childDeductibles, modelChoices } from "./config";
+import { clearJourneyState, loadJourneyState, saveJourneyState } from "./journey-storage";
 import {
-  adultDeductibles,
-  ageGroupForBirthYear,
-  ageChoices,
-  childDeductibles,
-  modelChoices,
-} from "./config";
-import type {
-  AccidentChoice,
-  LocationSearchResponse,
-  LocationSuggestion,
-  Message,
-  PremiumSearchResponse,
-} from "./types";
+  allSelection, createJourneyState, journeyReducer, resolveDeductibles,
+  resolveModels, selectedValues,
+} from "./journey-machine";
+import type { InsuranceModel, JourneyAction, JourneyStage } from "./journey-machine";
+import type { AccidentChoice, ChatProfile, LocationSuggestion, Message, PremiumSearchResponse } from "./types";
+import { useLocationPicker } from "./use-location-picker";
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function completeLocation(value: ChatProfile["resolved_location"]): value is LocationSuggestion {
+  if (!value) return false;
+  return ["postal_code", "locality", "municipality_id", "municipality_name", "label", "canton", "premium_region"]
+    .every((key) => typeof value[key as keyof typeof value] === "string");
+}
+
 export function useComparisonFlow() {
+  const [journey, setJourney] = useState(createJourneyState);
+  const [hydrated, setHydrated] = useState(false);
+  const [restoredNotice, setRestoredNotice] = useState("");
   const [threadId, setThreadId] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [locationQuery, setLocationQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
-  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
-  const [locationNotice, setLocationNotice] = useState("");
-  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const [activeLocationIndex, setActiveLocationIndex] = useState(-1);
+  const locationPicker = useLocationPicker();
   const [birthYear, setBirthYearValue] = useState("");
-  const [accident, setAccident] = useState<AccidentChoice>("");
+  const [accident, setAccidentValue] = useState<AccidentChoice>("");
   const [deductibles, setDeductibles] = useState<number[]>(adultDeductibles);
-  const [models, setModels] = useState<string[]>(modelChoices.map(({ value }) => value));
+  const [models, setModels] = useState<InsuranceModel[]>(
+    modelChoices.map(({ value }) => value as InsuranceModel),
+  );
   const [currentPremium, setCurrentPremium] = useState("");
   const [formError, setFormError] = useState("");
   const [results, setResults] = useState<PremiumSearchResponse | null>(null);
@@ -44,199 +46,175 @@ export function useComparisonFlow() {
   const [isSearching, setIsSearching] = useState(false);
   const resultsRef = useRef<HTMLElement>(null);
 
-  useEffect(() => setThreadId(crypto.randomUUID().replaceAll("-", "")), []);
+  function reduce(action: JourneyAction) {
+    setJourney((current) => journeyReducer(current, action));
+    setRestoredNotice("");
+  }
+
+  useEffect(() => {
+    try {
+      const savedJourney = loadJourneyState(window.sessionStorage);
+      const savedConversation = loadConversationState(window.sessionStorage);
+      if (savedJourney) {
+        const restored = savedJourney.stage === "results"
+          ? journeyReducer(savedJourney, { type: "edit", stage: "review" })
+          : savedJourney;
+        setJourney(restored);
+        const profile = restored.profile;
+        if (profile.location) locationPicker.chooseLocation(profile.location);
+        if (profile.birthYear) setBirthYearValue(String(profile.birthYear));
+        if (profile.accident) setAccidentValue(profile.accident);
+        if (profile.models) setModels(resolveModels(profile));
+        if (profile.deductibles) setDeductibles(resolveDeductibles(profile));
+        setRestoredNotice(savedJourney.stage === "results"
+          ? "Your answers were restored. Compare again to refresh the official premiums."
+          : "Your answers were restored for this browser tab.");
+      }
+      if (savedConversation) {
+        setThreadId(savedConversation.threadId);
+        setMessages(savedConversation.messages);
+        setCurrentPremium(savedConversation.currentPremium);
+      } else {
+        setThreadId(crypto.randomUUID().replaceAll("-", ""));
+      }
+    } finally {
+      setHydrated(true);
+    }
+    // The location picker is intentionally hydrated once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try { saveJourneyState(window.sessionStorage, journey); } catch { /* optional */ }
+  }, [hydrated, journey]);
+  useEffect(() => {
+    if (!hydrated || !threadId) return;
+    try {
+      saveConversationState(window.sessionStorage, { threadId, messages, currentPremium });
+    } catch { /* optional */ }
+  }, [currentPremium, hydrated, messages, threadId]);
   useEffect(() => {
     if (results || searchNotice) resultsRef.current?.focus();
   }, [results, searchNotice]);
 
-  useEffect(() => {
-    const query = locationQuery.trim();
-    if (query.length < 2 || selectedLocation?.label === query) {
-      setLocationSuggestions([]);
-      setActiveLocationIndex(-1);
-      setLocationNotice("");
-      setIsLoadingLocations(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(async () => {
-      setIsLoadingLocations(true);
-      setLocationNotice("");
-      try {
-        const response = await fetch(`/api/locations?q=${encodeURIComponent(query)}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const payload = (await response.json()) as LocationSearchResponse & { detail?: string };
-        if (!response.ok) throw new Error(payload.detail || "Location search is unavailable.");
-        setLocationSuggestions(payload.locations);
-        setActiveLocationIndex(payload.locations.length ? 0 : -1);
-        setLocationNotice(payload.locations.length ? "" : "No Swiss postcode or municipality found.");
-        setShowLocationSuggestions(true);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setLocationSuggestions([]);
-        setActiveLocationIndex(-1);
-        setLocationNotice("Location search is unavailable. Please try again.");
-      } finally {
-        if (!controller.signal.aborted) setIsLoadingLocations(false);
-      }
-    }, 180);
-
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [locationQuery, selectedLocation]);
-
   const ageGroup = ageGroupForBirthYear(birthYear);
   const availableDeductibles = ageGroup === "child" ? childDeductibles : adultDeductibles;
   const ageLabel = ageChoices.find(({ value }) => value === ageGroup)?.label || "Not chosen";
-  const accidentLabel = accident === "included"
-    ? "Included"
-    : accident === "excluded" ? "Excluded" : "Not chosen";
-  const location = selectedLocation?.label || "";
-
-  function updateLocationQuery(value: string) {
-    setLocationQuery(value);
-    if (value !== selectedLocation?.label) setSelectedLocation(null);
-    setShowLocationSuggestions(true);
-    setActiveLocationIndex(-1);
-    setFormError("");
-  }
-
-  function chooseLocation(value: LocationSuggestion) {
-    setSelectedLocation(value);
-    setLocationQuery(value.label);
-    setLocationSuggestions([]);
-    setActiveLocationIndex(-1);
-    setLocationNotice("");
-    setShowLocationSuggestions(false);
-    setFormError("");
-  }
-
-  function moveLocationSelection(direction: 1 | -1) {
-    if (!locationSuggestions.length) return;
-    setShowLocationSuggestions(true);
-    setActiveLocationIndex((current) => {
-      if (current < 0) return direction === 1 ? 0 : locationSuggestions.length - 1;
-      return (current + direction + locationSuggestions.length) % locationSuggestions.length;
-    });
-  }
-
-  function chooseActiveLocation() {
-    const location = locationSuggestions[activeLocationIndex];
-    if (showLocationSuggestions && location) chooseLocation(location);
-  }
+  const accidentLabel = accident === "included" ? "Included" : accident === "excluded" ? "Excluded" : "Not chosen";
 
   function setBirthYear(value: string) {
-    const previousAgeGroup = ageGroup;
     const nextAgeGroup = ageGroupForBirthYear(value);
     setBirthYearValue(value);
-    if (nextAgeGroup && nextAgeGroup !== previousAgeGroup) {
+    if (nextAgeGroup && nextAgeGroup !== ageGroup) {
       setDeductibles(nextAgeGroup === "child" ? childDeductibles : adultDeductibles);
     }
     setFormError("");
   }
 
-  function toggleDeductible(value: number) {
-    setDeductibles((current) => current.includes(value)
-      ? current.filter((item) => item !== value)
-      : [...current, value].sort((a, b) => a - b));
+  function goToStage(target: JourneyStage) {
+    setFormError("");
+    setSearchNotice("");
+    if (journey.stage === "results" || target === journey.stage) {
+      if (target !== "welcome" && target !== "results") reduce({ type: "edit", stage: target });
+      if (target !== "results") setResults(null);
+      return;
+    }
+    if (journey.stage === "location" && locationPicker.selectedLocation) reduce({ type: "set_location", location: locationPicker.selectedLocation });
+    else if (journey.stage === "birth_year" && ageGroup) reduce({ type: "set_birth_year", birthYear: Number(birthYear) });
+    else if (journey.stage === "accident" && accident) reduce({ type: "set_accident", accident });
+    else if (journey.stage === "models" && models.length) reduce({ type: "set_models", selection: models.length === modelChoices.length ? allSelection() : selectedValues(models) });
+    else if (journey.stage === "deductibles" && deductibles.length) reduce({ type: "set_deductibles", selection: deductibles.length === availableDeductibles.length ? allSelection() : selectedValues(deductibles) });
+    else if (target !== "welcome" && target !== "results") reduce({ type: "edit", stage: target });
   }
 
-  function toggleModel(value: string) {
-    setModels((current) => current.includes(value)
-      ? current.filter((item) => item !== value)
-      : [...current, value]);
+  function applyAgentProfile(profile?: ChatProfile, comparison?: PremiumSearchResponse) {
+    if (!profile) return;
+    const resolved = completeLocation(profile.resolved_location) ? profile.resolved_location : null;
+    if (resolved) locationPicker.chooseLocation(resolved);
+    if (profile.birth_year) setBirthYearValue(String(profile.birth_year));
+    if (profile.accident_coverage !== undefined) setAccidentValue(profile.accident_coverage ? "included" : "excluded");
+    const trustedModels = (profile.insurance_models || []).filter((value): value is InsuranceModel => modelChoices.some((choice) => choice.value === value));
+    if (trustedModels.length) setModels(trustedModels);
+    if (profile.deductibles?.length) setDeductibles(profile.deductibles);
+    setJourney((current) => {
+      let next = current;
+      if (resolved) next = journeyReducer(next, { type: "set_location", location: resolved });
+      if (profile.birth_year) next = journeyReducer(next, { type: "set_birth_year", birthYear: profile.birth_year });
+      if (profile.accident_coverage !== undefined) next = journeyReducer(next, { type: "set_accident", accident: profile.accident_coverage ? "included" : "excluded" });
+      if (trustedModels.length) next = journeyReducer(next, { type: "set_models", selection: trustedModels.length === modelChoices.length ? allSelection() : selectedValues(trustedModels) });
+      if (profile.deductibles?.length) next = journeyReducer(next, { type: "set_deductibles", selection: selectedValues(profile.deductibles) });
+      return comparison ? journeyReducer(next, { type: "comparison_succeeded" }) : next;
+    });
   }
 
   async function sendMessage(text: string) {
     const message = text.trim();
     if (!message || !threadId || isSending) return;
     setMessages((current) => [...current, { id: makeId(), role: "user", content: message }]);
-    setDraft("");
-    setIsSending(true);
+    setDraft(""); setIsSending(true);
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, thread_id: threadId }),
-      });
-      const result = (await response.json()) as { message?: string; detail?: string };
-      if (!response.ok || !result.message) throw new Error(result.detail || "No response.");
-      setMessages((current) => [
-        ...current,
-        { id: makeId(), role: "assistant", content: result.message! },
-      ]);
+      const response = await requestGuideReply(message, threadId, messages);
+      if (!response.message) throw new Error(response.detail || "No response.");
+      setMessages((current) => [...current, { id: makeId(), role: "assistant", content: response.message!, citations: response.citations }]);
+      applyAgentProfile(response.profile, response.comparison);
+      if (response.comparison) {
+        setResults(response.comparison);
+        setSearchNotice(response.comparison.offers.length ? "" : "No published offers match every selected filter.");
+      }
     } catch {
-      setMessages((current) => [
-        ...current,
-        {
-          id: makeId(),
-          role: "assistant",
-          content: "Questions are unavailable right now. You can still compare premiums and read the help topics.",
-        },
-      ]);
-    } finally {
-      setIsSending(false);
-    }
+      setMessages((current) => [...current, { id: makeId(), role: "assistant", content: "Questions are unavailable right now. You can still use the guided comparison and help topics." }]);
+    } finally { setIsSending(false); }
   }
 
   async function comparePlans() {
-    if (!selectedLocation || !ageGroup || !birthYear || !accident) {
-      setFormError("Choose your location, enter your birth year and select accident cover.");
-      return;
+    const selectedLocation = locationPicker.selectedLocation;
+    if (!selectedLocation || !ageGroup || !birthYear || !accident || !deductibles.length || !models.length) {
+      setFormError("Complete each answer before comparing premiums."); return;
     }
-    if (!deductibles.length || !models.length) {
-      setFormError("Choose at least one deductible and one insurance model.");
-      return;
-    }
-    setFormError("");
-    setIsSearching(true);
-    setSearchNotice("");
-    setResults(null);
-    const params = new URLSearchParams({
-      canton: selectedLocation.canton,
-      region: selectedLocation.premium_region,
-      birth_year: birthYear,
-      accident_coverage: String(accident === "included"),
-      year: "2027",
-      top_n: "10",
-    });
-    deductibles.forEach((value) => params.append("deductible", String(value)));
-    models.forEach((value) => params.append("insurance_model", value));
-    if (currentPremium) params.set("reference_monthly_premium_chf", currentPremium);
+    setFormError(""); setIsSearching(true); setSearchNotice(""); setResults(null);
     try {
-      const response = await fetch(`/api/premiums?${params.toString()}`, { cache: "no-store" });
-      const payload = (await response.json()) as PremiumSearchResponse & { detail?: string };
-      if (!response.ok) throw new Error("We couldn't load premiums right now. Please try again.");
+      const payload = await searchPremiums({ canton: selectedLocation.canton, region: selectedLocation.premium_region, birthYear, accidentCoverage: accident === "included", deductibles, models, currentPremium });
       setResults(payload);
+      setJourney((current) => journeyReducer(current, { type: "comparison_succeeded" }));
       if (!payload.offers.length) setSearchNotice("No published offers match every selected filter.");
     } catch (error) {
-      setSearchNotice(
-        error instanceof Error
-          ? error.message
-          : "We couldn't load premiums right now. Please try again.",
-      );
+      setSearchNotice(error instanceof Error ? error.message : "We couldn't load premiums right now. Please try again.");
     } finally {
       setIsSearching(false);
       window.setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
   }
 
+  function toggleDeductible(value: number) { setDeductibles((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value].sort((a, b) => a - b)); }
+  function toggleModel(value: string) { setModels((current) => current.includes(value as InsuranceModel) ? current.filter((item) => item !== value) : [...current, value as InsuranceModel]); }
+  function restartJourney() {
+    try {
+      clearJourneyState(window.sessionStorage);
+      clearConversationState(window.sessionStorage);
+    } catch { /* optional */ }
+    setJourney(createJourneyState());
+    locationPicker.updateLocationQuery("");
+    setBirthYearValue(""); setAccidentValue(""); setDeductibles(adultDeductibles);
+    setModels(modelChoices.map(({ value }) => value as InsuranceModel));
+    setMessages([]); setCurrentPremium(""); setResults(null); setSearchNotice("");
+    setFormError(""); setRestoredNotice(""); setThreadId(crypto.randomUUID().replaceAll("-", ""));
+  }
+
   return {
-    accident, accidentLabel, activeLocationIndex, ageGroup, ageLabel,
-    availableDeductibles, birthYear, chooseActiveLocation, chooseLocation,
-    comparePlans, currentPremium, deductibles, draft, formError,
-    isLoadingLocations, isSearching, isSending, location, locationNotice,
-    locationQuery, locationSuggestions, messages, models, results, resultsRef,
-    searchNotice, selectedLocation, sendMessage, setAccident, setBirthYear,
-    setActiveLocationIndex, setCurrentPremium, setDraft, setModels,
-    setShowLocationSuggestions,
-    showLocationSuggestions, threadId, toggleDeductible, toggleModel,
-    updateLocationQuery, moveLocationSelection,
+    ...locationPicker, accident, accidentLabel, ageGroup, ageLabel, allModelCount: modelChoices.length,
+    availableDeductibles, birthYear, comparePlans, currentPremium, deductibles, draft, formError,
+    completedStages: {
+      location: Boolean(journey.profile.location), birth_year: Boolean(journey.profile.birthYear),
+      accident: Boolean(journey.profile.accident), models: Boolean(journey.profile.models),
+      deductibles: Boolean(journey.profile.deductibles),
+    },
+    goToStage, isSearching, isSending, journeyStage: journey.stage, location: locationPicker.selectedLocation?.label || "",
+    messages, models, restartJourney, restoredNotice, results, resultsRef, searchNotice, sendMessage,
+    setAccident: (value: AccidentChoice) => { setAccidentValue(value); setFormError(""); }, setBirthYear,
+    setCurrentPremium, setDraft, startJourney: () => reduce({ type: "start" }), threadId,
+    toggleDeductible, toggleModel, selectAllModels: () => setModels(modelChoices.map(({ value }) => value as InsuranceModel)),
+    selectAllDeductibles: () => setDeductibles(availableDeductibles),
   };
 }
 

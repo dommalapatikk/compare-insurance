@@ -1,6 +1,11 @@
 import asyncio
 from decimal import Decimal
 
+from compare_insurance_api.application.ports import (
+    ChatHistoryMessage,
+    GuideReply,
+    SourceCitation,
+)
 from compare_insurance_api.application.use_cases import (
     ComparePremiums,
     ExplainInsuranceChoices,
@@ -26,11 +31,25 @@ class InMemoryPremiumRepository:
 
 class StubInsuranceGuide:
     def __init__(self) -> None:
-        self.received: tuple[str, str] | None = None
+        self.received: tuple[str, str, tuple[ChatHistoryMessage, ...]] | None = None
 
-    async def reply(self, *, message: str, thread_id: str) -> str:
-        self.received = (message, thread_id)
-        return "A deterministic explanation"
+    async def reply(
+        self,
+        *,
+        message: str,
+        thread_id: str,
+        history: tuple[ChatHistoryMessage, ...],
+    ) -> GuideReply:
+        self.received = (message, thread_id, history)
+        return GuideReply(
+            message="A deterministic explanation",
+            citations=(
+                SourceCitation(
+                    title="Official guidance",
+                    url="https://www.ch.ch/en/health/health-insurance/",
+                ),
+            ),
+        )
 
 
 def make_criteria() -> SearchCriteria:
@@ -86,14 +105,40 @@ def test_compare_premiums_orchestrates_repository_and_domain_ranking() -> None:
 
 def test_explain_insurance_choices_uses_the_guide_port() -> None:
     guide = StubInsuranceGuide()
+    history = (
+        ChatHistoryMessage(role="user", content="I live in Bern"),
+        ChatHistoryMessage(role="assistant", content="What is your birth year?"),
+    )
 
     response = asyncio.run(
         ExplainInsuranceChoices(guide).execute(
             message="Explain Telmed",
             thread_id="thread-123",
+            history=history,
         )
     )
 
-    assert response == "A deterministic explanation"
-    assert guide.received == ("Explain Telmed", "thread-123")
+    assert response.message == "A deterministic explanation"
+    assert response.citations[0].title == "Official guidance"
+    assert guide.received == ("Explain Telmed", "thread-123", history)
+
+
+def test_explain_insurance_choices_bounds_history_at_the_application_boundary() -> None:
+    guide = StubInsuranceGuide()
+    history = tuple(
+        ChatHistoryMessage(role="user", content=f"message {index}")
+        for index in range(20)
+    )
+
+    asyncio.run(
+        ExplainInsuranceChoices(guide).execute(
+            message="Continue",
+            thread_id="thread-123",
+            history=history,
+        )
+    )
+
+    assert guide.received is not None
+    assert len(guide.received[2]) == 12
+    assert guide.received[2][0].content == "message 8"
 

@@ -6,8 +6,10 @@ The API compares published Swiss mandatory health-insurance premiums. It must
 only return offers from an ingested, validated official dataset; it must not
 fabricate insurers, products, prices, or coverage.
 
-The implementation exposes a health check, a data-backed search contract, and
-a LangChain guide with a read-only comparison tool.
+The implementation exposes a health check, data-backed search contracts, and
+an agent-led guide that coordinates typed application tools. Generated guidance
+and verified facts are separate fields: a client must never parse assistant
+prose to obtain a profile value, insurer, premium, rank, saving, or deadline.
 
 ## Endpoints
 
@@ -51,34 +53,79 @@ When one postcode/locality intersects more than one municipality, the endpoint r
 
 ### `POST /v1/chat`
 
-Continues a short-lived LangChain conversation about compulsory basic-insurance
-comparison inputs and concepts.
+Continues the natural-language path through the guided comparison. Native step
+controls use the typed location and premium endpoints directly; the assistant
+may call those same application capabilities through tools and return their
+artifacts separately from generated prose.
 
 Request:
 
 ```json
 {
-  "message": "How does a CHF 2,500 deductible change my costs?",
-  "thread_id": "opaque-client-generated-id"
+  "thread_id": "opaque-client-generated-id",
+  "message": "I live in 3011 and was born in 1984",
+  "history": [
+    {"role": "assistant", "content": "Where do you live?"}
+  ]
 }
 ```
+
+`history` contains at most 12 sanitized user/assistant turns. It is supplied by
+the browser after a refresh and is never treated as the source of canonical
+prices, ranks, deadlines, or profile validation.
 
 Response:
 
 ```json
 {
-  "message": "Assistant response text",
   "thread_id": "opaque-client-generated-id",
-  "data_status": "comparison_available_when_catalogue_configured"
+  "message": "I found 3011 Bern. What accident-cover option should I compare?",
+  "data_status": "comparison_available_when_catalogue_configured",
+  "profile": {
+    "resolved_location": {
+      "postal_code": "3011",
+      "locality": "Bern",
+      "municipality_id": "351",
+      "municipality_name": "Bern",
+      "canton": "BE",
+      "premium_region": "1",
+      "label": "3011 Bern, BE"
+    }
+  },
+  "comparison": null,
+  "citations": [
+    {
+      "title": "swisstopo official locality and postcode directory",
+      "url": "https://www.swisstopo.admin.ch/en/official-directory-of-towns-and-cities"
+    }
+  ]
 }
 ```
 
 The endpoint uses server-side `OPENAI_API_KEY` and `OPENAI_MODEL` environment
-variables. It must never expose those values to a browser response. Conversation
-state is currently in-memory and is lost when the API process restarts. The
-agent may obtain prices only through the deterministic premium-search tool; it
-must not invent prices, rankings, or savings. It cannot generate SQL, access
-database credentials, or construct repository queries.
+variables. It must never expose those values to a browser response. Browser
+`sessionStorage` keeps the opaque thread ID, deterministic journey state, and
+bounded, sanitized visible history so the same tab can recover after a refresh.
+The client resends that bounded history; the agent is stateless at the server
+boundary and does not rely on in-memory checkpoints for continuity.
+
+When the agent invokes the comparison tool, `comparison` contains the same
+structured comparison shape returned by `GET /v1/premiums/search`, including `offers`,
+`cheapest_by_deductible`, `cheapest_by_model`, and
+`cheapest_by_deductible_and_model`. The UI renders factual values from that
+object, not from `message`.
+
+`profile` is an optional, validated projection of trusted location/comparison
+tool artifacts. It can be used to prefill the native journey after the user
+confirms the values. It is never inferred by parsing `message`. `citations`
+contains only allow-listed HTTPS sources returned by trusted tools. The 5.0%,
+CHF 412, and 30 November 2026 opening facts are versioned product content backed
+by official guidance rather than values extracted from model prose.
+
+The agent may obtain prices only through the deterministic premium-search tool;
+it must not invent prices, rankings, savings, deadlines, or model rules. It
+cannot generate SQL, access database credentials, or construct repository
+queries.
 
 ### `GET /v1/premiums/search`
 

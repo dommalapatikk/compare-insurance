@@ -1,6 +1,7 @@
 import type { ComparisonFlow } from "../use-comparison-flow";
 import { CategoryMatrix } from "./results/category-matrix";
 import { BeforeSwitching } from "./results/before-switching";
+import { DeductibleLadder } from "./deductible-ladder";
 import { RankedPlans } from "./results/ranked-plans";
 import { ResultSummary } from "./results/result-summary";
 
@@ -34,8 +35,28 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
             ageLabel={flow.ageLabel}
             accidentLabel={flow.accidentLabel}
           />
-          <CategoryMatrix offers={flow.results.cheapest_by_deductible_and_model} />
+          <DeductibleLadder offers={flow.results.cheapest_by_deductible} />
+          <details className="matrix-disclosure">
+            <summary>View every model × franchise combination</summary>
+            <CategoryMatrix offers={flow.results.cheapest_by_deductible_and_model} />
+          </details>
           <RankedPlans offers={flow.results.offers} source={flow.results.source_name} />
+          <section className="result-refinement" aria-labelledby="result-refinement-title">
+            <div>
+              <p className="eyebrow">Keep exploring</p>
+              <h3 id="result-refinement-title">What would you like to understand next?</h3>
+              <p>Ask about the trade-offs, edit an answer, or compare these plans with what you pay now.</p>
+            </div>
+            <div className="result-refinement-actions">
+              <button onClick={() => flow.goToStage("models")} type="button">Change care models</button>
+              <button onClick={() => flow.goToStage("deductibles")} type="button">Change franchises</button>
+              <button onClick={() => void flow.sendMessage("Explain the trade-offs in my comparison results.")} type="button">Explain these results</button>
+            </div>
+            <form onSubmit={(event) => { event.preventDefault(); void flow.comparePlans(); }}>
+              <label htmlFor="current-premium">What do you pay now each month? <small>Optional</small></label>
+              <div><span>CHF</span><input id="current-premium" inputMode="decimal" min="0" step="0.05" type="number" value={flow.currentPremium} onChange={(event) => flow.setCurrentPremium(event.target.value)} placeholder="e.g. 400.00" /><button type="submit">Compare savings</button></div>
+            </form>
+          </section>
           <BeforeSwitching />
           <details className="source-disclosure">
             <summary>About these premiums</summary>

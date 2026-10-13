@@ -1,6 +1,7 @@
 """Pydantic request and response contracts for the HTTP boundary."""
 
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -101,13 +102,46 @@ class LocationSearchResponse(BaseModel):
     locations: list[LocationResponse]
 
 
+class ChatHistoryItem(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=2_000)
+
+
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2_000)
     thread_id: str = Field(min_length=8, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")
+    history: list[ChatHistoryItem] = Field(default_factory=list, max_length=12)
+
+
+class CitationResponse(BaseModel):
+    title: str
+    url: str
+
+
+class ResolvedLocationProfileResponse(BaseModel):
+    postal_code: str | None = None
+    locality: str | None = None
+    municipality_id: str | None = None
+    municipality_name: str | None = None
+    label: str
+    canton: str
+    premium_region: str
+
+
+class ChatProfileResponse(BaseModel):
+    resolved_location: ResolvedLocationProfileResponse | None = None
+    birth_year: int | None = Field(default=None, ge=1900, le=2100)
+    age_category: AgeCategory | None = None
+    accident_coverage: bool | None = None
+    insurance_models: list[InsuranceModel] | None = None
+    deductibles: list[Deductible] | None = None
 
 
 class ChatResponse(BaseModel):
     message: str
     thread_id: str
     data_status: str = "comparison_available_when_catalogue_configured"
+    comparison: PremiumSearchResponse | None = None
+    citations: list[CitationResponse] | None = None
+    profile: ChatProfileResponse | None = None
 

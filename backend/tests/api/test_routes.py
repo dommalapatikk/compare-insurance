@@ -8,6 +8,11 @@ from compare_insurance_api.api.dependencies import (
     get_explain_insurance_choices,
     get_search_locations,
 )
+from compare_insurance_api.application.ports import (
+    ChatHistoryMessage,
+    GuideReply,
+    SourceCitation,
+)
 from compare_insurance_api.application.use_cases import PremiumComparison
 from compare_insurance_api.domain.models import (
     AgeCategory,
@@ -27,8 +32,68 @@ client = TestClient(app)
 
 
 class StubExplainInsuranceChoices:
-    async def execute(self, *, message: str, thread_id: str) -> str:
-        return f"Explained: {message} ({thread_id})"
+    async def execute(
+        self,
+        *,
+        message: str,
+        thread_id: str,
+        history: tuple[ChatHistoryMessage, ...] = (),
+    ) -> GuideReply:
+        assert history == ()
+        return GuideReply(message=f"Explained: {message} ({thread_id})")
+
+
+class StubStructuredInsuranceChoices:
+    async def execute(
+        self,
+        *,
+        message: str,
+        thread_id: str,
+        history: tuple[ChatHistoryMessage, ...] = (),
+    ) -> GuideReply:
+        assert history[-1].content == "What is your birth year?"
+        return GuideReply(
+            message="The comparison is ready.",
+            comparison={
+                "query": {
+                    "canton": "BE",
+                    "region": "1",
+                    "age_category": "adult",
+                    "birth_year": 1980,
+                    "deductibles": [2500],
+                    "accident_coverage": False,
+                    "insurance_models": ["praxis"],
+                    "year": 2027,
+                    "top_n": 10,
+                    "reference_monthly_premium_chf": None,
+                },
+                "source_year": 2027,
+                "source_name": "Swiss Federal Office of Public Health (BAG)",
+                "total_eligible_offers": 0,
+                "offers": [],
+                "cheapest_by_deductible": [],
+                "cheapest_by_model": [],
+                "cheapest_by_deductible_and_model": [],
+            },
+            citations=(
+                SourceCitation(
+                    title="BAG premium data",
+                    url="https://opendata.swiss/en/dataset/health-insurance-premiums",
+                ),
+            ),
+            profile={
+                "resolved_location": {
+                    "label": "3011 Bern, BE",
+                    "canton": "BE",
+                    "premium_region": "1",
+                },
+                "birth_year": 1980,
+                "age_category": "adult",
+                "accident_coverage": False,
+                "insurance_models": ["praxis"],
+                "deductibles": [2500],
+            },
+        )
 
 
 class StubComparePremiums:
@@ -293,6 +358,60 @@ def test_chat_maps_the_application_response_to_the_http_contract() -> None:
         "thread_id": "test-thread",
         "data_status": "comparison_available_when_catalogue_configured",
     }
+
+
+def test_chat_accepts_history_and_returns_structured_tool_artifacts() -> None:
+    app.dependency_overrides[get_explain_insurance_choices] = (
+        lambda: StubStructuredInsuranceChoices()
+    )
+    try:
+        response = client.post(
+            "/v1/chat",
+            json={
+                "message": "1980",
+                "thread_id": "test-thread",
+                "history": [
+                    {"role": "user", "content": "I live in 3011"},
+                    {"role": "assistant", "content": "What is your birth year?"},
+                ],
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["message"] == "The comparison is ready."
+    assert body["comparison"]["query"]["birth_year"] == 1980
+    assert body["citations"][0]["title"] == "BAG premium data"
+    assert body["profile"] == {
+        "resolved_location": {
+            "label": "3011 Bern, BE",
+            "canton": "BE",
+            "premium_region": "1",
+        },
+        "birth_year": 1980,
+        "age_category": "adult",
+        "accident_coverage": False,
+        "insurance_models": ["praxis"],
+        "deductibles": [2500],
+    }
+
+
+def test_chat_rejects_unbounded_history() -> None:
+    response = client.post(
+        "/v1/chat",
+        json={
+            "message": "Continue",
+            "thread_id": "test-thread",
+            "history": [
+                {"role": "user", "content": f"message {index}"}
+                for index in range(13)
+            ],
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_chat_reports_missing_server_configuration(monkeypatch) -> None:

@@ -15,10 +15,12 @@ get_insurance_agent = get_langchain_agent
 
 
 async def chat_with_insurance_agent(message: str, thread_id: str) -> str:
-    return await LangChainInsuranceGuide().reply(
+    reply = await LangChainInsuranceGuide().reply(
         message=message,
         thread_id=thread_id,
+        history=(),
     )
+    return reply.message
 
 
 __all__ = [
