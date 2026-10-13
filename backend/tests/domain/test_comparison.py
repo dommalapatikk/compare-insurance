@@ -11,6 +11,16 @@ from compare_insurance_api.domain.models import (
     PremiumOffer,
     SearchCriteria,
 )
+
+
+def test_uses_the_official_2027_priminfo_model_categories() -> None:
+    assert {model.value for model in InsuranceModel} == {
+        "standard",
+        "flex",
+        "praxis",
+        "tel_dig",
+        "pharm",
+    }
 from compare_insurance_api.domain.services import (
     cheapest_offers_by_deductible,
     cheapest_offers_by_deductible_and_model,
@@ -25,7 +35,7 @@ def make_offer(
     plan_id: str,
     monthly_premium: str,
     deductible: Deductible = Deductible.CHF_2500,
-    insurance_model: InsuranceModel = InsuranceModel.TELMED,
+    insurance_model: InsuranceModel = InsuranceModel.TEL_DIG,
 ) -> PremiumOffer:
     return PremiumOffer(
         insurer_id=insurer_id,
@@ -58,7 +68,7 @@ def test_adult_criteria_accept_requested_deductibles() -> None:
             Deductible.CHF_2000,
             Deductible.CHF_2500,
         ),
-        insurance_models=(InsuranceModel.STANDARD, InsuranceModel.TELMED),
+        insurance_models=(InsuranceModel.STANDARD, InsuranceModel.TEL_DIG),
         premium_year=2027,
     )
 
@@ -199,7 +209,7 @@ def test_cheapest_by_model_is_stable_and_model_ordered() -> None:
 
     assert [(offer.insurance_model, offer.insurer_id) for offer in grouped] == [
         (InsuranceModel.STANDARD, "standard"),
-        (InsuranceModel.TELMED, "telmed-cheap"),
+        (InsuranceModel.TEL_DIG, "telmed-cheap"),
     ]
 
 
@@ -233,7 +243,7 @@ def test_cheapest_by_deductible_and_model_returns_each_available_cell() -> None:
         for offer in grouped
     ] == [
         (300, InsuranceModel.STANDARD, "standard-300"),
-        (300, InsuranceModel.TELMED, "telmed-300"),
-        (2500, InsuranceModel.TELMED, "telmed-2500"),
+        (300, InsuranceModel.TEL_DIG, "telmed-300"),
+        (2500, InsuranceModel.TEL_DIG, "telmed-2500"),
     ]
 

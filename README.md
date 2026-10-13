@@ -11,7 +11,7 @@ The repository contains the product and UX requirements, a guided Next.js fronte
 - Search by Swiss place of residence and premium region.
 - Account for age category and other premium-relevant inputs.
 - Compare deductibles of CHF 300, 500, 1,000, 1,500, 2,000, and 2,500 where eligible.
-- Compare standard, family-doctor, HMO, telemedicine, and other published insurance models.
+- Compare the official 2027 Priminfo categories: Standard, FLEX, PRAXIS, TEL-DIG, and PHARM where offers exist.
 - Rank up to ten suitable offers and show savings against a clearly defined comparison baseline.
 
 ## Repository layout
@@ -32,8 +32,17 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev,data]'
 .venv/bin/python -m pytest -q
 .venv/bin/python scripts/ingest_bag_to_supabase.py --validate-only
+.venv/bin/python scripts/check_priminfo_parity.py
 .venv/bin/uvicorn compare_insurance_api.main:app --reload
 ```
+
+The parity command submits one equivalent profile to the official Priminfo
+calculator and the production comparison API, then verifies the eligible count
+and the ordered top-ten monthly premiums. GitHub Actions repeats this check
+weekly for every 2027 category present in the dataset—Standard, FLEX, PRAXIS,
+and TEL-DIG—and it can also be run manually through the `Priminfo parity`
+workflow. PHARM remains a supported official category but has no row in the
+pinned 2027 premium snapshot.
 
 The API provides `GET /health`, data-backed `GET /v1/premiums/search`, and the
 LangChain-backed `POST /v1/chat` route.
@@ -67,6 +76,8 @@ configuration without committing the resulting file.
 - API health check: <https://compare-insurance-api.vercel.app/health>
 - GitHub Actions runs the backend, frontend, and pinned-data integrity gates on
   pushes to `main` and on pull requests.
+- A separate scheduled workflow compares an equivalent production query with
+  the official Priminfo calculator.
 
 The two applications are separate Vercel projects in this monorepo. The
 frontend production environment points to the API project. Premium comparison

@@ -16,31 +16,31 @@ export const modelChoices: Choice[] = [
     description: "Free choice of doctor under the plan rules.",
   },
   {
-    value: "family_doctor",
-    label: "Family doctor",
-    description: "Your chosen practice is normally the first contact.",
+    value: "flex",
+    label: "FLEX",
+    description: "Choose between several defined first-contact options.",
   },
   {
-    value: "hmo",
-    label: "HMO",
-    description: "An HMO network is normally the first contact.",
+    value: "praxis",
+    label: "PRAXIS",
+    description: "A designated doctor or medical practice is your first contact.",
   },
   {
-    value: "telmed",
-    label: "Telmed",
-    description: "A medical advice line is normally the first contact.",
+    value: "tel_dig",
+    label: "TEL-DIG",
+    description: "Your first contact is by phone, app or another digital service.",
   },
   {
-    value: "other",
-    label: "Other models",
-    description: "Other source-defined restricted-care models.",
+    value: "pharm",
+    label: "PHARM",
+    description: "A partner pharmacy is your first contact.",
   },
 ];
 
 export const quickQuestions = [
   "What does the deductible mean?",
   "Should I include accident cover?",
-  "How do HMO and Telmed differ?",
+  "How do the insurance models differ?",
 ];
 
 export const modelLabels: Record<string, string> = Object.fromEntries(

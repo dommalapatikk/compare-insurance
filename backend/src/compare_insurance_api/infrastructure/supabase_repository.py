@@ -27,11 +27,23 @@ SELECT_FIELDS = ",".join(
         "age_subgroup",
         "deductible_chf",
         "accident_coverage",
-        "insurance_model",
+        "source_tariff_type",
         "premium_year",
         "monthly_premium_chf",
     )
 )
+
+SOURCE_TARIFF_TYPE_BY_MODEL = {
+    InsuranceModel.STANDARD: "BASE",
+    InsuranceModel.FLEX: "FLEX",
+    InsuranceModel.PRAXIS: "PRAXIS",
+    InsuranceModel.TEL_DIG: "TEL_DIG",
+    InsuranceModel.PHARM: "PHARM",
+}
+MODEL_BY_SOURCE_TARIFF_TYPE = {
+    source_type: model
+    for model, source_type in SOURCE_TARIFF_TYPE_BY_MODEL.items()
+}
 
 
 class SupabasePremiumRepository:
@@ -64,7 +76,10 @@ class SupabasePremiumRepository:
 
     def _params(self, criteria: SearchCriteria) -> dict[str, str]:
         deductibles = ",".join(str(int(value)) for value in criteria.deductibles)
-        models = ",".join(value.value for value in criteria.insurance_models)
+        source_tariff_types = ",".join(
+            SOURCE_TARIFF_TYPE_BY_MODEL[value]
+            for value in criteria.insurance_models
+        )
         return {
             "select": SELECT_FIELDS,
             "canton": f"eq.{criteria.canton}",
@@ -73,7 +88,7 @@ class SupabasePremiumRepository:
             "age_subgroup": f"eq.{criteria.age_category.ordinary_source_subgroup}",
             "accident_coverage": f"eq.{str(criteria.accident_coverage).lower()}",
             "deductible_chf": f"in.({deductibles})",
-            "insurance_model": f"in.({models})",
+            "source_tariff_type": f"in.({source_tariff_types})",
             "premium_year": f"eq.{criteria.premium_year}",
             "order": (
                 "monthly_premium_chf.asc,insurer_name.asc,product_name.asc,"
@@ -141,7 +156,9 @@ class SupabasePremiumRepository:
                 age_category=AgeCategory(str(row["age_category"])),
                 deductible=Deductible(int(row["deductible_chf"])),
                 accident_coverage=bool(row["accident_coverage"]),
-                insurance_model=InsuranceModel(str(row["insurance_model"])),
+                insurance_model=MODEL_BY_SOURCE_TARIFF_TYPE[
+                    str(row["source_tariff_type"])
+                ],
                 premium_year=int(row["premium_year"]),
                 monthly_premium_chf=Decimal(str(row["monthly_premium_chf"])),
             )

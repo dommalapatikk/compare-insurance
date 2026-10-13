@@ -53,7 +53,8 @@ The comparison form is the only way to submit pricing inputs. Free text is avail
    - Pair the control with: “A higher deductible can lower the premium but can increase what you pay when you need care.”
 5. **Insurance model**
    - Default to “Compare all models.”
-   - Allow multi-select for Standard/free choice, Family doctor, HMO, Telmed, and source-defined Other.
+   - Allow multi-select for the official 2027 categories: Standard, FLEX, PRAXIS, TEL-DIG, and PHARM.
+   - Explain the first-contact distinction in plain language: PRAXIS uses a designated medical practice, TEL-DIG starts by phone or digitally, PHARM uses a partner pharmacy, and FLEX offers several defined options.
    - Each option has a one-sentence care-access description. Preserve the insurer’s exact product name in results.
 6. **Current premium (optional)**
    - Ask “What do you pay now each month?” with CHF prefix and “Skip.”

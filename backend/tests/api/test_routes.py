@@ -42,7 +42,7 @@ class StubComparePremiums:
             age_category=AgeCategory.ADULT,
             deductible=Deductible.CHF_2500,
             accident_coverage=False,
-            insurance_model=InsuranceModel.HMO,
+            insurance_model=InsuranceModel.PRAXIS,
             premium_year=2027,
             monthly_premium_chf=Decimal("320.00"),
         )
@@ -94,7 +94,7 @@ def test_premium_search_maps_ranked_offers_to_the_http_contract() -> None:
                 "age_category": "adult",
                 "deductible": 2500,
                 "accident_coverage": False,
-                "insurance_model": "hmo",
+                "insurance_model": "praxis",
                 "year": 2027,
             },
         )
@@ -117,7 +117,7 @@ def test_premium_search_maps_ranked_offers_to_the_http_contract() -> None:
         "region": "0",
         "deductible_chf": 2500,
         "accident_coverage": False,
-        "insurance_model": "hmo",
+        "insurance_model": "praxis",
         "monthly_premium_chf": "320.00",
         "annual_premium_chf": "3840.00",
         "monthly_difference_from_cheapest_chf": "0.00",
@@ -126,10 +126,10 @@ def test_premium_search_maps_ranked_offers_to_the_http_contract() -> None:
     }
     assert body["cheapest_by_deductible"][0]["deductible_chf"] == 2500
     assert body["cheapest_by_deductible"][0]["monthly_premium_chf"] == "320.00"
-    assert body["cheapest_by_model"][0]["insurance_model"] == "hmo"
+    assert body["cheapest_by_model"][0]["insurance_model"] == "praxis"
     assert body["cheapest_by_model"][0]["insurer_id"] == "8"
     assert body["cheapest_by_deductible_and_model"][0]["deductible_chf"] == 2500
-    assert body["cheapest_by_deductible_and_model"][0]["insurance_model"] == "hmo"
+    assert body["cheapest_by_deductible_and_model"][0]["insurance_model"] == "praxis"
 
 
 def test_premium_search_requires_source_filters() -> None:
@@ -148,7 +148,7 @@ def test_premium_search_serializes_reference_savings() -> None:
                 "region": "0",
                 "age_category": "adult",
                 "deductible": 2500,
-                "insurance_model": "hmo",
+                "insurance_model": "praxis",
                 "reference_monthly_premium_chf": "400.00",
             },
         )
@@ -175,7 +175,7 @@ def test_premium_search_reports_missing_supabase_configuration() -> None:
                 "region": "0",
                 "age_category": "adult",
                 "deductible": 2500,
-                "insurance_model": "hmo",
+                "insurance_model": "praxis",
             },
         )
     finally:

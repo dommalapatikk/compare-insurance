@@ -17,6 +17,7 @@ async function collect(directory) {
 
 await collect(path.join(comparisonRoot, "components"));
 checkedFiles.push(path.join(comparisonRoot, "use-comparison-flow.ts"));
+checkedFiles.push(path.join(comparisonRoot, "config.ts"));
 
 const bannedCopy = [
   "langchain",
@@ -35,6 +36,10 @@ const bannedCopy = [
   "bag insurer no.",
   "not supplied",
   "exact database filters",
+  "family doctor",
+  "hmo",
+  "telmed",
+  "other models",
 ];
 
 const violations = [];

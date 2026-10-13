@@ -32,7 +32,7 @@ class StubPremiumRepository:
                 age_category=AgeCategory.ADULT,
                 deductible=Deductible.CHF_2500,
                 accident_coverage=False,
-                insurance_model=InsuranceModel.HMO,
+                insurance_model=InsuranceModel.PRAXIS,
                 premium_year=2027,
                 monthly_premium_chf=Decimal("320.00"),
             )
@@ -51,7 +51,7 @@ def test_langchain_tool_uses_the_deterministic_comparison_use_case() -> None:
                 "age_category": "adult",
                 "deductibles": [2500],
                 "accident_coverage": False,
-                "insurance_models": ["hmo"],
+                "insurance_models": ["praxis"],
                 "premium_year": 2027,
                 "top_n": 10,
             }
@@ -59,7 +59,7 @@ def test_langchain_tool_uses_the_deterministic_comparison_use_case() -> None:
     )
 
     assert repository.criteria is not None
-    assert repository.criteria.insurance_models == (InsuranceModel.HMO,)
+    assert repository.criteria.insurance_models == (InsuranceModel.PRAXIS,)
     assert result["source"] == "Swiss Federal Office of Public Health (BAG)"
     assert result["offers"][0]["monthly_premium_chf"] == "320.00"
     assert result["offers"][0]["annual_premium_chf"] == "3840.00"

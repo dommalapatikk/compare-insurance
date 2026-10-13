@@ -34,10 +34,10 @@ class AgeCategory(str, Enum):
 
 class InsuranceModel(str, Enum):
     STANDARD = "standard"
-    FAMILY_DOCTOR = "family_doctor"
-    HMO = "hmo"
-    TELMED = "telmed"
-    OTHER = "other"
+    FLEX = "flex"
+    PRAXIS = "praxis"
+    TEL_DIG = "tel_dig"
+    PHARM = "pharm"
 
 
 class Deductible(IntEnum):

@@ -19,7 +19,7 @@ const answers = [
   {
     question: "What changes between models?",
     answer:
-      "Alternative models can lower your premium by changing whom you contact first, such as a family doctor, HMO practice or telemedicine service. Rules vary by insurer and plan.",
+      "For 2027, PRAXIS starts with a designated medical practice, TEL-DIG by phone or digitally, PHARM at a partner pharmacy, and FLEX offers several defined first-contact options. Rules vary by insurer and plan.",
   },
 ];
 

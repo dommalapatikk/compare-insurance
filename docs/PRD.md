@@ -23,7 +23,7 @@ The product should turn official premium data into a fast, understandable compar
 
 - Find the cheapest eligible basic-insurance plans for a user's municipality and age category.
 - Compare plans at adult deductible levels of CHF 300, 500, 1,000, 1,500, 2,000, and 2,500.
-- Compare standard, family-doctor, HMO, telemedicine, and other source-defined models where available.
+- Compare the official 2027 Priminfo model categories: Standard, FLEX, PRAXIS, TEL-DIG, and PHARM where available.
 - Show the ten lowest-premium eligible plan combinations with transparent ranking and savings calculations.
 - Use approved, traceable Federal Office of Public Health (FOPH/BAG) data and make the applicable premium year visible.
 - Explain the practical trade-offs behind deductibles, restricted-provider models, and accident coverage.
@@ -168,9 +168,9 @@ As a resident, I want each result to show the provider's official name, BAG insu
 
 ### FR-4 — Model comparison
 
-- Normalize source model codes into understandable categories such as standard/free choice, family doctor, HMO, and telemedicine, while retaining the insurer's exact product name.
+- Use the official 2027 Priminfo categories without reinterpretation: Standard (`BASE`), FLEX, PRAXIS, TEL-DIG, and PHARM. Retain the insurer's exact product name.
 - Explain that alternative models may restrict the first point of contact or provider choice.
-- Preserve an "other/unknown" category rather than silently misclassifying a source value.
+- Reject an unknown source category during ingestion rather than silently misclassifying it.
 
 ### FR-5 — Results and filters
 
@@ -339,6 +339,7 @@ Raw source files must remain immutable. Normalized data must be reproducible fro
 - Verify municipality-to-premium-region coverage and flag ambiguous postal codes.
 - Compare row counts and value distributions with the previous import to detect abrupt changes.
 - Spot-check at least 20 representative combinations across cantons, age groups, models, deductibles, and accident options against Priminfo or the official published overview before production promotion.
+- Run an automated production parity query against Priminfo at least weekly, comparing the eligible offer count and ordered top-ten approved premiums for equivalent inputs.
 - Store a machine-readable validation report.
 
 ### 11.6 Refresh policy
@@ -500,7 +501,7 @@ Business conversion metrics such as outbound insurer visits may be measured late
 |---|---|---|
 | Source schema or download URL changes | Broken or incomplete annual import | Versioned parser, schema checks, monitoring, immutable raw files, manual promotion gate |
 | Municipality/postal-code ambiguity | Incorrect premium region and wrong price | Require municipality confirmation and use official municipality identifiers |
-| Model-code inconsistency across insurers | Misleading category comparison | Preserve exact labels, maintain tested mappings, expose "other/unknown" |
+| Model taxonomy changes between premium years | Misleading category comparison | Version the official category mapping by premium year, preserve exact product labels, and fail closed on unknown source codes |
 | Users interpret premium savings as total savings | Poor deductible choice | Use precise labels and prominent out-of-pocket-cost warning |
 | Accident option chosen incorrectly | Invalid or unsuitable comparison | Require explicit choice, explain the issue, direct user to confirm eligibility |
 | Annual data becomes stale | Incorrect purchase decision | Visible year/update date, scheduled checks, stale-data alerts |

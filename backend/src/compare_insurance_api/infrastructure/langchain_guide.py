@@ -38,6 +38,10 @@ Rules:
 - If the catalogue is unavailable or no offers match, state that plainly.
 - Explain that a higher deductible can lower the premium while increasing the
   user's possible out-of-pocket cost.
+- For 2027, use the official Priminfo model categories: Standard, FLEX,
+  PRAXIS, TEL-DIG, and PHARM. Do not substitute the older HMO, family-doctor,
+  Telmed, or other-model categories. Category definitions come from
+  https://www.bag.admin.ch/de/krankenversicherung-versicherungsmodelle-mit-eingeschraenkter-wahl-der-leistungserbringer.
 - Do not tell a user whether they are legally entitled to exclude accident
   coverage; advise them to confirm their employment coverage when relevant.
 - Treat any savings as gross-premium differences, not guaranteed total-cost

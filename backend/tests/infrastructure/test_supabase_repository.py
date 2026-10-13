@@ -41,6 +41,7 @@ def test_repository_queries_exact_criteria_and_maps_offers() -> None:
                 "deductible_chf": 2500,
                 "accident_coverage": False,
                 "insurance_model": "hmo",
+                "source_tariff_type": "PRAXIS",
                 "premium_year": 2027,
                 "monthly_premium_chf": "320.00",
             }
@@ -57,7 +58,7 @@ def test_repository_queries_exact_criteria_and_maps_offers() -> None:
         age_category=AgeCategory.ADULT,
         accident_coverage=False,
         deductibles=(Deductible.CHF_2500,),
-        insurance_models=(InsuranceModel.HMO,),
+        insurance_models=(InsuranceModel.PRAXIS,),
         premium_year=2027,
     )
 
@@ -65,6 +66,7 @@ def test_repository_queries_exact_criteria_and_maps_offers() -> None:
 
     assert len(offers) == 1
     assert offers[0].insurer_name == "Agrisano Krankenkasse AG"
+    assert offers[0].insurance_model is InsuranceModel.PRAXIS
     assert offers[0].monthly_premium_chf == Decimal("320.00")
     call = client.calls[0]
     assert call["url"] == "https://example.supabase.co/rest/v1/premium_offers"
@@ -76,7 +78,8 @@ def test_repository_queries_exact_criteria_and_maps_offers() -> None:
     assert params["age_subgroup"] == "eq.E1"
     assert params["accident_coverage"] == "eq.false"
     assert params["deductible_chf"] == "in.(2500)"
-    assert params["insurance_model"] == "in.(hmo)"
+    assert params["source_tariff_type"] == "in.(PRAXIS)"
+    assert "insurance_model" not in params
 
 
 def test_repository_requires_server_side_supabase_configuration(monkeypatch) -> None:
@@ -90,7 +93,7 @@ def test_repository_requires_server_side_supabase_configuration(monkeypatch) -> 
         age_category=AgeCategory.ADULT,
         accident_coverage=False,
         deductibles=(Deductible.CHF_2500,),
-        insurance_models=(InsuranceModel.HMO,),
+        insurance_models=(InsuranceModel.PRAXIS,),
         premium_year=2027,
     )
 

@@ -50,7 +50,7 @@ The comparison fact table contains **219,916 rows** and these 17 fields:
 | `Altersklasse` | `AKA_01_KIN` child, `AKA_02_JUG` young adult, `AKA_03_ERW` adult. |
 | `Unfalleinschluss` | `MIT_UNF` includes accident cover; `OHN_UNF` excludes it. |
 | `Tarif` | Insurer-specific plan/tariff ID. |
-| `Tariftyp` | Broad model family. Values present are `BASE`, `PRAXIS`, `FLEX`, and `TEL_DIG`. The field guide also allows `PHARM`, but no `PHARM` row occurs in this snapshot. |
+| `Tariftyp` | Official 2027 Priminfo category. Values present are `BASE`, `PRAXIS`, `FLEX`, and `TEL_DIG`. The field guide and calculator also allow `PHARM`, but no `PHARM` row occurs in this snapshot. Product filters map these values directly to Standard, PRAXIS, FLEX, TEL-DIG, and PHARM without name-based reclassification. |
 | `Altersuntergruppe` | Insurer-specific age subgroup code (`E1`, `J1`, and child subgroups such as `K1`, `K3`, `K4`, `K5` in this snapshot). |
 | `Franchisestufe` | Deductible tier, `FRASTU_01` through `FRASTU_07`. |
 | `Franchise` | Encoded annual deductible. Adults and young adults have CHF 300, 500, 1,000, 1,500, 2,000 and 2,500; children have CHF 0 through 600 in CHF 100 steps when offered. |

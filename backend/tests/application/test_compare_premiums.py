@@ -40,7 +40,7 @@ def make_criteria() -> SearchCriteria:
         age_category=AgeCategory.ADULT,
         accident_coverage=False,
         deductibles=(Deductible.CHF_2500,),
-        insurance_models=(InsuranceModel.TELMED,),
+        insurance_models=(InsuranceModel.TEL_DIG,),
         premium_year=2027,
         top_n=1,
         reference_monthly_premium_chf=Decimal("400.00"),
@@ -59,7 +59,7 @@ def make_offer(insurer_id: str, monthly: str) -> PremiumOffer:
         age_category=AgeCategory.ADULT,
         deductible=Deductible.CHF_2500,
         accident_coverage=False,
-        insurance_model=InsuranceModel.TELMED,
+        insurance_model=InsuranceModel.TEL_DIG,
         premium_year=2027,
         monthly_premium_chf=Decimal(monthly),
     )

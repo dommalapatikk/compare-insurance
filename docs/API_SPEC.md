@@ -64,7 +64,7 @@ Ties use insurer name and stable source identifiers for deterministic ordering.
 | `age_category` | string | Yes | `child`, `young_adult`, or `adult`. Ordinary child premiums use BAG subgroup `K1`; optional multi-child discounts are not mixed into results. |
 | `deductible` | repeated integer | No | One or more of `300`, `500`, `1000`, `1500`, `2000`, `2500` CHF. Omission searches all six values. |
 | `accident_coverage` | boolean | No | Whether accident coverage is included; defaults to `true`. |
-| `insurance_model` | repeated string | No | One or more of `standard`, `family_doctor`, `hmo`, `telmed`, or `other`. Omission searches all models. |
+| `insurance_model` | repeated string | No | One or more of the official 2027 categories: `standard`, `flex`, `praxis`, `tel_dig`, or `pharm`. Omission searches all models. |
 | `year` | integer | No | Premium year; defaults to `2027`. |
 | `top_n` | integer, 1–10 | No | Maximum returned offers; defaults to `10`. |
 | `reference_monthly_premium_chf` | decimal | No | User-supplied current monthly premium used only for an explicitly labelled savings/cost comparison. |
@@ -88,7 +88,7 @@ Repeated deductible example:
     "age_category": "adult",
     "deductibles": [300, 2500],
     "accident_coverage": true,
-    "insurance_models": ["standard", "hmo"],
+    "insurance_models": ["standard", "praxis"],
     "year": 2027,
     "top_n": 10,
     "reference_monthly_premium_chf": "400.00"
@@ -120,13 +120,13 @@ Repeated deductible example:
     }
   ],
   "cheapest_by_deductible": [
-    {"deductible_chf": 2500, "insurance_model": "hmo", "monthly_premium_chf": "000.00"}
+    {"deductible_chf": 2500, "insurance_model": "praxis", "monthly_premium_chf": "000.00"}
   ],
   "cheapest_by_model": [
-    {"deductible_chf": 2500, "insurance_model": "hmo", "monthly_premium_chf": "000.00"}
+    {"deductible_chf": 2500, "insurance_model": "praxis", "monthly_premium_chf": "000.00"}
   ],
   "cheapest_by_deductible_and_model": [
-    {"deductible_chf": 2500, "insurance_model": "hmo", "monthly_premium_chf": "000.00"}
+    {"deductible_chf": 2500, "insurance_model": "praxis", "monthly_premium_chf": "000.00"}
   ]
 }
 ```
