@@ -1,16 +1,7 @@
 const CH_COSTS = "https://www.ch.ch/en/health/health-insurance/health-insurance-costs/";
 const BAG_MODELS = "https://www.bag.admin.ch/de/krankenversicherung-versicherungsmodelle-mit-eingeschraenkter-wahl-der-leistungserbringer";
 const PRIMINFO = "https://www.priminfo.admin.ch/de/praemien/";
-const BAG_2027 = "https://www.bag.admin.ch/de/newnsb/BfuGvedj0OOX";
-
 const answers = [
-  {
-    question: "What is changing in 2027?",
-    answer:
-      "The average Swiss basic-insurance premium rises by 5.0% to CHF 412 per month in 2027. Your own premium can change by a different amount because it depends on your location, age category, franchise, insurer and model.",
-    source: BAG_2027,
-    sourceLabel: "BAG",
-  },
   {
     question: "What is a deductible (franchise)?",
     answer:
@@ -53,12 +44,11 @@ export function OfficialHelp() {
     <section className="official-help" aria-labelledby="help-title">
       <div className="section-heading">
         <div><p className="eyebrow">Good to know</p><h2 id="help-title">Health insurance basics</h2></div>
-        <a href={CH_COSTS} target="_blank" rel="noreferrer">Information from CH.CH ↗</a>
       </div>
       <div className="faq-list">
         {answers.map((item) => (
           <details key={item.question}>
-            <summary>{item.question}<span aria-hidden="true">+</span></summary>
+            <summary>{item.question}</summary>
             <p>
               {item.answer}{" "}
               <a href={item.source} target="_blank" rel="noreferrer">

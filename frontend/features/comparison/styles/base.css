@@ -20,6 +20,7 @@ body {
   background: var(--paper);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
+  overflow-x: hidden;
 }
 button, input, select, textarea { font: inherit; }
 button, summary, select, input { touch-action: manipulation; }
@@ -52,38 +53,15 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   color: var(--ink);
   text-decoration: none;
   font-weight: 800;
   letter-spacing: -.025em;
 }
-.brand-mark {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--green);
-}
-.brand-mark::before, .brand-mark::after {
-  content: "";
-  position: absolute;
-  inset: 50% auto auto 50%;
-  width: 15px;
-  height: 4px;
-  border-radius: 3px;
-  background: var(--accent);
-  transform: translate(-50%, -50%);
-}
-.brand-mark::after { transform: translate(-50%, -50%) rotate(90deg); }
 .source-status { color: var(--muted); font-size: .82rem; font-weight: 650; }
 
 .intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
-  gap: clamp(40px, 7vw, 96px);
-  align-items: end;
-  padding: 64px 0 48px;
+  padding: 48px 0 34px;
 }
 .eyebrow {
   margin: 0 0 7px;
@@ -94,12 +72,13 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   text-transform: uppercase;
 }
 .intro h1 {
+  max-width: 850px;
   margin: 0;
-  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-size: clamp(2rem, 4.6vw, 3.5rem);
   line-height: 1.04;
   letter-spacing: -.035em;
 }
-.intro-copy, .premium-context { min-width: 0; }
+.intro-copy { min-width: 0; }
 .intro-description {
   max-width: 670px;
   margin: 13px 0 0;
@@ -107,30 +86,9 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   font-size: 1rem;
   line-height: 1.6;
 }
-.intro-action {
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  gap: 42px;
-  margin-top: 24px;
-  padding: 0 17px;
-  color: white;
-  background: var(--green-dark);
-  border-radius: 9px;
-  text-decoration: none;
-  font-size: .84rem;
-  font-weight: 800;
-}
-.intro-action:hover { background: var(--green); }
-.intro-trust { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 13px 0 0; color: var(--muted); font-size: .75rem; }
-.intro-trust span { position: relative; }
-.intro-trust span + span::before { content: "·"; position: absolute; left: -9px; }
-.premium-context { padding-left: 24px; border-left: 1px solid var(--line); }
-.premium-context > div { display: grid; grid-template-columns: 105px 1fr; align-items: baseline; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.premium-context strong { font-size: 1.55rem; letter-spacing: -.045em; }
-.premium-context span { color: var(--muted); font-size: .76rem; line-height: 1.4; }
-.premium-context p { margin: 16px 0 9px; font-size: .76rem; line-height: 1.55; }
-.premium-context a { color: var(--muted); font-size: .65rem; }
+.premium-update { max-width: 850px; margin: 19px 0 0; padding-top: 14px; color: var(--muted); border-top: 1px solid var(--line); font-size: .78rem; line-height: 1.55; }
+.premium-update strong { color: var(--ink); }
+.premium-update a { white-space: nowrap; }
 
 .support-panel {
   margin-bottom: 56px;
@@ -156,15 +114,11 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   min-height: 48px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 10px;
   cursor: pointer;
   font-size: .9rem;
   font-weight: 750;
-  list-style: none;
 }
-.faq-list summary::-webkit-details-marker { display: none; }
-.faq-list summary span { color: var(--green); font-size: 1.15rem; }
 .faq-list p { margin: -2px 30px 16px 0; color: var(--muted); font-size: .86rem; line-height: 1.55; }
 
 .site-footer {

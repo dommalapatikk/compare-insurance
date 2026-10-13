@@ -1,9 +1,14 @@
 import type { FormEvent } from "react";
 
-import { quickQuestions } from "../config";
 import type { ComparisonFlow } from "../use-comparison-flow";
 
-export function AdvisorComposer({ flow }: { flow: ComparisonFlow }) {
+export function AdvisorComposer({
+  flow,
+  suggestions,
+}: {
+  flow: ComparisonFlow;
+  suggestions: string[];
+}) {
   function submit(event: FormEvent) {
     event.preventDefault();
     void flow.sendMessage(flow.draft);
@@ -32,14 +37,14 @@ export function AdvisorComposer({ flow }: { flow: ComparisonFlow }) {
       )}
 
       <form className="advisor-composer" onSubmit={submit}>
-        <label htmlFor="advisor-message">Ask about this step or describe your situation</label>
+        <label htmlFor="advisor-message">Ask a question</label>
         <div>
           <textarea
             id="advisor-message"
             maxLength={2000}
             onChange={(event) => flow.setDraft(event.target.value)}
-            placeholder="e.g. I live in 3011, was born in 1980 and want no accident cover"
-            rows={2}
+            placeholder="What would you like to know?"
+            rows={1}
             value={flow.draft}
           />
           <button
@@ -51,13 +56,13 @@ export function AdvisorComposer({ flow }: { flow: ComparisonFlow }) {
         </div>
       </form>
 
-      <div className="advisor-suggestions" aria-label="Suggested questions">
-        {quickQuestions.map((question) => (
+      {suggestions.length > 0 && <div className="advisor-suggestions" aria-label="Suggested questions">
+        {suggestions.map((question) => (
           <button key={question} onClick={() => void flow.sendMessage(question)} type="button">
             {question}
           </button>
         ))}
-      </div>
+      </div>}
       <p className="advisor-privacy">
         Please do not enter medical history, policy numbers or payment details.
       </p>

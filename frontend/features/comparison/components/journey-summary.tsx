@@ -26,7 +26,7 @@ export function JourneySummary({ flow }: { flow: ComparisonFlow }) {
     : currentIndex >= 0 ? currentIndex + 1 : stages.length;
   const progressLabel = currentIndex >= 0
     ? stages[currentIndex].label
-    : flow.journeyStage === "welcome" ? "Ready to begin" : "Review your answers";
+    : flow.journeyStage === "welcome" ? "Ready to begin" : "Your answers";
 
   return (
     <nav className="journey-navigation" aria-label="Comparison progress">
@@ -43,7 +43,12 @@ export function JourneySummary({ flow }: { flow: ComparisonFlow }) {
           const isCurrent = flow.journeyStage === stage;
           return (
             <li aria-current={isCurrent ? "step" : undefined} className={value ? "complete" : isCurrent ? "current" : ""} key={stage}>
-              <button disabled={!value || isCurrent} onClick={() => flow.goToStage(stage)} type="button">
+              <button
+                aria-label={value ? `${label}: ${value}. ${isCurrent ? "Current step" : "Edit answer"}` : `${label}: not answered`}
+                disabled={!value || isCurrent}
+                onClick={() => flow.goToStage(stage)}
+                type="button"
+              >
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <small>{label}</small>
                 <strong>{value || (isCurrent ? "Answer now" : "Not answered")}</strong>

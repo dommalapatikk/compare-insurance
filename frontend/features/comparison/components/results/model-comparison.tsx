@@ -11,23 +11,17 @@ export function ModelComparison({ offers }: { offers: CategoryMinimum[] }) {
   );
 
   return (
-    <section className="model-comparison" aria-labelledby="model-comparison-title">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Compare care models</p>
-          <h3 id="model-comparison-title">Lowest premium in each model</h3>
-        </div>
-        <p>One lowest-priced option for every selected care model.</p>
-      </div>
-      <div className="model-rows">
-        {ordered.map((offer) => (
-          <article key={offer.insurance_model}>
-            <div><strong>{labels.get(offer.insurance_model) || offer.insurance_model}</strong><span>{offer.insurer_name} · {offer.product_name}</span></div>
-            <span>{formatDeductible(offer.deductible_chf)} franchise</span>
-            <strong>{formatCurrency(Number(offer.monthly_premium_chf))}<small>/month</small></strong>
-          </article>
-        ))}
-      </div>
-    </section>
+    <div className="comparison-scroll">
+      <table className="comparison-table model-table">
+        <caption>Lowest matching premium in each care model</caption>
+        <thead><tr><th>Care model</th><th>Monthly premium</th><th>Franchise</th><th>Insurer and plan</th></tr></thead>
+        <tbody>{ordered.map((offer) => <tr key={offer.insurance_model}>
+          <th>{labels.get(offer.insurance_model) || offer.insurance_model}</th>
+          <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>
+          <td>{formatDeductible(offer.deductible_chf)}</td>
+          <td><strong>{offer.insurer_name}</strong><small>{offer.product_name}</small></td>
+        </tr>)}</tbody>
+      </table>
+    </div>
   );
 }

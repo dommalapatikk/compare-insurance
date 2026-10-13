@@ -50,12 +50,6 @@ export const modelChoices: Choice[] = [
   },
 ];
 
-export const quickQuestions = [
-  "What does the deductible mean?",
-  "Should I include accident cover?",
-  "What does the family-doctor model mean?",
-];
-
 export const modelLabels: Record<string, string> = Object.fromEntries(
   modelChoices.map(({ value, label }) => [value, label]),
 );

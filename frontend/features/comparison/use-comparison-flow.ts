@@ -60,7 +60,7 @@ export function useComparisonFlow() {
           ? journeyReducer(savedJourney, { type: "start" })
           : savedJourney;
         const restored = currentJourney.stage === "results"
-          ? journeyReducer(currentJourney, { type: "edit", stage: "review" })
+          ? journeyReducer(currentJourney, { type: "edit", stage: "deductibles" })
           : currentJourney;
         setJourney(restored);
         const profile = restored.profile;
@@ -174,6 +174,12 @@ export function useComparisonFlow() {
     const selectedLocation = locationPicker.selectedLocation;
     if (!selectedLocation || !ageGroup || !birthYear || !accident || !deductibles.length || !models.length) {
       setFormError("Complete each answer before comparing premiums."); return;
+    }
+    if (journey.stage === "deductibles") {
+      const selection = deductibles.length === availableDeductibles.length
+        ? allSelection<number>()
+        : selectedValues(deductibles);
+      setJourney((current) => journeyReducer(current, { type: "set_deductibles", selection }));
     }
     setFormError(""); setIsSearching(true); setSearchNotice(""); setResults(null);
     try {
