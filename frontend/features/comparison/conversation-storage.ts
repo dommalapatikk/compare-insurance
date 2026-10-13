@@ -1,6 +1,7 @@
 import type { Message } from "./types";
+import { APP_SESSION_SCHEMA_VERSION } from "./session-version";
 
-export const CONVERSATION_SCHEMA_VERSION = 1;
+export const CONVERSATION_SCHEMA_VERSION = APP_SESSION_SCHEMA_VERSION;
 export const CONVERSATION_STORAGE_KEY = "compare-insurance:conversation";
 export const MAX_STORED_MESSAGES = 24;
 
@@ -60,7 +61,11 @@ export function parseConversationSnapshot(raw: string): ConversationState | null
 
 export function loadConversationState(storage: StorageLike): ConversationState | null {
   const raw = storage.getItem(CONVERSATION_STORAGE_KEY);
-  return raw ? parseConversationSnapshot(raw) : null;
+  if (!raw) return null;
+
+  const state = parseConversationSnapshot(raw);
+  if (!state) storage.removeItem(CONVERSATION_STORAGE_KEY);
+  return state;
 }
 
 export function saveConversationState(

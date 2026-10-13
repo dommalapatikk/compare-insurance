@@ -11,8 +11,9 @@ import type {
   Selection,
 } from "./journey-machine";
 import type { LocationSuggestion } from "./types";
+import { APP_SESSION_SCHEMA_VERSION } from "./session-version";
 
-export const JOURNEY_SCHEMA_VERSION = 1;
+export const JOURNEY_SCHEMA_VERSION = APP_SESSION_SCHEMA_VERSION;
 export const JOURNEY_STORAGE_KEY = "compare-insurance:guided-journey";
 
 export type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -145,7 +146,11 @@ export function saveJourneyState(storage: StorageLike, state: JourneyState): voi
 
 export function loadJourneyState(storage: StorageLike): JourneyState | null {
   const snapshot = storage.getItem(JOURNEY_STORAGE_KEY);
-  return snapshot ? parseJourneySnapshot(snapshot) : null;
+  if (!snapshot) return null;
+
+  const state = parseJourneySnapshot(snapshot);
+  if (!state) storage.removeItem(JOURNEY_STORAGE_KEY);
+  return state;
 }
 
 export function clearJourneyState(storage: StorageLike): void {

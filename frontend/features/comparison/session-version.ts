@@ -1,0 +1,1 @@
+export const APP_SESSION_SCHEMA_VERSION = 2;

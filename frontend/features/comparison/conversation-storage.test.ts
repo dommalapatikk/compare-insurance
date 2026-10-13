@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CONVERSATION_SCHEMA_VERSION,
   CONVERSATION_STORAGE_KEY,
   clearConversationState,
   loadConversationState,
@@ -35,9 +36,20 @@ describe("conversation session storage", () => {
     expect(storage.getItem(CONVERSATION_STORAGE_KEY)).toBeNull();
   });
 
+  it("removes an outdated conversation instead of restoring it again", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(CONVERSATION_STORAGE_KEY, JSON.stringify({
+      schemaVersion: CONVERSATION_SCHEMA_VERSION - 1,
+      state: { threadId: "thread_123456", currentPremium: "", messages: [] },
+    }));
+
+    expect(loadConversationState(storage)).toBeNull();
+    expect(storage.getItem(CONVERSATION_STORAGE_KEY)).toBeNull();
+  });
+
   it("rejects executable links, excessive history and unknown fields", () => {
     const valid = {
-      schemaVersion: 1,
+      schemaVersion: CONVERSATION_SCHEMA_VERSION,
       state: { threadId: "thread_123456", currentPremium: "", messages: [] },
     };
     expect(parseConversationSnapshot(JSON.stringify({

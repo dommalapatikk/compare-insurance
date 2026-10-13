@@ -5,8 +5,10 @@ import { OfficialHelp } from "./components/official-help";
 import { Intro, SiteFooter, SiteHeader } from "./components/page-chrome";
 import { ResultsPreview } from "./components/results-preview";
 import { useComparisonFlow } from "./use-comparison-flow";
+import { useDeploymentRefresh } from "./use-deployment-refresh";
 
 export function CompareInsuranceExperience() {
+  useDeploymentRefresh();
   const flow = useComparisonFlow();
 
   return (

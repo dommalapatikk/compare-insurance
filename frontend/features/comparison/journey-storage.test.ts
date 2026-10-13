@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  JOURNEY_SCHEMA_VERSION,
   JOURNEY_STORAGE_KEY,
   clearJourneyState,
   loadJourneyState,
@@ -58,15 +59,26 @@ describe("guided journey session storage", () => {
     expect(storage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
   });
 
+  it("removes an outdated snapshot instead of restoring it again", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(JOURNEY_STORAGE_KEY, JSON.stringify({
+      schemaVersion: JOURNEY_SCHEMA_VERSION - 1,
+      state: readyState(),
+    }));
+
+    expect(loadJourneyState(storage)).toBeNull();
+    expect(storage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
+  });
+
   it("rejects malformed, outdated or gender-bearing snapshots", () => {
     expect(parseJourneySnapshot("not-json")).toBeNull();
-    expect(parseJourneySnapshot(JSON.stringify({ schemaVersion: 0, state: readyState() })))
+    expect(parseJourneySnapshot(JSON.stringify({ schemaVersion: JOURNEY_SCHEMA_VERSION - 1, state: readyState() })))
       .toBeNull();
 
     const state = readyState();
     const profile = { ...state.profile, gender: "female" };
     expect(parseJourneySnapshot(JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: JOURNEY_SCHEMA_VERSION,
       state: { ...state, profile },
     }))).toBeNull();
   });
@@ -82,7 +94,7 @@ describe("guided journey session storage", () => {
         deductibles: { kind: "selected", values: [2500] },
       },
     };
-    expect(parseJourneySnapshot(JSON.stringify({ schemaVersion: 1, state: invalid })))
+    expect(parseJourneySnapshot(JSON.stringify({ schemaVersion: JOURNEY_SCHEMA_VERSION, state: invalid })))
       .toBeNull();
   });
 });
