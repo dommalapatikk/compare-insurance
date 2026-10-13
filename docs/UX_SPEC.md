@@ -6,7 +6,7 @@
 
 ## 1. Experience goal
 
-Help a person move from “I do not know which inputs matter” to a trustworthy shortlist in a few minutes. The assistant should guide the task, but deterministic controls and the comparison service—not the language model—must define the query, prices, ranking, and savings.
+Help a person move from “I do not know which inputs matter” to a trustworthy shortlist in under a minute. A compact form should make the main task immediately clear; optional help may explain unfamiliar terms, but the comparison service must define the query, prices, ranking, and savings.
 
 Success means the user can:
 
@@ -22,16 +22,16 @@ Do not request gender. It is not a pricing dimension for compulsory basic insura
 
 Use one task-focused page with four layers:
 
-1. **Compact trust header** — product name, “Swiss compulsory basic insurance,” language control when available, and data status/year.
-2. **Guided comparison workspace** — chat transcript containing structured input cards. On desktop, a sticky “Your comparison” summary sits beside it; on mobile it becomes a collapsible summary bar.
-3. **Results workspace** — a summary, visual comparison, and ranked top-ten list. Keep the guide available in a narrow contextual panel or drawer for explanations.
-4. **Plan details and provenance** — an expandable row/drawer with exact product name, restrictions, source fields, dataset date, and official link.
+1. **Compact trust header** — product name, independent-comparison status, and premium year.
+2. **Comparison form** — location, age group, and accident cover are visible together; deductible, model, and current-premium controls use progressive disclosure.
+3. **Results workspace** — lowest-price summary, deductible/model comparison, ranked top-ten list, and a before-switching checklist.
+4. **Help and provenance** — CH.CH guidance and optional question-and-answer help follow the task; technical identifiers and methodology stay in expandable details.
 
-Reduce the current hero height so the first guided input is visible on a typical laptop without scrolling. The dataset card should support trust, not compete with the primary “Start comparison” action.
+Keep the introduction short enough that the form begins in the first laptop viewport. Avoid decorative dataset cards, duplicate summaries, side rails, and large empty containers that compete with the primary action.
 
-## 3. Chat-embedded input flow
+## 3. Compact structured input flow
 
-The chat is a guided form, not a blank prompt. Each assistant turn may contain explanatory text plus one semantic input card. Preserve completed answers as compact editable chips in the transcript and mirror them in “Your comparison.” Free text remains available for questions, but cannot silently alter pricing inputs.
+The comparison form is the only way to submit pricing inputs. Free text is available later for questions, but cannot silently alter comparison filters. Keep the three required decisions visible together and use native, validated controls.
 
 ### Step sequence
 
@@ -58,21 +58,19 @@ The chat is a guided form, not a blank prompt. Each assistant turn may contain e
 6. **Current premium (optional)**
    - Ask “What do you pay now each month?” with CHF prefix and “Skip.”
    - Explain that this enables a gross-premium difference only. It is not a total-cost estimate.
-7. **Review and compare**
-   - Show one confirmation card with location, premium year, age category, accident choice, selected deductibles, models, and optional reference premium.
-   - Primary action: **Compare plans**. Secondary action: **Edit answers**.
-
-The assistant may explain or ask for a missing field, but it must submit normalized structured values. If the user types “I live in 8001 and want Telmed,” show extracted values as unconfirmed chips and ask for confirmation before running the search.
+7. **Submit**
+   - Primary action: **Show premiums**.
+   - Keep all selected values visible and editable in place; do not add a duplicate review rail.
+   - Move focus to the results heading after a successful comparison.
 
 ## 4. Progressive disclosure
 
-- Ask one decision at a time and reveal the next step after a valid answer.
-- Keep explanations to one or two sentences; place legal nuance and model details behind “Why this matters.”
-- Always show progress, for example “3 of 6,” and allow users to edit completed steps without restarting.
+- Keep the three required fields visible. Place deductibles, models, and the optional current premium in clearly labelled disclosures.
+- Keep explanations to one or two sentences; place legal nuance and model details in the CH.CH help section.
 - Hide insurer filters and sorting until results exist.
-- Show advanced source fields only in plan details.
+- Show technical identifiers only in plan details and source methodology in a collapsed disclosure.
 - When an upstream input changes, identify dependent answers that were reset. Example: changing from Adult to Child resets invalid deductible selections and announces why.
-- Do not require a chat exchange for experienced users: “Fill all details” expands the full deterministic form using the same controls.
+- Never require a chat exchange to compare premiums.
 
 ## 5. Results hierarchy
 
@@ -86,7 +84,7 @@ Show:
 - **Potential savings:** only if a current monthly premium was supplied and the result is cheaper;
 - number of eligible combinations and number displayed;
 - premium year, confirmed municipality/premium region, and accident choice; and
-- “Official BAG data” with import/update date.
+- “Premium data: FOPH/BAG” with import/update date, without implying that this independent product is an official federal calculator.
 
 The main callout is the exact monthly premium, not an AI-written recommendation. Phrase the outcome as “Lowest premium for these filters,” not “Best insurance.”
 
@@ -137,15 +135,15 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 
 ### Initial/empty
 
-- Begin with a welcome message and the first location input visible.
-- Provide two intent shortcuts: “Find the lowest premium” and “Help me understand the choices.”
-- The free-text composer remains available, but its placeholder should mention that the guided fields are required for prices.
+- Begin with the comparison form and all three required inputs visible.
+- Default to all source-valid deductibles and models.
+- Keep optional help below the comparison task.
 
 ### Loading
 
 - Keep confirmed inputs visible and disable only the submitted action.
-- For chat, show “Guide is responding…” in a polite live region after a short delay.
-- For search, show a result-card skeleton plus “Comparing validated BAG premiums for [municipality]…”; preserve the previous results if filters are being refreshed.
+- For questions, announce that an answer is loading in a polite live region after a short delay.
+- For search, show a result-card skeleton plus “Finding available premiums…”; preserve the previous results if filters are being refreshed.
 - Never use an indefinite spinner without explanatory text.
 
 ### Location ambiguity
@@ -178,9 +176,9 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 
 ### Desktop (≥ 960 px)
 
-- Use a two-column task layout: guided conversation (approximately 60%) and sticky comparison summary (approximately 40%).
-- Once results load, allow the result area to use the full content width; keep the guide in a collapsible side drawer.
-- Keep controls and result columns aligned to support scanning.
+- Use a single, centred task column for the introduction and comparison form.
+- Let results use the full content width, in the order: summary, deductible/model comparison, ranked plans, before-switching checklist, source details, and help.
+- Keep controls and result columns aligned to support scanning; do not duplicate selected inputs in a side rail.
 
 ### Tablet (600–959 px)
 
@@ -189,7 +187,7 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 
 ### Mobile (< 600 px)
 
-- Use a single-column step flow with a sticky progress/summary bar and sticky composer that does not obscure content or the software keyboard.
+- Use a single-column form and result flow without a sticky composer or duplicate summary.
 - Render results as cards: insurer and price first, then model/deductible, then difference and details.
 - Default charts to the accessible compact/table view if labels would collide. Never require horizontal page scrolling.
 - Use full-width bottom sheets for explanations, filter editing, and plan details.
@@ -218,12 +216,13 @@ Add: “Actual annual cost depends on healthcare use, deductible, retention fee,
 
 ## 11. Acceptance criteria
 
-- A user can complete the comparison using only structured controls embedded in the conversation.
-- A user can edit any prior answer and sees which dependent choices were reset.
+- A user can complete the comparison using the compact structured form without opening help.
+- A user can edit any answer in place and sees which dependent choices were reset.
 - Location ambiguity, age-dependent deductibles, and accident coverage require explicit confirmation.
 - Results visually and textually identify the lowest premium, exact monthly/annual amounts, and the reference used for any claimed savings.
 - Charts expose equivalent tabular data and never imply quality, recommendation, or total healthcare cost.
 - The complete flow is usable at 320 CSS px width, with keyboard only, and at 200% zoom.
-- If chat fails, deterministic comparison controls remain functional; if price search is unavailable, no plausible result data is shown.
+- If question-and-answer help fails, comparison controls remain functional; if price search is unavailable, no plausible result data is shown.
 - The data source, premium year, import date, and calculation scope are visible from every result set.
+- No customer-facing label exposes framework names, model names, database terms, internal safety rules, or prototype language.
 

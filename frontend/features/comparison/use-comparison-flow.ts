@@ -98,7 +98,7 @@ export function useComparisonFlow() {
         {
           id: makeId(),
           role: "assistant",
-          content: "The AI guide is unavailable. The official explanations above and price comparison still work.",
+          content: "Questions are unavailable right now. You can still compare premiums and read the help topics.",
         },
       ]);
     } finally {
@@ -108,11 +108,11 @@ export function useComparisonFlow() {
 
   async function comparePlans() {
     if (!canton || !region || !ageGroup || !accident) {
-      setFormError("Choose your location, age category, and accident coverage.");
+      setFormError("Choose your location, age group and accident cover.");
       return;
     }
     if (!deductibles.length || !models.length) {
-      setFormError("Select at least one franchise and one insurance model.");
+      setFormError("Choose at least one deductible and one insurance model.");
       return;
     }
     setFormError("");
@@ -133,11 +133,15 @@ export function useComparisonFlow() {
     try {
       const response = await fetch(`/api/premiums?${params.toString()}`, { cache: "no-store" });
       const payload = (await response.json()) as PremiumSearchResponse & { detail?: string };
-      if (!response.ok) throw new Error(payload.detail || "Comparison failed.");
+      if (!response.ok) throw new Error("We couldn't load premiums right now. Please try again.");
       setResults(payload);
       if (!payload.offers.length) setSearchNotice("No published offers match every selected filter.");
     } catch (error) {
-      setSearchNotice(error instanceof Error ? error.message : "Comparison unavailable.");
+      setSearchNotice(
+        error instanceof Error
+          ? error.message
+          : "We couldn't load premiums right now. Please try again.",
+      );
     } finally {
       setIsSearching(false);
       window.setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);

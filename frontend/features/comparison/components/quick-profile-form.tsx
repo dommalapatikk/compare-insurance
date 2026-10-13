@@ -14,10 +14,10 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
     <form className="profile-form" onSubmit={submit} aria-labelledby="profile-title">
       <div className="form-heading">
         <div>
-          <p className="eyebrow">Your comparison</p>
-          <h2 id="profile-title">Three details. About 30 seconds.</h2>
+          <p className="eyebrow">Your details</p>
+          <h2 id="profile-title">Tell us what to compare</h2>
         </div>
-        <span>Required fields are marked *</span>
+        <span>Takes about 30 seconds</span>
       </div>
 
       <div className="primary-fields">
@@ -45,11 +45,11 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
               </select>
             </label>
           </div>
-          <small>Use the BAG premium region for your official place of residence.</small>
+          <small>Choose the premium region for your registered municipality.</small>
         </fieldset>
 
         <fieldset className="field-group">
-          <legend>2. Age category *</legend>
+          <legend>2. Which age group applies in 2027? *</legend>
           <div className="segmented three">
             {ageChoices.map((choice) => (
               <label key={choice.value}>
@@ -63,10 +63,11 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
               </label>
             ))}
           </div>
+          <small>Choose the age you will be on 31 December 2027.</small>
         </fieldset>
 
         <fieldset className="field-group">
-          <legend>3. Accident cover *</legend>
+          <legend>3. Include accident cover? *</legend>
           <div className="segmented">
             {(["excluded", "included"] as const).map((value) => (
               <label key={value}>
@@ -80,18 +81,21 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
               </label>
             ))}
           </div>
-          <small>Usually exclude only if an employer covers non-occupational accidents.</small>
+          <small>
+            If you work at least 8 hours a week for the same employer, accident
+            cover is usually provided through work. Check before excluding it.
+          </small>
         </fieldset>
       </div>
 
       <details className="filters-disclosure">
         <summary>
-          <span>Franchises and models</span>
-          <small>{flow.deductibles.length} franchises · {flow.models.length} models selected</small>
+          <span>More options</span>
+          <small>{flow.deductibles.length} deductibles · {flow.models.length} models selected</small>
         </summary>
         <div className="filter-grid">
           <fieldset>
-            <legend>Franchise (annual deductible)</legend>
+            <legend>Annual deductible (franchise)</legend>
             <div className="chip-grid">
               {flow.availableDeductibles.map((value) => (
                 <label key={value}>
@@ -124,9 +128,9 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
       </details>
 
       <details className="current-premium">
-        <summary>Add current premium to calculate savings</summary>
+        <summary>Calculate your potential savings</summary>
         <label>
-          <span>Current monthly premium</span>
+          <span>Current monthly premium (optional)</span>
           <div><b>CHF</b><input
             inputMode="decimal"
             min="0"
@@ -141,9 +145,9 @@ export function QuickProfileForm({ flow }: { flow: ComparisonFlow }) {
 
       {flow.formError && <p className="form-error" role="alert">{flow.formError}</p>}
       <div className="form-action">
-        <p><b>Private by default.</b> No name, account, or health history required.</p>
+        <p>No sign-up required.</p>
         <button type="submit" disabled={flow.isSearching}>
-          {flow.isSearching ? "Comparing…" : "Compare premiums"}<span aria-hidden="true">→</span>
+          {flow.isSearching ? "Comparing premiums…" : "Show premiums"}<span aria-hidden="true">→</span>
         </button>
       </div>
     </form>

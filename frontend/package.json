@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check:content": "node scripts/check-user-facing-copy.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "check:architecture": "node scripts/check-architecture.mjs"

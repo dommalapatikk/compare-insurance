@@ -5,7 +5,7 @@ export function SiteHeader() {
         <span className="brand-mark" aria-hidden="true" />
         <span>Compare Insurance</span>
       </a>
-      <span className="source-status"><i /> BAG 2027 · validated data</span>
+      <span className="source-status">Independent comparison · 2027 premiums</span>
     </header>
   );
 }
@@ -13,11 +13,11 @@ export function SiteHeader() {
 export function Intro() {
   return (
     <section className="intro" aria-labelledby="page-title">
-      <p className="eyebrow">Swiss compulsory basic insurance</p>
-      <h1 id="page-title">Find your lowest premium.</h1>
+      <p className="eyebrow">Swiss basic health insurance</p>
+      <h1 id="page-title">Compare health insurance premiums</h1>
       <p>
-        Compare approved premiums across franchises and insurance models. No sign-up,
-        no gender, no invented prices.
+        Find the lowest premiums available for your location, deductible and
+        insurance model.
       </p>
     </section>
   );
@@ -26,8 +26,8 @@ export function Intro() {
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <p>Premiums: Swiss Federal Office of Public Health (BAG), 2027.</p>
-      <p>Informational comparison only. Confirm availability and model rules with the insurer.</p>
+      <p>Premium data: Federal Office of Public Health (FOPH/BAG), 2027.</p>
+      <p>Prices are shown before subsidies. Confirm your final premium with the insurer.</p>
     </footer>
   );
 }

@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Compare Insurance | Swiss basic insurance guide",
+  title: "Compare Swiss health insurance premiums | Compare Insurance",
   description:
-    "Compare Swiss compulsory health-insurance options with official BAG data.",
+    "Compare Swiss basic health insurance premiums by location, deductible and insurance model. No sign-up required.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

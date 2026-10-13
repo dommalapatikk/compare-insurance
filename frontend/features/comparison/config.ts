@@ -38,9 +38,9 @@ export const modelChoices: Choice[] = [
 ];
 
 export const quickQuestions = [
-  "What does franchise mean?",
-  "Should accident coverage be included?",
-  "What is the difference between HMO and Telmed?",
+  "What does the deductible mean?",
+  "Should I include accident cover?",
+  "How do HMO and Telmed differ?",
 ];
 
 export const modelLabels: Record<string, string> = Object.fromEntries(

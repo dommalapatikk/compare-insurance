@@ -3,27 +3,27 @@ import type { FormEvent } from "react";
 import { quickQuestions } from "../config";
 import type { ComparisonFlow } from "../use-comparison-flow";
 
-export function GuideChat({ flow }: { flow: ComparisonFlow }) {
+export function AskQuestion({ flow }: { flow: ComparisonFlow }) {
   function submitChat(event: FormEvent) {
     event.preventDefault();
     void flow.sendMessage(flow.draft);
   }
 
   return (
-    <section className="guide-help" aria-labelledby="ask-guide-title">
-      <p className="eyebrow">Optional AI help</p>
-      <h2 id="ask-guide-title">Ask about the choices</h2>
-      <p className="guide-intro">
-        The guide can explain terms. It cannot create, change, or rank premium values;
-        those always come from the deterministic BAG comparison.
+    <section className="question-help" aria-labelledby="ask-question-title">
+      <p className="eyebrow">Need help?</p>
+      <h2 id="ask-question-title">Ask about health insurance</h2>
+      <p className="question-intro">
+        Get plain-language answers about deductibles, insurance models, accident
+        cover and your results.
       </p>
       <details className="chat-disclosure">
-        <summary>Open question box <span aria-hidden="true">→</span></summary>
+        <summary>Ask a question <span aria-hidden="true">→</span></summary>
         {flow.messages.length > 0 && (
           <div className="chat-transcript" aria-live="polite">
             {flow.messages.map((message) => (
               <div className={`chat-message ${message.role}`} key={message.id}>
-                <span>{message.role === "assistant" ? "GUIDE" : "YOU"}</span>
+                <span>{message.role === "assistant" ? "ANSWER" : "YOU"}</span>
                 <p>{message.content}</p>
               </div>
             ))}
@@ -37,12 +37,12 @@ export function GuideChat({ flow }: { flow: ComparisonFlow }) {
           ))}
         </div>
         <form className="chat-composer" onSubmit={submitChat}>
-          <label className="sr-only" htmlFor="chat-message">Message the insurance guide</label>
+          <label className="sr-only" htmlFor="chat-message">Ask a health insurance question</label>
           <textarea
             id="chat-message"
             maxLength={2000}
             onChange={(event) => flow.setDraft(event.target.value)}
-            placeholder="Ask for an explanation…"
+            placeholder="Type your question…"
             rows={2}
             value={flow.draft}
           />
@@ -53,7 +53,7 @@ export function GuideChat({ flow }: { flow: ComparisonFlow }) {
             {flow.isSending ? "…" : "Send"}
           </button>
         </form>
-        <p className="chat-note">Explanations only—not insurance, legal, or financial advice.</p>
+        <p className="chat-note">General information only. Confirm plan details with the insurer.</p>
       </details>
     </section>
   );

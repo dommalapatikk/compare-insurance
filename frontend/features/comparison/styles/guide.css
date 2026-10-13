@@ -112,7 +112,7 @@ select:disabled { color: #9ba49f; background: #f2f4f1; }
 .form-action button:hover { background: var(--green); }
 .form-action button:disabled { opacity: .55; cursor: wait; }
 
-.guide-intro { margin: 10px 0 18px; color: var(--muted); font-size: .86rem; line-height: 1.55; }
+.question-intro { margin: 10px 0 18px; color: var(--muted); font-size: .86rem; line-height: 1.55; }
 .chat-disclosure { border-top: 1px solid var(--line); }
 .chat-disclosure > summary { min-height: 49px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--green); font-size: .84rem; font-weight: 800; }
 .chat-transcript { max-height: 240px; overflow: auto; padding-top: 8px; }

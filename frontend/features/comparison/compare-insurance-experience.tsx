@@ -1,6 +1,6 @@
 "use client";
 
-import { GuideChat } from "./components/guide-chat";
+import { AskQuestion } from "./components/ask-question";
 import { OfficialHelp } from "./components/official-help";
 import { Intro, SiteFooter, SiteHeader } from "./components/page-chrome";
 import { QuickProfileForm } from "./components/quick-profile-form";
@@ -16,10 +16,10 @@ export function CompareInsuranceExperience() {
       <Intro />
       <QuickProfileForm flow={flow} />
       <ResultsPreview flow={flow} />
-      <div className="support-grid">
+      <section className="support-panel" aria-label="Health insurance help">
         <OfficialHelp />
-        <GuideChat flow={flow} />
-      </div>
+        <AskQuestion flow={flow} />
+      </section>
       <SiteFooter />
     </main>
   );

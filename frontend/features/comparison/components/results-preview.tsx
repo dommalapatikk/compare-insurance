@@ -1,5 +1,6 @@
 import type { ComparisonFlow } from "../use-comparison-flow";
 import { CategoryMatrix } from "./results/category-matrix";
+import { BeforeSwitching } from "./results/before-switching";
 import { RankedPlans } from "./results/ranked-plans";
 import { ResultSummary } from "./results/result-summary";
 
@@ -16,12 +17,12 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
       <div className="results-heading">
         <div>
           <p className="eyebrow">Your results</p>
-          <h2 id="results-title">Cheapest matches at a glance</h2>
+          <h2 id="results-title">Your lowest premiums</h2>
         </div>
-        <span>BAG 2027 · gross monthly premiums</span>
+        <span>2027 monthly premiums before subsidies</span>
       </div>
 
-      {flow.isSearching && <div className="result-state">Checking the validated catalogue…</div>}
+      {flow.isSearching && <div className="result-state">Finding available premiums…</div>}
       {!flow.isSearching && flow.searchNotice && !flow.results?.offers.length && (
         <div className="result-state error" role="alert">{flow.searchNotice}</div>
       )}
@@ -35,11 +36,19 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
           />
           <CategoryMatrix offers={flow.results.cheapest_by_deductible_and_model} />
           <RankedPlans offers={flow.results.offers} source={flow.results.source_name} />
-          <div className="source-bar">
-            <div><b>Source</b><span>{flow.results.source_name} · premium year {flow.results.source_year}</span></div>
-            <div><b>Method</b><span>Exact database filters, deterministic price sorting, no LLM calculations</span></div>
-            <a href="https://www.priminfo.admin.ch/" target="_blank" rel="noreferrer">Verify with official Priminfo ↗</a>
-          </div>
+          <BeforeSwitching />
+          <details className="source-disclosure">
+            <summary>About these premiums</summary>
+            <div className="source-bar">
+              <div><b>Premium data</b><span>{flow.results.source_name} · {flow.results.source_year}</span></div>
+              <div><b>Price order</b><span>Lowest monthly premium first · before subsidies</span></div>
+              <a href="https://www.priminfo.admin.ch/" target="_blank" rel="noreferrer">Check on Priminfo ↗</a>
+              <p>
+                Compare Insurance is an independent comparison tool and is not affiliated
+                with FOPH/BAG. Priminfo is the official federal premium calculator.
+              </p>
+            </div>
+          </details>
         </>
       )}
     </section>

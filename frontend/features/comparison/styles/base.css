@@ -34,7 +34,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 .intro,
 .profile-form,
 .results-preview,
-.support-grid,
+.support-panel,
 .site-footer {
   width: min(1120px, calc(100% - 40px));
   margin-left: auto;
@@ -76,14 +76,6 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 }
 .brand-mark::after { transform: translate(-50%, -50%) rotate(90deg); }
 .source-status { color: var(--muted); font-size: .82rem; font-weight: 650; }
-.source-status i {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 7px;
-  border-radius: 50%;
-  background: #21a179;
-}
 
 .intro { padding: 48px 0 28px; }
 .eyebrow {
@@ -108,19 +100,16 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   line-height: 1.6;
 }
 
-.support-grid {
-  display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  gap: 20px;
+.support-panel {
   margin-bottom: 56px;
-}
-.official-help, .guide-help {
   padding: 26px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 16px;
 }
-.official-help h2, .guide-help h2 { margin: 0; font-size: 1.25rem; letter-spacing: -.025em; }
+.official-help, .question-help { max-width: 820px; }
+.question-help { margin-top: 26px; padding-top: 26px; border-top: 1px solid var(--line); }
+.official-help h2, .question-help h2 { margin: 0; font-size: 1.25rem; letter-spacing: -.025em; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .section-heading h3 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .section-heading > p, .section-heading > span, .section-heading > a {

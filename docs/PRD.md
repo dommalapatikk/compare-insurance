@@ -195,7 +195,7 @@ As a resident, I want each result to show the provider's official name, BAG insu
 ### FR-7 — Plan detail and provenance
 
 - Provide a detail view or drawer with the exact source fields used in the comparison.
-- Put the official provider name first in each result and show the BAG insurer number, exact product name, and source plan identifier without requiring the user to open a detail view.
+- Put the official provider name and exact product name first in each result. Keep the BAG insurer number and source plan identifier in an expandable detail view so they remain available without competing with the buying decision.
 - Show the dataset publisher, premium year, source update/import date, and a link to the official source.
 - State that availability and contractual model rules must be confirmed with the insurer before switching.
 
@@ -217,18 +217,17 @@ The implementation may vary, but the product needs equivalent read capabilities:
 
 The public API must reject unknown filter values, cap page size, and never accept gender as a pricing parameter.
 
-### FR-10 — LangChain conversational guide
+### FR-10 — Optional customer help
 
-- Keep the structured comparison form primary and the conversational guide secondary and initially collapsed.
+- Keep the structured comparison form primary and the question-and-answer help secondary and initially collapsed.
 - Use static, source-linked CH.CH answers for common questions before invoking a language model.
-- Implement the assistant on the server with LangChain; provider credentials must never be sent to browser code.
+- Implement the assistant on the server with LangChain; provider credentials must never be sent to browser code. Framework and model names are implementation details and must not appear in customer-facing labels or status messages.
 - Keep conversation context within an opaque thread identifier and avoid collecting names, exact street addresses, health history, policy numbers, or payment details.
-- Let the guide explain comparison concepts and summarize the user's selected inputs.
+- Let the help experience explain comparison concepts and summarize the user's selected inputs.
 - Give the agent access to premium results only through a validated, deterministic comparison tool once ingestion is complete.
 - The agent must not generate SQL, construct database filters, perform premium arithmetic, or receive direct database credentials. It may invoke only typed application tools whose repositories enforce exact filters.
-- Until that tool is available, the agent must clearly state that it cannot quote, rank, or invent live premiums.
 - The structured comparison service, not the language model, remains the source of truth for eligibility, premium values, ordering, and savings calculations.
-- Display a persistent informational-only disclaimer and ensure the deterministic controls remain usable when the conversational service is unavailable.
+- Display a concise general-information disclaimer inside the help area and ensure the comparison controls remain usable when the conversational service is unavailable.
 
 ## 10. Ranking and calculation definitions
 
@@ -376,6 +375,14 @@ Raw source files must remain immutable. Normalized data must be reproducible fro
 - MVP copy may launch in English, but data structures and layouts must support German, French, and Italian without schema changes.
 - Format CHF values and numbers consistently; do not translate official insurer/product names.
 
+### Customer-facing content
+
+- Lead with the user's task, inputs, premiums, and practical next steps rather than implementation architecture.
+- Do not expose framework or model names, internal safety policies, database terminology, prototype states, or engineering validation language in customer-facing copy.
+- Keep source provenance, methodology, and technical identifiers available through progressive disclosure.
+- Use “annual deductible (franchise)” on first use, then “deductible,” and reserve “savings” for comparisons against a reference premium supplied by the user.
+- Present service failures as concise, actionable messages and never expose raw upstream error details.
+
 ### Privacy and security
 
 - Minimize collection: no name, gender, health history, account, or exact street address is needed for comparison.
@@ -423,12 +430,12 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 - Adult deductible comparison for CHF 300–2,500 at the requested levels; valid source-defined options for other age groups.
 - Model filtering and understandable model labels.
 - Top-ten cheapest eligible plan combinations.
-- Monthly and annual gross premiums.
+- Monthly and annual premiums before subsidies.
 - Savings against a selected current plan or entered current premium.
 - Source, premium year, update date, and calculation explanations.
 - Automated official-data ingestion, validation report, and atomic dataset promotion.
 - English UI with an architecture ready for DE/FR/IT localization.
-- LangChain-powered conversational guide with short-term thread context and a responsive, accessible chat interface.
+- Optional question-and-answer help with short-term thread context and a responsive, accessible interface; LangChain remains a server-side implementation detail.
 - Graphical price-difference and deductible comparisons with equivalent accessible tables.
 
 ### Deferred
@@ -462,10 +469,10 @@ Before adding lead generation, affiliate links, commissions, insurer-sponsored p
 16. Keyboard-only and screen-reader users can complete the input flow, understand validation errors, and read or navigate the ranked results.
 17. All required pricing inputs are available as native form controls in one compact comparison form, and every answer remains visible and editable before resubmission.
 18. Every result chart exposes the same values in a navigable table and never implies plan quality, endorsement, or total healthcare cost.
-19. While the comparison endpoint is unavailable, the product shows no plausible data as a real result; any design fixture is labelled “Illustrative preview—not actual premiums or offers” in every result module.
+19. While the comparison endpoint is unavailable, the production product shows no sample, fixture, or plausible price data as a real result and instead presents a concise retry state.
 20. The default form requires no more than location, age category, and accident coverage; all valid franchises and models are preselected and editable.
 21. Every franchise/model matrix cell is computed from all eligible source rows for that exact pair, not from the displayed top-ten rows.
-22. Each ranked result exposes the provider's official name, BAG insurer number, exact product name, and source plan identifier.
+22. Each ranked result shows the provider's official name and exact product name; an expandable detail exposes the BAG insurer number and source plan identifier.
 23. The language model cannot access the database directly, produce premium values, or determine ordering; disabling it does not prevent a comparison.
 
 ## 16. Success metrics
