@@ -11,7 +11,6 @@ export function CompareInsuranceExperience() {
   useDeploymentRefresh();
   const flow = useComparisonFlow();
   const isFirstStep = flow.journeyStage === "location" && !flow.location;
-  const hasResults = Boolean(flow.results?.offers.length);
 
   return (
     <main id="top">
@@ -19,12 +18,9 @@ export function CompareInsuranceExperience() {
       {isFirstStep && <Intro />}
       <GuidedAdvisor flow={flow} />
       <ResultsPreview flow={flow} />
-      {hasResults && <section className="support-panel" aria-label="Health insurance help">
-        <details className="support-disclosure">
-          <summary>Questions about your choices</summary>
-          <OfficialHelp />
-        </details>
-      </section>}
+      <section className="support-panel" aria-label="Health insurance help">
+        <OfficialHelp />
+      </section>
       <SiteFooter />
     </main>
   );

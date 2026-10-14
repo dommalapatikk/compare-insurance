@@ -15,11 +15,16 @@ export function Intro() {
     <section className="intro" aria-labelledby="page-title">
       <div className="intro-copy">
         <p className="eyebrow">Swiss health insurance</p>
-        <h1 id="page-title">Compare health insurance premiums</h1>
+        <h1 id="page-title">Find your lowest health premium</h1>
         <p className="intro-description">
-          Enter your postcode and preferences to see the lowest published premiums matching your choices.
+          Compare official 2027 basic-insurance premiums in two simple steps.
         </p>
       </div>
+      <aside className="premium-update" aria-label="2027 premium update">
+        <div><strong>+5.0%</strong><span>average premium increase in 2027</span></div>
+        <div><strong>CHF 412</strong><span>average monthly premium</span></div>
+        <a href="https://www.bag.admin.ch/en/premiums-and-costs-answers-to-frequently-asked-questions" target="_blank" rel="noreferrer">BAG update ↗</a>
+      </aside>
     </section>
   );
 }

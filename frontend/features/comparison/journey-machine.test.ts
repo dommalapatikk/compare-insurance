@@ -6,6 +6,7 @@ import {
   createJourneyState,
   isJourneyReady,
   isPreviousOrCurrentStage,
+  journeySection,
   journeyReducer,
   resolveDeductibles,
   resolveModels,
@@ -101,5 +102,15 @@ describe("guided comparison journey", () => {
     expect(isPreviousOrCurrentStage("birth_year", "location")).toBe(true);
     expect(isPreviousOrCurrentStage("birth_year", "accident")).toBe(false);
     expect(isPreviousOrCurrentStage("results", "models")).toBe(true);
+  });
+
+  it("presents the detailed domain journey as two simple customer sections", () => {
+    expect(journeySection("location")).toBe("details");
+    expect(journeySection("birth_year")).toBe("details");
+    expect(journeySection("accident")).toBe("details");
+    expect(journeySection("models")).toBe("preferences");
+    expect(journeySection("deductibles")).toBe("preferences");
+    expect(journeySection("review")).toBe("preferences");
+    expect(journeySection("results")).toBe("results");
   });
 });

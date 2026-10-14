@@ -1,17 +1,17 @@
 :root {
   --ink: #202124;
   --muted: #5f6368;
-  --paper: #f8fafc;
+  --paper: #f6f8fc;
   --card: #ffffff;
-  --soft: #f1f4f8;
-  --line: #d9e0e8;
-  --brand: #d52b1e;
-  --action: #1967d2;
-  --action-dark: #1557b0;
+  --soft: #eef3fb;
+  --line: #d9e1ec;
+  --brand: #e2231a;
+  --action: #0b57d0;
+  --action-dark: #0842a0;
   --action-pale: #e8f0fe;
-  --action-ink: #174ea6;
-  --positive: #137333;
-  --positive-pale: #e6f4ea;
+  --action-ink: #0b57d0;
+  --positive: #087a61;
+  --positive-pale: #e6f5ef;
   --warning: #b42318;
 }
 
@@ -85,7 +85,13 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 .brand-mark::after { width: 5px; height: 16px; }
 .source-status { color: var(--muted); font-size: .8rem; font-weight: 550; }
 
-.intro { padding: 42px 0 30px; }
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 42px;
+  align-items: end;
+  padding: 46px 0 28px;
+}
 .eyebrow {
   margin: 0 0 8px;
   color: var(--brand);
@@ -95,7 +101,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   text-transform: uppercase;
 }
 .intro h1 {
-  max-width: 820px;
+  max-width: 700px;
   margin: 0;
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
@@ -109,22 +115,24 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   font-size: 1rem;
   line-height: 1.55;
 }
+.premium-update {
+  width: 340px;
+  padding: 17px 20px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(32, 33, 36, .06);
+}
+.premium-update > div { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding: 5px 0; }
+.premium-update strong { flex: none; color: var(--ink); font-size: 1.18rem; }
+.premium-update span { color: var(--muted); font-size: .75rem; text-align: right; }
+.premium-update a { min-height: 38px; display: inline-flex; align-items: center; margin-top: 5px; font-size: .74rem; font-weight: 700; }
 .support-panel {
   margin-bottom: 42px;
-  padding: 30px 0;
+  padding: 34px 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
-.support-disclosure > summary {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  color: var(--action-ink);
-  cursor: pointer;
-  font-size: .9rem;
-  font-weight: 700;
-}
-.support-disclosure[open] > summary { margin-bottom: 18px; }
 .official-help {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);

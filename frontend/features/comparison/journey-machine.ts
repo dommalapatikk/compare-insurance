@@ -18,6 +18,7 @@ export const journeyStages = [
 ] as const;
 
 export type JourneyStage = (typeof journeyStages)[number];
+export type JourneySection = "details" | "preferences" | "results";
 export type EditableJourneyStage = Exclude<JourneyStage, "welcome" | "results">;
 export type JourneyAgeGroup = Exclude<AgeGroup, "">;
 export type JourneyAccident = Exclude<AccidentChoice, "">;
@@ -83,6 +84,12 @@ export function isPreviousOrCurrentStage(
   target: JourneyStage,
 ): boolean {
   return journeyStages.indexOf(target) <= journeyStages.indexOf(current);
+}
+
+export function journeySection(stage: JourneyStage): JourneySection {
+  if (stage === "results") return "results";
+  if (["models", "deductibles", "review"].includes(stage)) return "preferences";
+  return "details";
 }
 
 export function resolveModels(profile: JourneyProfile): InsuranceModel[] {

@@ -1,73 +1,60 @@
+import { journeySection } from "../journey-machine";
 import type { ComparisonFlow } from "../use-comparison-flow";
 
-type SummaryStage = "location" | "birth_year" | "accident" | "models" | "deductibles";
-
-const stages: Array<{ stage: SummaryStage; label: string }> = [
-  { stage: "location", label: "Location" },
-  { stage: "birth_year", label: "Birth year" },
-  { stage: "accident", label: "Accident" },
-  { stage: "models", label: "Insurance models" },
-  { stage: "deductibles", label: "Franchise" },
-];
+function preferenceSummary(flow: ComparisonFlow) {
+  const models = flow.models.length === flow.allModelCount
+    ? "All models"
+    : `${flow.models.length} model${flow.models.length === 1 ? "" : "s"}`;
+  const franchises = flow.deductibles.length === flow.availableDeductibles.length
+    ? "all franchises"
+    : `${flow.deductibles.length} franchise${flow.deductibles.length === 1 ? "" : "s"}`;
+  return `${models} · ${franchises}`;
+}
 
 export function JourneySummary({ flow }: { flow: ComparisonFlow }) {
-  const values: Record<SummaryStage, string> = {
-    location: flow.location,
-    birth_year: flow.birthYear ? `${flow.birthYear} · ${flow.ageLabel}` : "",
-    accident: flow.accident ? flow.accidentLabel : "",
-    models: flow.models.length === flow.allModelCount ? "All models" : `${flow.models.length} selected`,
-    deductibles: flow.deductibles.length === flow.availableDeductibles.length
-      ? "All franchises"
-      : `${flow.deductibles.length} selected`,
-  };
-  const currentIndex = stages.findIndex(({ stage }) => stage === flow.journeyStage);
-  const progressValue = flow.journeyStage === "welcome"
-    ? 0
-    : currentIndex >= 0 ? currentIndex + 1 : stages.length;
-  const progressLabel = currentIndex >= 0
-    ? stages[currentIndex].label
-    : flow.journeyStage === "welcome" ? "Ready to begin" : "Your answers";
+  const section = journeySection(flow.journeyStage);
+  const detailsReady = Boolean(flow.location && flow.birthYear && flow.accident);
+  const details = detailsReady
+    ? `${flow.location} · ${flow.birthYear} · Accident ${flow.accidentLabel.toLowerCase()}`
+    : "Postcode, birth year and accident cover";
+  const preferences = preferenceSummary(flow);
+
+  if (section === "results") {
+    return (
+      <details className="answer-summary">
+        <summary>Your choices</summary>
+        <div className="answer-summary-grid">
+          <button onClick={() => flow.goToStage("location")} type="button">
+            <span>Your details</span><strong>{details}</strong><i>Edit</i>
+          </button>
+          <button onClick={() => flow.goToStage("models")} type="button">
+            <span>Preferences</span><strong>{preferences}</strong><i>Edit</i>
+          </button>
+        </div>
+      </details>
+    );
+  }
 
   return (
-    <nav className="journey-navigation" aria-label="Comparison progress">
-      <div className="mobile-progress">
-        <div>
-          <span>{progressValue ? `Step ${progressValue} of ${stages.length}` : "Get started"}</span>
-          <strong>{progressLabel}</strong>
-        </div>
-        <progress max={stages.length} value={progressValue}>{progressValue} of {stages.length}</progress>
-      </div>
-      {flow.journeyStage === "results" && <details className="mobile-answer-summary">
-        <summary>Your choices</summary>
-        <ul>
-          {stages.map(({ stage, label }) => <li key={stage}>
-            <button onClick={() => flow.goToStage(stage)} type="button">
-              <span>{label}</span><strong>{values[stage]}</strong><i aria-hidden="true">Edit</i>
-            </button>
-          </li>)}
-        </ul>
-      </details>}
-      <ol className="journey-summary" aria-label="Your comparison answers">
-        {stages.map(({ stage, label }, index) => {
-          const value = flow.completedStages[stage] ? values[stage] : "";
-          const isCurrent = flow.journeyStage === stage;
-          return (
-            <li aria-current={isCurrent ? "step" : undefined} className={value ? "complete" : isCurrent ? "current" : ""} key={stage}>
-              <button
-                aria-label={value ? `${label}: ${value}. ${isCurrent ? "Current step" : "Edit answer"}` : `${label}: not answered`}
-                disabled={!value || isCurrent}
-                onClick={() => flow.goToStage(stage)}
-                type="button"
-              >
-                <span>{index + 1}</span>
-                <small>{label}</small>
-                <strong>{value || (isCurrent ? "Answer now" : "Not answered")}</strong>
-                <i className="sr-only">{isCurrent ? "Current step" : value ? "Completed; edit answer" : "Not completed"}</i>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+    <nav className="journey-navigation" aria-label="Comparison sections">
+      <button
+        aria-current={section === "details" ? "step" : undefined}
+        className={section === "details" ? "active" : ""}
+        onClick={() => flow.goToStage("location")}
+        type="button"
+      >
+        <span>Your details</span><small>{details}</small>
+      </button>
+      <span className="journey-arrow" aria-hidden="true">→</span>
+      <button
+        aria-current={section === "preferences" ? "step" : undefined}
+        className={section === "preferences" ? "active" : ""}
+        disabled={!detailsReady}
+        onClick={section === "details" ? flow.continueFromDetails : undefined}
+        type="button"
+      >
+        <span>Preferences</span><small>Models and franchises</small>
+      </button>
     </nav>
   );
 }

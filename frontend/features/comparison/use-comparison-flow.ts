@@ -6,11 +6,9 @@ import { requestGuideReply, searchPremiums } from "./comparison-api";
 import { clearConversationState, loadConversationState, saveConversationState } from "./conversation-storage";
 import { adultDeductibles, ageChoices, ageGroupForBirthYear, childDeductibles, modelChoices } from "./config";
 import { clearJourneyState, loadJourneyState, saveJourneyState } from "./journey-storage";
-import {
-  allSelection, createJourneyState, isPreviousOrCurrentStage, journeyReducer,
-  resolveDeductibles, resolveModels, selectedValues,
-} from "./journey-machine";
+import { allSelection, createJourneyState, isPreviousOrCurrentStage, journeyReducer, resolveDeductibles, resolveModels, selectedValues } from "./journey-machine";
 import type { InsuranceModel, JourneyAction, JourneyStage } from "./journey-machine";
+import { synchronizeDetails, synchronizePreferences } from "./journey-synchronizer";
 import type { AccidentChoice, ChatProfile, LocationSuggestion, Message, PremiumSearchResponse } from "./types";
 import { useLocationPicker } from "./use-location-picker";
 
@@ -60,7 +58,7 @@ export function useComparisonFlow() {
           ? journeyReducer(savedJourney, { type: "start" })
           : savedJourney;
         const restored = currentJourney.stage === "results"
-          ? journeyReducer(currentJourney, { type: "edit", stage: "deductibles" })
+          ? journeyReducer(currentJourney, { type: "edit", stage: "models" })
           : currentJourney;
         setJourney(restored);
         const profile = restored.profile;
@@ -109,6 +107,11 @@ export function useComparisonFlow() {
   const ageLabel = ageChoices.find(({ value }) => value === ageGroup)?.label || "Not chosen";
   const accidentLabel = accident === "included" ? "Included" : accident === "excluded" ? "Excluded" : "Not chosen";
 
+  const journeyDraft = {
+    location: locationPicker.selectedLocation, birthYear, accident, models, deductibles,
+    allModelCount: modelChoices.length, allDeductibleCount: availableDeductibles.length,
+  };
+
   function setBirthYear(value: string) {
     const nextAgeGroup = ageGroupForBirthYear(value);
     setBirthYearValue(value);
@@ -132,6 +135,18 @@ export function useComparisonFlow() {
     else if (journey.stage === "models" && models.length) reduce({ type: "set_models", selection: models.length === modelChoices.length ? allSelection() : selectedValues(models) });
     else if (journey.stage === "deductibles" && deductibles.length) reduce({ type: "set_deductibles", selection: deductibles.length === availableDeductibles.length ? allSelection() : selectedValues(deductibles) });
     else if (target !== "welcome" && target !== "results") reduce({ type: "edit", stage: target });
+  }
+
+  function continueFromDetails() {
+    if (!locationPicker.selectedLocation || !ageGroup || !birthYear || !accident) {
+      setFormError("Enter your postcode, birth year and accident cover.");
+      return;
+    }
+    setFormError("");
+    setSearchNotice("");
+    setResults(null);
+    setJourney((current) => synchronizeDetails(current, journeyDraft));
+    setRestoredNotice("");
   }
 
   function applyAgentProfile(profile?: ChatProfile, comparison?: PremiumSearchResponse) {
@@ -178,12 +193,7 @@ export function useComparisonFlow() {
     if (!selectedLocation || !ageGroup || !birthYear || !accident || !deductibles.length || !models.length) {
       setFormError("Complete each answer before comparing premiums."); return;
     }
-    if (journey.stage === "deductibles") {
-      const selection = deductibles.length === availableDeductibles.length
-        ? allSelection<number>()
-        : selectedValues(deductibles);
-      setJourney((current) => journeyReducer(current, { type: "set_deductibles", selection }));
-    }
+    setJourney((current) => synchronizePreferences(current, journeyDraft));
     setFormError(""); setIsSearching(true); setSearchNotice(""); setResults(null);
     try {
       const payload = await searchPremiums({ canton: selectedLocation.canton, region: selectedLocation.premium_region, birthYear, accidentCoverage: accident === "included", deductibles, models, currentPremium });
@@ -192,6 +202,7 @@ export function useComparisonFlow() {
       if (!payload.offers.length) setSearchNotice("No published offers match every selected filter.");
     } catch (error) {
       setSearchNotice(error instanceof Error ? error.message : "We couldn't load premiums right now. Please try again.");
+      setJourney((current) => journeyReducer(current, { type: "edit", stage: "models" }));
     } finally {
       setIsSearching(false);
       const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -224,7 +235,7 @@ export function useComparisonFlow() {
       accident: Boolean(journey.profile.accident), models: Boolean(journey.profile.models),
       deductibles: Boolean(journey.profile.deductibles),
     },
-    goToStage, isSearching, isSending, journeyStage: journey.stage, location: locationPicker.selectedLocation?.label || "",
+    continueFromDetails, goToStage, isSearching, isSending, journeyStage: journey.stage, location: locationPicker.selectedLocation?.label || "",
     messages, models, restartJourney, restoredNotice, results, resultsRef, searchNotice, sendMessage,
     setAccident: (value: AccidentChoice) => { setAccidentValue(value); setFormError(""); }, setBirthYear,
     setCurrentPremium, setDraft, startJourney: () => reduce({ type: "start" }), threadId,

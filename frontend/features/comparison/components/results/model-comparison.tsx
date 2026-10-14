@@ -48,13 +48,17 @@ export function ModelComparison({ offers, defaultDeductible }: { offers: Categor
       <MobileComparisonList items={mobileItems} label={`Lowest plan in each model at ${formatDeductible(deductible)}`} />
       <table className="comparison-table model-table">
         <caption>Lowest-priced matching plan for each selected insurance model</caption>
-        <thead><tr><th scope="col">Insurance model</th><th scope="col">Monthly premium</th><th scope="col">Franchise</th><th scope="col">Insurer and plan</th></tr></thead>
-        <tbody>{ordered.map((offer) => <tr key={offer.insurance_model}>
-          <th scope="row">{labels.get(offer.insurance_model) || offer.insurance_model}</th>
-          <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>
-          <td>{formatDeductible(offer.deductible_chf)}</td>
-          <td><strong>{offer.insurer_name}</strong><small>{offer.product_name}</small></td>
-        </tr>)}</tbody>
+        <thead><tr><th scope="col">Insurance model</th><th scope="col">Monthly premium</th><th scope="col">Franchise</th><th scope="col">Insurer and plan</th><th scope="col">Difference</th></tr></thead>
+        <tbody>{ordered.map((offer) => {
+          const difference = Number(offer.monthly_premium_chf) - lowest;
+          return <tr className={difference === 0 ? "best-row" : ""} key={offer.insurance_model}>
+            <th scope="row">{labels.get(offer.insurance_model) || offer.insurance_model}</th>
+            <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>
+            <td>{formatDeductible(offer.deductible_chf)}</td>
+            <td><strong>{offer.insurer_name}</strong><small>{offer.product_name}</small></td>
+            <td>{difference === 0 ? <span className="lowest-label">Lowest</span> : `${formatCurrency(difference)} more`}</td>
+          </tr>;
+        })}</tbody>
       </table>
     </div>
   );

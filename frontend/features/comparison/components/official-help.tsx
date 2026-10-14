@@ -51,7 +51,7 @@ export function OfficialHelp() {
   return (
     <section className="official-help" aria-labelledby="help-title">
       <div className="section-heading">
-        <div><h2 id="help-title">Understand your choices</h2><p>Short answers from official Swiss sources.</p></div>
+        <div><h2 id="help-title">Health insurance, simply explained</h2><p>Clear answers from official Swiss sources.</p></div>
       </div>
       <div className="faq-list">
         {answers.map((item) => (
