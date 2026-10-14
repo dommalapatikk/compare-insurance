@@ -21,16 +21,23 @@ function ContinueButton({ disabled, onClick, children = "Continue" }: {
 
 export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
   const workspaceRef = useRef<HTMLDivElement>(null);
-  const previousStage = useRef(flow.journeyStage);
+  const section = journeySection(flow.journeyStage);
+  const previousSection = useRef(section);
 
   useEffect(() => {
-    if (previousStage.current !== flow.journeyStage) {
-      workspaceRef.current?.querySelector<HTMLElement>(".journey-step h3")?.focus();
-      previousStage.current = flow.journeyStage;
-    }
-  }, [flow.journeyStage]);
+    if (previousSection.current !== section && section !== "results") {
+      const workspace = workspaceRef.current;
+      const heading = workspace?.querySelector<HTMLElement>(".journey-step h3");
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth";
 
-  const section = journeySection(flow.journeyStage);
+      heading?.focus({ preventScroll: true });
+      workspace?.scrollIntoView({ behavior, block: "start" });
+    }
+    previousSection.current = section;
+  }, [section]);
+
   const showWorkspace = section !== "results";
   const detailsReady = Boolean(flow.selectedLocation && flow.ageGroup && flow.accident);
   return (

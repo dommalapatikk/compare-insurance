@@ -27,6 +27,7 @@ body {
 }
 button, input, select, textarea { font: inherit; }
 button, summary, select, input { touch-action: manipulation; }
+button, summary, label { -webkit-tap-highlight-color: transparent; }
 a { color: var(--action-ink); }
 button:focus-visible, input:focus-visible, select:focus-visible,
 textarea:focus-visible, summary:focus-visible, a:focus-visible {

@@ -39,7 +39,7 @@
 .explorer-heading h3 { margin: 0; font-size: 1.15rem; font-weight: 700; }
 .explorer-heading p { margin: 0; color: var(--muted); font-size: .78rem; }
 .result-tabs { width: max-content; max-width: 100%; display: inline-grid; grid-template-columns: repeat(3, max-content); gap: 0; margin-top: 12px; padding: 2px; background: var(--soft); border: 1px solid var(--line); border-radius: 9px; }
-.result-tabs button { min-height: 44px; padding: 0 16px; color: var(--muted); background: transparent; border: 0; border-radius: 7px; cursor: pointer; font-size: .8rem; font-weight: 680; white-space: nowrap; }
+.result-tabs button { min-height: 44px; padding: 0 16px; color: var(--muted); background: transparent; border: 0; border-radius: 7px; cursor: pointer; font-size: .8rem; font-weight: 680; white-space: nowrap; transition: color .16s ease, background-color .16s ease, box-shadow .16s ease; }
 .result-tabs button[aria-selected="true"] { color: var(--action-ink); background: var(--card); box-shadow: 0 1px 2px rgba(60, 64, 67, .16); }
 [role="tabpanel"]:focus-visible { outline: 3px solid rgba(26, 115, 232, .2); outline-offset: 3px; }
 .comparison-scroll, .plans-scroll { overflow: visible; }

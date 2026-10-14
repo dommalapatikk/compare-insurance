@@ -50,7 +50,7 @@
   .details-grid { grid-template-columns: 1fr; gap: 13px; }
   .details-action, .step-primary-action { width: 100%; }
   .choice-cards.two, .choice-cards.models { grid-template-columns: 1fr; }
-  .choice-cards label > span { min-height: 64px; }
+  .choice-cards label > span { min-height: 60px; padding-top: 9px; padding-bottom: 9px; }
   .deductible-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .deductible-choices label + label span { margin-left: 0; }
   .deductible-choices label span { border-radius: 10px; }
@@ -95,7 +95,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
 
 @media (forced-colors: active) {
