@@ -1,0 +1,42 @@
+// Official websites from the BAG list of authorised Swiss health insurers,
+// published 1 October 2026 and stored in data/raw for reproducibility.
+const officialInsurerWebsites: Record<string, string> = {
+  "8": "https://www.css.ch",
+  "32": "https://www.aquilana.ch",
+  "134": "https://www.kkeinsiedeln.ch",
+  "194": "https://www.sumiswalder.ch",
+  "246": "https://www.kkst.ch",
+  "290": "https://www.concordia.ch",
+  "312": "https://www.atupri.ch",
+  "343": "https://www.groupemutuel.ch",
+  "360": "https://www.kklh.ch",
+  "376": "https://www.kpt.ch",
+  "455": "https://www.oekk.ch",
+  "509": "https://www.sympany.ch",
+  "780": "https://www.glkv.ch",
+  "820": "https://www.curaulta.ch",
+  "881": "https://www.egk.ch",
+  "923": "https://www.slkk.ch",
+  "941": "https://www.sodalis.ch",
+  "966": "https://www.vitasurselva.ch",
+  "1040": "https://www.kkv.ch",
+  "1113": "https://www.cmveo.ch",
+  "1318": "https://www.kkwaedenswil.ch",
+  "1322": "https://www.kkbirchmeier.ch",
+  "1384": "https://www.swica.ch",
+  "1386": "https://www.galenos.ch",
+  "1401": "https://www.rhenusana.ch",
+  "1479": "https://www.groupemutuel.ch",
+  "1507": "https://www.groupemutuel.ch",
+  "1509": "https://www.sanitas.com",
+  "1535": "https://www.groupemutuel.ch",
+  "1542": "https://www.assura.ch",
+  "1555": "https://www.visana.ch",
+  "1560": "https://www.agrisano.ch",
+  "1562": "https://www.helsana.ch",
+  "1568": "https://www.visana.ch",
+};
+
+export function officialInsurerWebsite(insurerId: string) {
+  return officialInsurerWebsites[insurerId] ?? null;
+}

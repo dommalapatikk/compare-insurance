@@ -14,7 +14,7 @@ export function CompareInsuranceExperience() {
 
   return (
     <main id="top">
-      <SiteHeader />
+      <SiteHeader onRestart={flow.restartJourney} />
       {isFirstStep && <Intro />}
       <GuidedAdvisor flow={flow} />
       <ResultsPreview flow={flow} />

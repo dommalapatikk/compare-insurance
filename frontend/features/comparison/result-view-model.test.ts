@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { explainSavings } from "./result-view-model";
-import type { PremiumOffer } from "./types";
+import { differenceFromLowest, explainSavings, filterAndSortMinimums } from "./result-view-model";
+import type { CategoryMinimum, PremiumOffer } from "./types";
 
 const offer = {
   monthly_premium_chf: "370.30",
@@ -42,5 +42,21 @@ describe("result view model", () => {
 
   it("does not show savings without an explicit comparison premium", () => {
     expect(explainSavings(offer, "")).toBeNull();
+  });
+
+  it("filters category minimums and sorts them by monthly premium", () => {
+    const minimums = [
+      { insurer_name: "B", product_name: "B", deductible_chf: 300, insurance_model: "standard", monthly_premium_chf: "500.00" },
+      { insurer_name: "A", product_name: "A", deductible_chf: 300, insurance_model: "praxis", monthly_premium_chf: "410.00" },
+      { insurer_name: "C", product_name: "C", deductible_chf: 2500, insurance_model: "praxis", monthly_premium_chf: "370.00" },
+    ] as CategoryMinimum[];
+
+    expect(filterAndSortMinimums(minimums, { deductible: 300, model: "all" }).map((item) => item.insurer_name)).toEqual(["A", "B"]);
+    expect(filterAndSortMinimums(minimums, { deductible: "all", model: "praxis" }).map((item) => item.insurer_name)).toEqual(["C", "A"]);
+  });
+
+  it("calculates the difference from the filtered lowest offer", () => {
+    const lowest = { monthly_premium_chf: "410.00" } as CategoryMinimum;
+    expect(differenceFromLowest({ monthly_premium_chf: "415.00" } as CategoryMinimum, lowest)).toBe(5);
   });
 });

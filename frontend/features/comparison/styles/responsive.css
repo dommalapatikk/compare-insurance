@@ -9,16 +9,17 @@
   .official-help { grid-template-columns: 190px minmax(0, 1fr); gap: 32px; }
   .comparison-table { display: none; }
   .mobile-comparison-list { display: grid; gap: 0; margin: 10px 0 0; padding: 0; list-style: none; }
-  .mobile-comparison-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 16px; padding: 15px 10px; border-top: 1px solid var(--line); }
+  .mobile-comparison-list li { display: block; padding: 16px 10px; border-top: 1px solid var(--line); }
   .mobile-comparison-list li.best { margin: 0 -4px; padding-right: 14px; padding-left: 14px; background: var(--positive-pale); border-radius: 10px; }
-  .mobile-result-heading { grid-column: 1; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .76rem; font-weight: 700; }
+  .mobile-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .76rem; font-weight: 700; }
   .mobile-result-heading em { padding: 2px 7px; color: var(--positive); background: white; border-radius: 999px; font-size: .66rem; font-style: normal; }
-  .mobile-result-price { grid-column: 2; grid-row: 1 / 3; align-self: center; white-space: nowrap; }
-  .mobile-result-price strong { font-size: 1rem; }
+  .mobile-result-price { margin: 8px 0 5px; white-space: nowrap; }
+  .mobile-result-price strong { font-size: 1.24rem; }
   .mobile-result-price small { margin-left: 2px; color: var(--muted); font-size: .7rem; }
-  .mobile-result-insurer { grid-column: 1; overflow-wrap: anywhere; font-size: .88rem; }
-  .mobile-result-plan { grid-column: 1 / -1; color: var(--muted); font-size: .76rem; }
-  .mobile-result-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 6px; color: var(--muted); font-size: .72rem; }
+  .mobile-result-insurer { display: block; overflow-wrap: anywhere; font-size: .88rem; }
+  .mobile-result-plan { display: block; margin-top: 2px; color: var(--muted); font-size: .76rem; }
+  .mobile-result-meta { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 8px; color: var(--muted); font-size: .72rem; }
+  .mobile-insurer-link { min-height: 44px; width: max-content; display: inline-flex; align-items: center; margin-top: 3px; font-size: .76rem; font-weight: 700; }
 }
 
 @media (max-width: 650px) {
@@ -35,14 +36,6 @@
   .premium-update { padding: 13px 15px 10px; border-radius: 14px; }
   .premium-update strong { font-size: 1rem; }
   .guided-advisor { margin-bottom: 30px; }
-  .journey-topline { min-height: 36px; }
-  .journey-navigation { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 4px; margin-bottom: 9px; }
-  .journey-navigation > button { min-height: 48px; padding: 6px 9px; }
-  .journey-navigation > button span { font-size: .78rem; }
-  .journey-navigation > button small { font-size: .64rem; }
-  .answer-summary-grid { grid-template-columns: 1fr; }
-  .answer-summary-grid button:first-child { border-radius: 10px 10px 0 0; }
-  .answer-summary-grid button:last-child { border-top: 1px solid var(--line); border-left: 0; border-radius: 0 0 10px 10px; }
   .advisor-workspace { padding: 20px 16px 18px; border-radius: 16px; box-shadow: 0 2px 10px rgba(32, 33, 36, .08); }
   .journey-step { gap: 16px; }
   .assistant-prompt h3 { font-size: 1.2rem; line-height: 1.2; }
@@ -57,9 +50,8 @@
   .preference-heading { align-items: flex-start; }
   .advisor-help-disclosure { max-width: none; margin-top: 5px; }
   .advisor-message { max-width: 94%; }
-  .results-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .results-heading { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
   .results-heading h2 { font-size: 1.55rem; }
-  .results-heading > span { font-size: .74rem; }
   .result-overview { grid-template-columns: 1fr; gap: 13px; padding: 17px 15px; border-radius: 14px; }
   .result-price, .result-plan, .result-facts { grid-column: 1; grid-row: auto; }
   .result-plan { align-self: auto; }
@@ -71,8 +63,10 @@
   .result-profile { margin-top: 0; }
   .results-explorer { padding: 15px 12px 8px; border-radius: 14px; }
   .explorer-heading h3 { font-size: 1.05rem; }
-  .result-tabs { position: sticky; z-index: 20; top: 62px; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: 12px; }
-  .result-tabs button { width: 100%; padding: 0 8px; text-align: center; line-height: 1.2; white-space: normal; }
+  .result-filters { align-items: stretch; flex-direction: column; gap: 8px; }
+  .result-filters label { width: 100%; }
+  .result-count { margin: 2px 0 0; }
+  .comparison-source { align-items: flex-start; flex-direction: column; gap: 0; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: 6px; }
   .savings-content { align-items: flex-start; flex-direction: column; gap: 12px; }
   .savings-form > div { width: 160px; }
@@ -83,14 +77,13 @@
   .site-footer { align-items: flex-start; flex-direction: column; gap: 6px; }
   .advisor-composer textarea, .advisor-workspace .step-control > input,
   .advisor-workspace label.step-control > input, .savings-form input { font-size: 16px; }
+  .results-preview { scroll-margin-top: 72px; }
 }
 
 @media (max-width: 360px) {
   .site-header, .intro, .guided-advisor, .results-preview, .support-panel, .site-footer { width: calc(100% - 24px); }
   .source-status { display: none; }
   .advisor-workspace { padding-right: 14px; padding-left: 14px; }
-  .journey-navigation > button small { display: none; }
-  .result-tabs button { padding: 0 6px; font-size: .76rem; }
   .mobile-result-price strong { font-size: .92rem; }
 }
 

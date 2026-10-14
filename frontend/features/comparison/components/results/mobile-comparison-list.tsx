@@ -9,6 +9,8 @@ export type MobileComparisonItem = {
   model: string;
   franchise: number;
   difference?: string;
+  insurerUrl?: string | null;
+  status?: string;
   best?: boolean;
 };
 
@@ -25,7 +27,7 @@ export function MobileComparisonList({
         <li className={item.best ? "best" : ""} key={item.key}>
           <div className="mobile-result-heading">
             <span>{item.eyebrow}</span>
-            {item.best && <em>Lowest</em>}
+            {item.status && <em>{item.status}</em>}
           </div>
           <div className="mobile-result-price">
             <strong>{formatCurrency(item.premium)}</strong><small>/month</small>
@@ -33,10 +35,15 @@ export function MobileComparisonList({
           <strong className="mobile-result-insurer">{item.insurer}</strong>
           <span className="mobile-result-plan">{item.plan}</span>
           <div className="mobile-result-meta">
-            <span>{item.model}</span>
             <span>{formatDeductible(item.franchise)}</span>
             {item.difference && <span>{item.difference}</span>}
           </div>
+          {item.insurerUrl && <a
+            className="mobile-insurer-link"
+            href={item.insurerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >Visit insurer ↗</a>}
         </li>
       ))}
     </ol>

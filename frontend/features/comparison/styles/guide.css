@@ -1,58 +1,4 @@
 .guided-advisor { margin-bottom: 44px; scroll-margin-top: 20px; }
-.journey-topline {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-.journey-topline button {
-  min-height: 44px;
-  padding: 4px 0;
-  color: var(--action-ink);
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid currentColor;
-  cursor: pointer;
-  font-size: .76rem;
-  font-weight: 700;
-}
-.journey-navigation {
-  width: min(560px, 100%);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  margin: 0 auto 12px;
-}
-.journey-navigation > button {
-  min-width: 0;
-  min-height: 52px;
-  display: grid;
-  align-content: center;
-  gap: 1px;
-  padding: 7px 14px;
-  color: var(--muted);
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  cursor: pointer;
-}
-.journey-navigation > button.active { color: var(--action-ink); background: var(--action-pale); border-color: #bfd1f5; }
-.journey-navigation > button:disabled { opacity: .55; cursor: default; }
-.journey-navigation > button span { font-size: .84rem; font-weight: 750; }
-.journey-navigation > button small { overflow: hidden; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
-.journey-arrow { color: #87909d; font-size: 1rem; }
-.answer-summary { margin-bottom: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
-.answer-summary > summary { min-height: 48px; display: flex; align-items: center; padding: 0 16px; color: var(--action-ink); cursor: pointer; font-size: .84rem; font-weight: 700; }
-.answer-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 16px 14px; }
-.answer-summary-grid button { min-width: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 12px 14px; color: var(--ink); text-align: left; background: var(--soft); border: 0; cursor: pointer; }
-.answer-summary-grid button:first-child { border-radius: 10px 0 0 10px; }
-.answer-summary-grid button:last-child { border-left: 1px solid var(--line); border-radius: 0 10px 10px 0; }
-.answer-summary-grid span { color: var(--muted); font-size: .7rem; font-weight: 700; }
-.answer-summary-grid strong { overflow: hidden; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
-.answer-summary-grid i { grid-column: 2; grid-row: 1 / 3; align-self: center; color: var(--action-ink); font-size: .72rem; font-style: normal; font-weight: 700; }
-
 .advisor-workspace {
   min-width: 0;
   padding: 27px 30px 30px;
@@ -63,6 +9,7 @@
   scroll-margin-top: 84px;
 }
 .journey-step { display: grid; gap: 18px; margin: 0; padding: 0; border: 0; animation: step-enter .22s ease-out both; }
+.step-kicker { margin: 0 0 -12px; color: var(--action-ink); font-size: .72rem; font-weight: 750; letter-spacing: .04em; }
 @keyframes step-enter {
   from { opacity: .55; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }

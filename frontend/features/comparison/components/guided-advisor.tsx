@@ -5,7 +5,6 @@ import { modelChoices } from "../config";
 import { journeySection } from "../journey-machine";
 import type { ComparisonFlow } from "../use-comparison-flow";
 import { AdvisorComposer } from "./advisor-composer";
-import { JourneySummary } from "./journey-summary";
 
 function Question({ title, children }: { title: string; children?: ReactNode }) {
   return <div className="assistant-prompt"><h3 id="step-question" tabIndex={-1}>{title}</h3>{children}</div>;
@@ -40,15 +39,13 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
   const showWorkspace = section !== "results";
   const detailsReady = Boolean(flow.selectedLocation && flow.ageGroup && flow.accident);
+  if (!showWorkspace) return null;
+
   return (
     <section className="guided-advisor" id="guided-comparison" aria-label="Premium comparison">
-      {Object.values(flow.completedStages).some(Boolean) && <div className="journey-topline">
-        <button onClick={flow.restartJourney} type="button">Start over</button>
-      </div>}
-      <JourneySummary flow={flow} />
-
-      {showWorkspace && <div className="advisor-workspace" ref={workspaceRef}>
+      <div className="advisor-workspace" ref={workspaceRef}>
         {section === "details" && <div className="journey-step details-step">
+          <p className="step-kicker">Step 1 of 2</p>
           <Question title="Your details"><p>Three quick answers are enough to find the premiums for you.</p></Question>
           <div className="details-grid">
             <div className="step-control location-combobox form-field">
@@ -66,7 +63,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
                 if (event.key === "ArrowUp") { event.preventDefault(); flow.moveLocationSelection(-1); }
                 if (event.key === "Enter" && flow.showLocationSuggestions) { event.preventDefault(); flow.chooseActiveLocation(); }
                 if (event.key === "Escape") flow.setShowLocationSuggestions(false);
-              }} placeholder="3011"
+              }} placeholder="3110"
               />
             {flow.showLocationSuggestions && flow.locationSuggestions.length > 0 && <ul id="location-suggestions" className="location-suggestions" role="listbox">
               {flow.locationSuggestions.map((item, index) => <li
@@ -76,7 +73,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
                 onClick={() => flow.chooseLocation(item)}
               ><strong>{item.postal_code} {item.locality}</strong><small>{item.municipality_name}, {item.canton}</small></li>)}
             </ul>}
-              <small aria-live="polite" id="location-hint">{flow.isLoadingLocations ? "Searching…" : flow.selectedLocation ? flow.selectedLocation.label : flow.locationNotice || "4-digit Swiss postcode"}</small>
+              <small aria-live="polite" id="location-hint">{flow.isLoadingLocations ? "Looking up postcode…" : flow.selectedLocation ? flow.selectedLocation.label : flow.locationNotice || "Enter your 4-digit Swiss postcode."}</small>
             </div>
             <label className="step-control form-field" htmlFor="birth-year">Birth year
               <input id="birth-year" aria-describedby="birth-year-hint" inputMode="numeric" min="1900" max="2027" type="number" value={flow.birthYear} onChange={(event) => flow.setBirthYear(event.target.value)} placeholder="1984" />
@@ -99,7 +96,8 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
         {section === "preferences" && <div className="journey-step preferences-step">
           <button className="back-button" onClick={() => flow.goToStage("location")} type="button"><span aria-hidden="true">←</span> Your details</button>
-          <Question title="What would you consider?"><p>Keep every option selected for the widest comparison.</p></Question>
+          <p className="step-kicker">Step 2 of 2</p>
+          <Question title="Choose what to compare"><p>Keep every option selected for the widest comparison.</p></Question>
           <section className="preference-group" aria-labelledby="model-heading">
             <div className="preference-heading"><div><h4 id="model-heading">Insurance models</h4><p>How you first contact healthcare.</p></div>
               {flow.models.length !== flow.allModelCount && <button onClick={flow.selectAllModels} type="button">Select all</button>}
@@ -119,7 +117,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
             <AdvisorComposer flow={flow} suggestions={["What does the family-doctor model mean?", "How does the franchise affect my costs?"]} />
           </details>
         </div>}
-      </div>}
+      </div>
       {flow.restoredNotice && <p className="restore-notice" role="status">{flow.restoredNotice}</p>}
     </section>
   );

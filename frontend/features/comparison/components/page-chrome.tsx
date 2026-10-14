@@ -1,7 +1,28 @@
-export function SiteHeader() {
+import type { MouseEvent } from "react";
+
+export function SiteHeader({ onRestart }: { onRestart: () => void }) {
+  function handleBrandClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (
+      event.button !== 0
+      || event.metaKey
+      || event.ctrlKey
+      || event.shiftKey
+      || event.altKey
+    ) return;
+
+    event.preventDefault();
+    onRestart();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   return (
     <header className="site-header">
-      <a className="brand" href="#top" aria-label="Compare Insurance home">
+      <a
+        className="brand"
+        href="/"
+        aria-label="Compare Insurance — start a new comparison"
+        onClick={handleBrandClick}
+      >
         <span className="brand-mark" aria-hidden="true" />
         <span>Compare Insurance</span>
       </a>
