@@ -37,6 +37,16 @@ export function JourneySummary({ flow }: { flow: ComparisonFlow }) {
         </div>
         <progress max={stages.length} value={progressValue}>{progressValue} of {stages.length}</progress>
       </div>
+      {flow.journeyStage === "results" && <details className="mobile-answer-summary">
+        <summary>Your choices</summary>
+        <ul>
+          {stages.map(({ stage, label }) => <li key={stage}>
+            <button onClick={() => flow.goToStage(stage)} type="button">
+              <span>{label}</span><strong>{values[stage]}</strong><i aria-hidden="true">Edit</i>
+            </button>
+          </li>)}
+        </ul>
+      </details>}
       <ol className="journey-summary" aria-label="Your comparison answers">
         {stages.map(({ stage, label }, index) => {
           const value = flow.completedStages[stage] ? values[stage] : "";

@@ -32,7 +32,7 @@ export function ResultSummary({
         <div><dt>Franchise</dt><dd>{formatDeductible(cheapest.deductible_chf)}</dd></div>
         <div><dt>Accident cover</dt><dd>{accidentLabel}</dd></div>
       </dl>
-      <p className="result-profile"><strong>Your choices:</strong> {location} · {ageLabel}</p>
+      <p className="result-profile">{location} · {ageLabel}</p>
       <div className="result-source">
         <span>Official BAG premium data · {results.source_year} · Before subsidies</span>
         <a href="https://www.priminfo.admin.ch/" target="_blank" rel="noreferrer">Verify on Priminfo ↗</a>

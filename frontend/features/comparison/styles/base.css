@@ -1,13 +1,13 @@
 :root {
   --ink: #202124;
   --muted: #5f6368;
-  --paper: #f7f9fc;
+  --paper: #f8fafc;
   --card: #ffffff;
-  --soft: #f1f3f4;
-  --line: #dfe1e5;
+  --soft: #f1f4f8;
+  --line: #d9e0e8;
   --brand: #d52b1e;
-  --action: #1a73e8;
-  --action-dark: #1558b0;
+  --action: #1967d2;
+  --action-dark: #1557b0;
   --action-pale: #e8f0fe;
   --action-ink: #174ea6;
   --positive: #137333;
@@ -21,7 +21,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: var(--paper);
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
   line-height: 1.45;
 }
@@ -54,6 +54,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   border-bottom: 1px solid var(--line);
 }
 .brand {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 11px;
@@ -114,6 +115,16 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
+.support-disclosure > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  color: var(--action-ink);
+  cursor: pointer;
+  font-size: .9rem;
+  font-weight: 700;
+}
+.support-disclosure[open] > summary { margin-bottom: 18px; }
 .official-help {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);
@@ -149,6 +160,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   font-weight: 650;
 }
 .faq-list p { margin: -2px 32px 18px 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+.faq-list a, .result-source a, .before-switching a { min-height: 44px; display: inline-flex; align-items: center; }
 
 .site-footer {
   display: flex;

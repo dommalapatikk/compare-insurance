@@ -13,17 +13,23 @@ export function explainSavings(
   currentPremium: string,
 ): SavingsExplanation | null {
   const baseline = Number(currentPremium);
-  const comparison = offer.reference_comparison;
-  if (!currentPremium || !Number.isFinite(baseline) || baseline <= 0 || !comparison) {
+  const premium = Number(offer.monthly_premium_chf);
+  if (
+    !currentPremium
+    || !Number.isFinite(baseline)
+    || baseline <= 0
+    || !Number.isFinite(premium)
+  ) {
     return null;
   }
 
+  const difference = Math.abs(baseline - premium);
+  const relation = baseline === premium ? "same" : baseline > premium ? "less" : "more";
+
   return {
     baseline: `${formatCurrency(baseline)}/month`,
-    monthlyDifference: formatCurrency(Number(comparison.monthly_difference_chf)),
-    annualDifference: formatCurrency(Number(comparison.annual_difference_chf)),
-    relation: comparison.relation === "cheaper"
-      ? "less"
-      : comparison.relation === "more_expensive" ? "more" : "same",
+    monthlyDifference: formatCurrency(difference),
+    annualDifference: formatCurrency(difference * 12),
+    relation,
   };
 }

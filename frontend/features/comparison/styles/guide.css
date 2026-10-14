@@ -7,6 +7,7 @@
   border-top: 1px solid var(--line);
 }
 .journey-topline button {
+  min-height: 44px;
   padding: 4px 0;
   color: var(--action-ink);
   background: transparent;
@@ -16,7 +17,7 @@
   font-size: .76rem;
   font-weight: 700;
 }
-.mobile-progress { display: none; }
+.mobile-progress, .mobile-answer-summary { display: none; }
 .journey-summary {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -61,6 +62,7 @@
 .advisor-workspace { max-width: 620px; min-width: 0; margin: 24px auto 0; }
 .journey-step { display: grid; gap: 13px; margin: 0; padding: 0; border: 0; }
 .back-button {
+  min-height: 44px;
   width: max-content;
   padding: 2px 0;
   color: var(--action-ink);
@@ -83,14 +85,17 @@
   background: var(--card);
   border: 1px solid #a9a9a5;
   border-radius: 4px;
-  font-size: .94rem;
+  font-size: 1rem;
 }
 .step-control > small, label.step-control > small { color: var(--muted); font-size: .76rem; font-weight: 500; }
 .compact-control { max-width: 260px; }
 .location-actions { display: flex; align-items: flex-start; gap: 12px; }
-.location-actions .continue-button { width: 160px; margin-top: 27px; }
+.location-actions .step-primary-action { margin-top: 27px; }
+.location-actions .continue-button { width: 160px; }
 .location-combobox { width: min(100%, 352px); }
 .location-combobox > input { width: 160px; }
+.step-primary-action { width: min(100%, 210px); }
+.step-primary-action .continue-button { width: 100%; }
 .continue-button {
   width: min(100%, 210px);
   min-height: 44px;
@@ -117,7 +122,7 @@
 .location-suggestions {
   position: absolute;
   z-index: 10;
-  top: calc(100% - 19px);
+  top: 72px;
   right: 0;
   left: 0;
   max-height: 280px;
@@ -171,10 +176,10 @@
 .advisor-composer > label { display: block; margin-bottom: 7px; font-size: .8rem; font-weight: 700; }
 .advisor-composer > div { display: flex; align-items: flex-end; gap: 8px; padding: 6px; background: var(--card); border: 1px solid #a9a9a5; border-radius: 4px; }
 .advisor-composer textarea { min-width: 0; min-height: 40px; flex: 1; padding: 6px; resize: none; border: 0; outline: 0; line-height: 1.4; }
-.advisor-composer button { min-height: 40px; padding: 0 14px; color: white; background: var(--action); border: 0; border-radius: 3px; font-size: .78rem; font-weight: 700; }
+.advisor-composer button { min-height: 44px; padding: 0 14px; color: white; background: var(--action); border: 0; border-radius: 3px; font-size: .78rem; font-weight: 700; }
 .advisor-composer button:disabled { opacity: .45; }
 .advisor-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
-.advisor-suggestions button { min-height: 36px; padding: 0 10px; color: var(--action-ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font-size: .74rem; }
+.advisor-suggestions button { min-height: 44px; padding: 0 12px; color: var(--action-ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font-size: .74rem; }
 .advisor-privacy, .restore-notice { color: var(--muted); font-size: .72rem; }
 .advisor-privacy { margin: 8px 0 0; }
 .restore-notice { max-width: 650px; margin: 12px auto 0; }

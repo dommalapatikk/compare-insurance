@@ -9,9 +9,9 @@ import { ModelComparison } from "./model-comparison";
 import { RankedPlans } from "./ranked-plans";
 
 const tabs = [
-  { id: "franchise", label: "By franchise" },
-  { id: "model", label: "By insurance model" },
-  { id: "offers", label: "Lowest-priced plans" },
+  { id: "franchise", label: "Franchises", fullLabel: "Compare by franchise" },
+  { id: "model", label: "Models", fullLabel: "Compare by insurance model" },
+  { id: "offers", label: "Plans", fullLabel: "Lowest-priced plans" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -40,7 +40,7 @@ export function ResultsExplorer({ results }: { results: PremiumSearchResponse })
           aria-controls={`${tab.id}-panel`} aria-selected={activeTab === tab.id}
           id={`${tab.id}-tab`} key={tab.id} onClick={() => setActiveTab(tab.id)}
           onKeyDown={(event) => moveFocus(event, index)} ref={(node) => { tabRefs.current[index] = node; }}
-          role="tab" tabIndex={activeTab === tab.id ? 0 : -1} type="button"
+          aria-label={tab.fullLabel} role="tab" tabIndex={activeTab === tab.id ? 0 : -1} type="button"
         >{tab.label}</button>)}
       </div>
       <div aria-labelledby="franchise-tab" hidden={activeTab !== "franchise"} id="franchise-panel" role="tabpanel" tabIndex={0}>

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { modelChoices } from "../../config";
 import { formatCurrency, formatDeductible } from "../../formatters";
 import type { CategoryMinimum } from "../../types";
+import { MobileComparisonList } from "./mobile-comparison-list";
 
 export function ModelComparison({ offers, defaultDeductible }: { offers: CategoryMinimum[]; defaultDeductible?: number }) {
   const deductibles = useMemo(
@@ -20,6 +21,21 @@ export function ModelComparison({ offers, defaultDeductible }: { offers: Categor
   const ordered = offers.filter((offer) => offer.deductible_chf === deductible).sort(
     (left, right) => (order.get(left.insurance_model) ?? 99) - (order.get(right.insurance_model) ?? 99),
   );
+  const lowest = Math.min(...ordered.map((offer) => Number(offer.monthly_premium_chf)));
+  const mobileItems = ordered.map((offer) => {
+    const difference = Number(offer.monthly_premium_chf) - lowest;
+    return {
+      key: offer.insurance_model,
+      eyebrow: labels.get(offer.insurance_model) || offer.insurance_model,
+      premium: Number(offer.monthly_premium_chf),
+      insurer: offer.insurer_name,
+      plan: offer.product_name,
+      model: labels.get(offer.insurance_model) || offer.insurance_model,
+      franchise: offer.deductible_chf,
+      difference: difference ? `${formatCurrency(difference)} more` : undefined,
+      best: difference === 0,
+    };
+  });
 
   return (
     <div className="comparison-scroll model-comparison">
@@ -29,6 +45,7 @@ export function ModelComparison({ offers, defaultDeductible }: { offers: Categor
         </select>
       </label>
       <p className="comparison-context">Models are compared at the same franchise.</p>
+      <MobileComparisonList items={mobileItems} label={`Lowest plan in each model at ${formatDeductible(deductible)}`} />
       <table className="comparison-table model-table">
         <caption>Lowest-priced matching plan for each selected insurance model</caption>
         <thead><tr><th scope="col">Insurance model</th><th scope="col">Monthly premium</th><th scope="col">Franchise</th><th scope="col">Insurer and plan</th></tr></thead>

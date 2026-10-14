@@ -1,13 +1,13 @@
 export function BeforeSwitching() {
   return (
-    <section className="before-switching" aria-labelledby="before-switching-title">
-      <h3 id="before-switching-title">Before you switch</h3>
+    <details className="before-switching">
+      <summary>Before you switch</summary>
       <ol>
-        <li><strong>Check the model</strong>Make sure its first-contact rules and available doctors or services suit you.</li>
-        <li><strong>Apply and cancel on time</strong>Apply to the new basic insurer and cancel your current basic insurance at the same time.</li>
-        <li><strong>Meet the deadline</strong>For cover from 1 January 2027, your cancellation must reach your current insurer by 30 November 2026. The postmark does not count.</li>
+        <li><strong>Check the plan rules</strong>Make sure the required first contact and available doctors suit you.</li>
+        <li><strong>Choose the new insurer</strong>Confirm the plan is available and apply before cancelling your current basic insurance.</li>
+        <li><strong>Meet the deadline</strong>For cover from 1 January 2027, your cancellation must arrive by 30 November 2026.</li>
       </ol>
-      <p>These dates apply to changing basic insurer. Changes to only your model or franchise can follow different rules. <a href="https://www.priminfo.admin.ch/de/zahlen-und-fakten/wechsel" target="_blank" rel="noreferrer">Switching guidance ↗</a></p>
-    </section>
+      <p>Rules can differ when you change only your model or franchise. <a href="https://www.priminfo.admin.ch/de/zahlen-und-fakten/wechsel" target="_blank" rel="noreferrer">Official switching guidance ↗</a></p>
+    </details>
   );
 }

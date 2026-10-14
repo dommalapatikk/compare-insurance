@@ -194,7 +194,10 @@ export function useComparisonFlow() {
       setSearchNotice(error instanceof Error ? error.message : "We couldn't load premiums right now. Please try again.");
     } finally {
       setIsSearching(false);
-      window.setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth";
+      window.setTimeout(() => resultsRef.current?.scrollIntoView({ behavior }), 50);
     }
   }
 
