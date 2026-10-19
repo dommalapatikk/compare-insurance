@@ -2,6 +2,7 @@ import { formatCurrency, formatDeductible } from "../../formatters";
 
 export type MobileComparisonItem = {
   key: string;
+  rank?: number;
   eyebrow: string;
   premium: number;
   insurer: string;
@@ -26,7 +27,7 @@ export function MobileComparisonList({
       {items.map((item) => (
         <li className={item.best ? "best" : ""} key={item.key}>
           <div className="mobile-result-heading">
-            <span>{item.eyebrow}</span>
+            <span>{item.rank ? `#${item.rank} · ` : ""}{item.eyebrow}</span>
             {item.status && <em>{item.status}</em>}
           </div>
           <div className="mobile-result-price">

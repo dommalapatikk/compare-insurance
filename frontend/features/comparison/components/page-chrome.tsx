@@ -36,9 +36,9 @@ export function Intro() {
     <section className="intro" aria-labelledby="page-title">
       <div className="intro-copy">
         <p className="eyebrow">Swiss health insurance</p>
-        <h1 id="page-title">Find your lowest health premium</h1>
+        <h1 id="page-title">Compare 2027 health insurance premiums</h1>
         <p className="intro-description">
-          Compare official 2027 basic-insurance premiums in two simple steps.
+          Start with what you need: compare your current price, find a new plan or explore every option.
         </p>
       </div>
       <aside className="premium-update" aria-label="2027 premium update">

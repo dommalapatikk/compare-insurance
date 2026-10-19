@@ -13,7 +13,12 @@ from compare_insurance_api.application.ports import (
     GuideReply,
     SourceCitation,
 )
-from compare_insurance_api.application.use_cases import PremiumComparison
+from compare_insurance_api.application.use_cases import (
+    PremiumComparison,
+    RankedDeductibleGroup,
+    RankedModelOfferSet,
+    RankedOfferSet,
+)
 from compare_insurance_api.domain.models import (
     AgeCategory,
     CostRelation,
@@ -135,6 +140,18 @@ class StubComparePremiums:
             cheapest_by_deductible=(offer,),
             cheapest_by_model=(offer,),
             cheapest_by_deductible_and_model=(offer,),
+            ranked_by_deductible=(
+                RankedDeductibleGroup(
+                    deductible_chf=2500,
+                    all_selected_models=RankedOfferSet(1, 1, 1, (ranked,)),
+                    models=(
+                        RankedModelOfferSet(
+                            insurance_model="praxis",
+                            ranking=RankedOfferSet(1, 1, 1, (ranked,)),
+                        ),
+                    ),
+                ),
+            ),
         )
 
 
@@ -239,6 +256,9 @@ def test_premium_search_maps_ranked_offers_to_the_http_contract() -> None:
     assert body["cheapest_by_model"][0]["insurer_id"] == "8"
     assert body["cheapest_by_deductible_and_model"][0]["deductible_chf"] == 2500
     assert body["cheapest_by_deductible_and_model"][0]["insurance_model"] == "praxis"
+    assert body["ranked_by_deductible"][0]["deductible_chf"] == 2500
+    assert body["ranked_by_deductible"][0]["all_selected_models"]["offers"][0]["rank"] == 1
+    assert body["ranked_by_deductible"][0]["models"][0]["insurance_model"] == "praxis"
 
 
 def test_premium_search_requires_source_filters() -> None:

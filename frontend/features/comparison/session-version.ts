@@ -1,1 +1,1 @@
-export const APP_SESSION_SCHEMA_VERSION = 2;
+export const APP_SESSION_SCHEMA_VERSION = 3;

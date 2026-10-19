@@ -12,7 +12,10 @@ export async function GET(request: Request) {
       signal: AbortSignal.timeout(30_000),
     });
     const result = await upstream.json();
-    return NextResponse.json(result, { status: upstream.status });
+    return NextResponse.json(result, {
+      status: upstream.status,
+      headers: { "Cache-Control": "private, no-store" },
+    });
   } catch (error) {
     console.error(
       "Premium proxy request failed",

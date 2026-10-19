@@ -27,6 +27,7 @@ const bern: LocationSuggestion = {
 
 function throughAccident(): JourneyState {
   let state = createJourneyState();
+  state = journeyReducer(state, { type: "select_intent", intent: "new_insurance" });
   state = journeyReducer(state, { type: "set_location", location: bern });
   state = journeyReducer(state, { type: "set_birth_year", birthYear: 1980 });
   return journeyReducer(state, { type: "set_accident", accident: "excluded" });
@@ -35,6 +36,8 @@ function throughAccident(): JourneyState {
 describe("guided comparison journey", () => {
   it("moves through every requested stage without a gender step", () => {
     let state = createJourneyState();
+    expect(state.stage).toBe("welcome");
+    state = journeyReducer(state, { type: "select_intent", intent: "new_insurance" });
     expect(state.stage).toBe("location");
     state = journeyReducer(state, { type: "set_location", location: bern });
     expect(state.stage).toBe("birth_year");
@@ -105,6 +108,7 @@ describe("guided comparison journey", () => {
   });
 
   it("presents the detailed domain journey as two simple customer sections", () => {
+    expect(journeySection("welcome")).toBe("intent");
     expect(journeySection("location")).toBe("details");
     expect(journeySection("birth_year")).toBe("details");
     expect(journeySection("accident")).toBe("details");
@@ -112,5 +116,13 @@ describe("guided comparison journey", () => {
     expect(journeySection("deductibles")).toBe("preferences");
     expect(journeySection("review")).toBe("preferences");
     expect(journeySection("results")).toBe("results");
+  });
+
+  it("keeps the three customer intents in one deterministic journey", () => {
+    for (const intent of ["compare_current", "new_insurance", "explore"] as const) {
+      const state = journeyReducer(createJourneyState(), { type: "select_intent", intent });
+      expect(state.intent).toBe(intent);
+      expect(state.stage).toBe("location");
+    }
   });
 });

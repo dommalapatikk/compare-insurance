@@ -22,6 +22,7 @@ from compare_insurance_api.application.ports import ChatHistoryMessage
 from compare_insurance_api.application.use_cases import (
     ComparePremiums,
     ExplainInsuranceChoices,
+    RankedOfferSet,
     SearchLocations,
 )
 from compare_insurance_api.domain.models import (
@@ -30,6 +31,7 @@ from compare_insurance_api.domain.models import (
     DomainValidationError,
     InsuranceModel,
     PremiumOffer,
+    RankedPremiumOffer,
     SearchCriteria,
     age_category_for_birth_year,
     valid_deductibles,
@@ -52,6 +54,41 @@ def _minimum_response(offer: PremiumOffer) -> dict[str, object]:
         "insurance_model": offer.insurance_model.value,
         "monthly_premium_chf": offer.monthly_premium_chf,
         "annual_premium_chf": offer.annual_premium_chf,
+    }
+
+
+def _ranked_response(ranked: RankedPremiumOffer) -> dict[str, object]:
+    return {
+        "rank": ranked.rank,
+        **_minimum_response(ranked.offer),
+        "monthly_difference_from_cheapest_chf": (
+            ranked.monthly_difference_from_cheapest_chf
+        ),
+        "annual_difference_from_cheapest_chf": (
+            ranked.annual_difference_from_cheapest_chf
+        ),
+        "reference_comparison": (
+            {
+                "relation": ranked.reference_comparison.relation,
+                "monthly_difference_chf": (
+                    ranked.reference_comparison.monthly_difference_chf
+                ),
+                "annual_difference_chf": (
+                    ranked.reference_comparison.annual_difference_chf
+                ),
+            }
+            if ranked.reference_comparison is not None
+            else None
+        ),
+    }
+
+
+def _ranked_set_response(ranking: RankedOfferSet) -> dict[str, object]:
+    return {
+        "total_eligible_offers": ranking.total_eligible_offers,
+        "within_five_offer_count": ranking.within_five_offer_count,
+        "within_five_insurer_count": ranking.within_five_insurer_count,
+        "offers": [_ranked_response(offer) for offer in ranking.offers],
     }
 
 
@@ -238,42 +275,7 @@ async def search_premiums(
         source_year=criteria.premium_year,
         source_name="Swiss Federal Office of Public Health (BAG)",
         total_eligible_offers=comparison.total_eligible_offers,
-        offers=[
-            {
-                "rank": ranked.rank,
-                "insurer_id": ranked.offer.insurer_id,
-                "insurer_name": ranked.offer.insurer_name,
-                "plan_id": ranked.offer.plan_id,
-                "product_name": ranked.offer.product_name,
-                "canton": ranked.offer.canton,
-                "region": ranked.offer.region,
-                "deductible_chf": ranked.offer.deductible,
-                "accident_coverage": ranked.offer.accident_coverage,
-                "insurance_model": ranked.offer.insurance_model.value,
-                "monthly_premium_chf": ranked.offer.monthly_premium_chf,
-                "annual_premium_chf": ranked.offer.annual_premium_chf,
-                "monthly_difference_from_cheapest_chf": (
-                    ranked.monthly_difference_from_cheapest_chf
-                ),
-                "annual_difference_from_cheapest_chf": (
-                    ranked.annual_difference_from_cheapest_chf
-                ),
-                "reference_comparison": (
-                    {
-                        "relation": ranked.reference_comparison.relation,
-                        "monthly_difference_chf": (
-                            ranked.reference_comparison.monthly_difference_chf
-                        ),
-                        "annual_difference_chf": (
-                            ranked.reference_comparison.annual_difference_chf
-                        ),
-                    }
-                    if ranked.reference_comparison is not None
-                    else None
-                ),
-            }
-            for ranked in comparison.offers
-        ],
+        offers=[_ranked_response(ranked) for ranked in comparison.offers],
         cheapest_by_deductible=[
             _minimum_response(offer)
             for offer in comparison.cheapest_by_deductible
@@ -285,6 +287,22 @@ async def search_premiums(
         cheapest_by_deductible_and_model=[
             _minimum_response(offer)
             for offer in comparison.cheapest_by_deductible_and_model
+        ],
+        ranked_by_deductible=[
+            {
+                "deductible_chf": group.deductible_chf,
+                "all_selected_models": _ranked_set_response(
+                    group.all_selected_models
+                ),
+                "models": [
+                    {
+                        "insurance_model": model_group.insurance_model,
+                        "ranking": _ranked_set_response(model_group.ranking),
+                    }
+                    for model_group in group.models
+                ],
+            }
+            for group in comparison.ranked_by_deductible
         ],
     )
 

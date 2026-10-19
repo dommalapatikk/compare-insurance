@@ -4,141 +4,101 @@ import { useMemo, useState } from "react";
 
 import { modelLabels } from "../../config";
 import { formatCurrency, formatDeductible } from "../../formatters";
-import { officialInsurerWebsite } from "../../insurer-links";
-import { differenceFromLowest, filterAndSortMinimums } from "../../result-view-model";
-import type { PremiumSearchResponse } from "../../types";
-import { MobileComparisonList } from "./mobile-comparison-list";
+import type { JourneyIntent } from "../../journey-machine";
+import { explainSavings } from "../../result-view-model";
+import type { PremiumSearchResponse, RankedDeductibleGroup } from "../../types";
+import { RankedFranchiseGroup } from "./ranked-franchise-group";
 
 const ALL = "all";
 
-function uniqueNumbers(values: number[]) {
-  return [...new Set(values)].sort((left, right) => left - right);
+function rankingFor(group: RankedDeductibleGroup, model: string) {
+  if (model === ALL) return group.all_selected_models;
+  return group.models.find((item) => item.insurance_model === model)?.ranking ?? {
+    total_eligible_offers: 0,
+    within_five_offer_count: 0,
+    within_five_insurer_count: 0,
+    offers: [],
+  };
 }
 
-function uniqueModels(values: string[]) {
-  return [...new Set(values)].sort((left, right) => (
-    (modelLabels[left] || left).localeCompare(modelLabels[right] || right)
-  ));
-}
-
-export function ResultsExplorer({ results }: { results: PremiumSearchResponse }) {
-  const [deductible, setDeductible] = useState<typeof ALL | number>(ALL);
-  const [model, setModel] = useState<typeof ALL | string>(ALL);
-  const sourceOffers = results.cheapest_by_deductible_and_model;
-  const deductibles = useMemo(
-    () => uniqueNumbers(sourceOffers.map((offer) => offer.deductible_chf)),
-    [sourceOffers],
+export function ResultsExplorer({
+  results,
+  intent,
+  currentPremium,
+}: {
+  results: PremiumSearchResponse;
+  intent: JourneyIntent | null;
+  currentPremium: string;
+}) {
+  const groups = results.ranked_by_deductible ?? [];
+  const [deductible, setDeductible] = useState<typeof ALL | number>(
+    groups.length === 1 ? groups[0].deductible_chf : ALL,
   );
-  const models = useMemo(
-    () => uniqueModels(sourceOffers.map((offer) => offer.insurance_model)),
-    [sourceOffers],
+  const [model, setModel] = useState<typeof ALL | string>(
+    results.query.insurance_models.length === 1 ? results.query.insurance_models[0] : ALL,
   );
-  const offers = useMemo(
-    () => filterAndSortMinimums(sourceOffers, { deductible, model }),
-    [deductible, model, sourceOffers],
+  const visibleGroups = useMemo(
+    () => groups
+      .filter((group) => deductible === ALL || group.deductible_chf === deductible)
+      .map((group) => ({ ...group, selectedRanking: rankingFor(group, model) })),
+    [deductible, groups, model],
   );
-  const lowest = offers[0];
-  const sameFranchise = deductible !== ALL;
-  const withinFive = sameFranchise
-    ? offers.filter((offer) => differenceFromLowest(offer, lowest) <= 5)
-    : [];
-  const withinFiveInsurers = new Set(withinFive.map((offer) => offer.insurer_id)).size;
-
-  const mobileItems = offers.map((offer, index) => {
-    const difference = differenceFromLowest(offer, lowest);
-    const status = index === 0
-      ? "Lowest in this view"
-      : sameFranchise && difference <= 5
-        ? "Within CHF 5/month"
-        : undefined;
-    return {
-      key: `${offer.deductible_chf}-${offer.insurance_model}-${offer.insurer_id}-${offer.plan_id ?? offer.product_name}`,
-      eyebrow: modelLabels[offer.insurance_model] || offer.insurance_model,
-      premium: Number(offer.monthly_premium_chf),
-      insurer: offer.insurer_name,
-      plan: offer.product_name,
-      model: modelLabels[offer.insurance_model] || offer.insurance_model,
-      franchise: offer.deductible_chf,
-      difference: index === 0 ? undefined : `${formatCurrency(difference)} more`,
-      insurerUrl: officialInsurerWebsite(offer.insurer_id),
-      status,
-      best: index === 0,
-    };
-  });
+  const totalResults = visibleGroups.reduce(
+    (sum, group) => sum + group.selectedRanking.total_eligible_offers,
+    0,
+  );
+  const savings = intent === "compare_current" && results.offers[0]
+    ? explainSavings(results.offers[0], currentPremium)
+    : null;
 
   return (
     <section className="results-explorer" aria-labelledby="explorer-title">
       <div className="explorer-heading">
         <div>
           <h3 id="explorer-title">Compare premiums</h3>
-          <p>Lowest matching plan for every selected franchise and insurance model.</p>
+          <p>True lowest offers for the franchises and insurance models you selected.</p>
         </div>
         <span>{results.source_year} · Before subsidies</span>
       </div>
 
+      {savings && <div className="current-comparison" role="status">
+        <strong>{formatCurrency(Number(results.offers[0].monthly_premium_chf))}/month is the lowest with the same setup.</strong>
+        <span>{savings.monthlyDifference} {savings.relation} per month · {savings.annualDifference} {savings.relation} per year than {savings.baseline}.</span>
+      </div>}
+
       <div className="result-filters" aria-label="Filter comparison results">
         <label>
           <span>Franchise</span>
-          <select
-            value={deductible}
-            onChange={(event) => setDeductible(event.target.value === ALL ? ALL : Number(event.target.value))}
-          >
+          <select value={deductible} onChange={(event) => setDeductible(event.target.value === ALL ? ALL : Number(event.target.value))}>
             <option value={ALL}>All franchises</option>
-            {deductibles.map((value) => <option key={value} value={value}>{formatDeductible(value)}</option>)}
+            {groups.map((group) => <option key={group.deductible_chf} value={group.deductible_chf}>{formatDeductible(group.deductible_chf)}</option>)}
           </select>
         </label>
         <label>
           <span>Insurance model</span>
           <select value={model} onChange={(event) => setModel(event.target.value)}>
             <option value={ALL}>All models</option>
-            {models.map((value) => <option key={value} value={value}>{modelLabels[value] || value}</option>)}
+            {results.query.insurance_models.map((value) => <option key={value} value={value}>{modelLabels[value] || value}</option>)}
           </select>
         </label>
-        <p className="result-count" aria-live="polite">{offers.length} matching combination{offers.length === 1 ? "" : "s"}</p>
+        <p className="result-count" aria-live="polite">{totalResults} eligible plan{totalResults === 1 ? "" : "s"}</p>
       </div>
 
-      <p className="comparison-guidance">
-        {sameFranchise
-          ? `${withinFive.length} matching combination${withinFive.length === 1 ? "" : "s"} from ${withinFiveInsurers} insurer${withinFiveInsurers === 1 ? "" : "s"} ${withinFive.length === 1 ? "is" : "are"} within CHF 5/month of the lowest. CHF 5/month is CHF 60/year.`
-          : "Sorted by monthly premium. A higher franchise can lower the premium but increase what you pay yourself when you need care."}
-      </p>
+      <p className="selection-summary"><strong>Franchise:</strong> {deductible === ALL ? "All franchises" : formatDeductible(deductible)} <span>·</span> <strong>Insurance model:</strong> {model === ALL ? "All models" : modelLabels[model] || model}</p>
+      <p className="comparison-guidance">{deductible === ALL
+        ? "Each franchise has its own ranking. A higher franchise can lower the premium but increases what you may pay yourself, so compare within each group."
+        : `Every result uses a ${formatDeductible(deductible)} franchise, so the premiums can be compared directly.`}</p>
 
-      <div className="comparison-scroll">
-        <table className="comparison-table unified-results-table">
-          <caption>Lowest matching premium for each franchise and insurance model</caption>
-          <thead><tr>
-            <th scope="col">Monthly premium</th>
-            <th scope="col">Insurer and plan</th>
-            <th scope="col">Insurance model</th>
-            <th scope="col">Franchise</th>
-            <th scope="col">Comparison</th>
-            <th scope="col"><span className="sr-only">Insurer website</span></th>
-          </tr></thead>
-          <tbody>{offers.map((offer, index) => {
-            const difference = differenceFromLowest(offer, lowest);
-            const insurerUrl = officialInsurerWebsite(offer.insurer_id);
-            return <tr className={index === 0 ? "best-row" : ""} key={`${offer.deductible_chf}-${offer.insurance_model}-${offer.insurer_id}-${offer.plan_id ?? offer.product_name}`}>
-              <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>
-              <th scope="row"><strong>{offer.insurer_name}</strong><small>{offer.product_name}</small></th>
-              <td>{modelLabels[offer.insurance_model] || offer.insurance_model}</td>
-              <td>{formatDeductible(offer.deductible_chf)}</td>
-              <td className={index === 0 ? "difference best" : "difference"}>
-                {index === 0
-                  ? "Lowest in this view"
-                  : sameFranchise && difference <= 5
-                    ? "Within CHF 5/month"
-                    : `${formatCurrency(difference)} more`}
-              </td>
-              <td>{insurerUrl
-                ? <a className="insurer-link" href={insurerUrl} target="_blank" rel="noopener noreferrer">Visit insurer ↗</a>
-                : <span className="link-unavailable">Website unavailable</span>}
-              </td>
-            </tr>;
-          })}</tbody>
-        </table>
+      {!groups.length && <p className="result-state error">Grouped top-10 results are unavailable. Refresh after the latest comparison service is deployed.</p>}
+      <div className="franchise-groups">
+        {visibleGroups.map((group, index) => <RankedFranchiseGroup
+          key={`${group.deductible_chf}-${model}`}
+          franchise={group.deductible_chf}
+          ranking={group.selectedRanking}
+          collapsible={deductible === ALL}
+          initiallyOpen={index === 0}
+        />)}
       </div>
-
-      <MobileComparisonList items={mobileItems} label="Filtered premium comparison" />
 
       <div className="comparison-source">
         <span>Official BAG premium data · {results.source_year}</span>

@@ -9,6 +9,32 @@
   scroll-margin-top: 84px;
 }
 .journey-step { display: grid; gap: 18px; margin: 0; padding: 0; border: 0; animation: step-enter .22s ease-out both; }
+.intent-step { max-width: 940px; margin: 0 auto; }
+.journey-intent-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.journey-intent-cards button {
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  color: var(--ink);
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.journey-intent-cards button > span:first-child { display: grid; gap: 7px; }
+.journey-intent-cards strong { font-size: .96rem; }
+.journey-intent-cards small { color: var(--muted); font-size: .78rem; line-height: 1.45; }
+.journey-intent-cards button > span:last-child { color: var(--action-ink); font-size: 1.2rem; }
+.current-premium-control { width: min(100%, 270px); display: grid; gap: 6px; font-size: .84rem; font-weight: 700; }
+.current-premium-control > span:nth-child(2) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; overflow: hidden; background: var(--card); border: 1px solid #a9a9a5; border-radius: 10px; }
+.current-premium-control b { padding: 0 12px; color: var(--muted); font-size: .78rem; }
+.current-premium-control input { width: 100%; min-width: 0; min-height: 52px; padding: 0 12px; border: 0; border-left: 1px solid var(--line); outline: 0; }
+.current-premium-control small { color: var(--muted); font-size: .72rem; font-weight: 500; }
 .step-kicker { margin: 0 0 -12px; color: var(--action-ink); font-size: .72rem; font-weight: 750; letter-spacing: .04em; }
 @keyframes step-enter {
   from { opacity: .55; transform: translateY(6px); }
@@ -162,4 +188,5 @@
 @media (hover: hover) {
   .continue-button:hover { background: var(--action-dark); box-shadow: 0 2px 7px rgba(11, 87, 208, .24); }
   .choice-cards label:hover > span, .deductible-choices label:hover > span { border-color: #8aabeb; }
+  .journey-intent-cards button:hover { border-color: #8aabeb; box-shadow: 0 4px 14px rgba(60, 64, 67, .1); transform: translateY(-1px); }
 }

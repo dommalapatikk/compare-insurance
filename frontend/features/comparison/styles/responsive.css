@@ -2,6 +2,8 @@
   .intro { grid-template-columns: 1fr; gap: 20px; }
   .premium-update { width: 100%; max-width: 540px; }
   .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .journey-intent-cards { grid-template-columns: 1fr; }
+  .journey-intent-cards button { min-height: 88px; }
   .details-action { padding-top: 0; }
   .before-switching ol { grid-template-columns: 1fr; gap: 8px; }
   .before-switching li { min-height: 0; }
@@ -65,7 +67,12 @@
   .explorer-heading h3 { font-size: 1.05rem; }
   .result-filters { align-items: stretch; flex-direction: column; gap: 8px; }
   .result-filters label { width: 100%; }
+  .result-filters select { font-size: 16px; }
   .result-count { margin: 2px 0 0; }
+  .selection-summary { line-height: 1.6; }
+  .franchise-summary { grid-template-columns: 1fr; gap: 2px; }
+  .franchise-group > summary, .franchise-group-heading { min-height: 78px; }
+  .franchise-group-content { padding-right: 8px; padding-left: 8px; }
   .comparison-source { align-items: flex-start; flex-direction: column; gap: 0; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: 6px; }
   .savings-content { align-items: flex-start; flex-direction: column; gap: 12px; }
@@ -76,7 +83,8 @@
   .before-switching { margin-top: 12px; }
   .site-footer { align-items: flex-start; flex-direction: column; gap: 6px; }
   .advisor-composer textarea, .advisor-workspace .step-control > input,
-  .advisor-workspace label.step-control > input, .savings-form input { font-size: 16px; }
+  .advisor-workspace label.step-control > input, .savings-form input,
+  .current-premium-control input { font-size: 16px; }
   .results-preview { scroll-margin-top: 72px; }
 }
 

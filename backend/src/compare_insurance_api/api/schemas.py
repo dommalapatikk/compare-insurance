@@ -74,6 +74,24 @@ class CategoryMinimumResponse(BaseModel):
     annual_premium_chf: Decimal = Field(ge=0, decimal_places=2)
 
 
+class RankedOfferSetResponse(BaseModel):
+    total_eligible_offers: int = Field(ge=0)
+    within_five_offer_count: int = Field(ge=0)
+    within_five_insurer_count: int = Field(ge=0)
+    offers: list[PremiumOfferResponse]
+
+
+class RankedModelOfferSetResponse(BaseModel):
+    insurance_model: InsuranceModel
+    ranking: RankedOfferSetResponse
+
+
+class RankedDeductibleGroupResponse(BaseModel):
+    deductible_chf: Deductible
+    all_selected_models: RankedOfferSetResponse
+    models: list[RankedModelOfferSetResponse]
+
+
 class PremiumSearchResponse(BaseModel):
     query: PremiumSearchRequest
     source_year: int
@@ -83,6 +101,7 @@ class PremiumSearchResponse(BaseModel):
     cheapest_by_deductible: list[CategoryMinimumResponse]
     cheapest_by_model: list[CategoryMinimumResponse]
     cheapest_by_deductible_and_model: list[CategoryMinimumResponse]
+    ranked_by_deductible: list[RankedDeductibleGroupResponse] = Field(default_factory=list)
 
 
 class LocationResponse(BaseModel):

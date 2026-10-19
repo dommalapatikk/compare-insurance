@@ -10,7 +10,7 @@ import { useDeploymentRefresh } from "./use-deployment-refresh";
 export function CompareInsuranceExperience() {
   useDeploymentRefresh();
   const flow = useComparisonFlow();
-  const isFirstStep = flow.journeyStage === "location" && !flow.location;
+  const isFirstStep = flow.journeyStage === "welcome";
 
   return (
     <main id="top">

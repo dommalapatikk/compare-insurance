@@ -17,7 +17,10 @@ import {
 import type { JourneyState } from "./journey-machine";
 
 function readyState(): JourneyState {
-  let state = journeyReducer(createJourneyState(), { type: "start" });
+  let state = journeyReducer(createJourneyState(), {
+    type: "select_intent",
+    intent: "new_insurance",
+  });
   state = journeyReducer(state, {
     type: "set_location",
     location: {
