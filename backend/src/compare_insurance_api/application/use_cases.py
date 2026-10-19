@@ -1,6 +1,7 @@
 """Application orchestration around the pure domain model."""
 
 from dataclasses import dataclass
+from decimal import Decimal
 
 from compare_insurance_api.application.ports import (
     ChatHistoryMessage,
@@ -32,6 +33,83 @@ class PremiumComparison:
     cheapest_by_deductible: tuple[PremiumOffer, ...]
     cheapest_by_model: tuple[PremiumOffer, ...]
     cheapest_by_deductible_and_model: tuple[PremiumOffer, ...]
+    ranked_by_deductible: tuple["RankedDeductibleGroup", ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class RankedOfferSet:
+    total_eligible_offers: int
+    within_five_offer_count: int
+    within_five_insurer_count: int
+    offers: tuple[RankedPremiumOffer, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class RankedModelOfferSet:
+    insurance_model: str
+    ranking: RankedOfferSet
+
+
+@dataclass(frozen=True, slots=True)
+class RankedDeductibleGroup:
+    deductible_chf: int
+    all_selected_models: RankedOfferSet
+    models: tuple[RankedModelOfferSet, ...]
+
+
+def _ranked_offer_set(
+    offers: tuple[PremiumOffer, ...],
+    criteria: SearchCriteria,
+) -> RankedOfferSet:
+    ranked = rank_premium_offers(
+        offers,
+        top_n=criteria.top_n,
+        reference_monthly_premium_chf=criteria.reference_monthly_premium_chf,
+    )
+    if not offers:
+        return RankedOfferSet(0, 0, 0, ())
+    lowest = min(offer.monthly_premium_chf for offer in offers)
+    ceiling = lowest + Decimal("5.00")
+    near = tuple(offer for offer in offers if offer.monthly_premium_chf <= ceiling)
+    return RankedOfferSet(
+        total_eligible_offers=len(offers),
+        within_five_offer_count=len(near),
+        within_five_insurer_count=len({offer.insurer_id for offer in near}),
+        offers=ranked,
+    )
+
+
+def _ranked_by_deductible(
+    offers: tuple[PremiumOffer, ...],
+    criteria: SearchCriteria,
+) -> tuple[RankedDeductibleGroup, ...]:
+    groups: list[RankedDeductibleGroup] = []
+    for deductible in sorted(criteria.deductibles, key=int):
+        franchise_offers = tuple(
+            offer for offer in offers if offer.deductible is deductible
+        )
+        model_groups = tuple(
+            RankedModelOfferSet(
+                insurance_model=model.value,
+                ranking=_ranked_offer_set(
+                    tuple(
+                        offer
+                        for offer in franchise_offers
+                        if offer.insurance_model is model
+                    ),
+                    criteria,
+                ),
+            )
+            for model in criteria.insurance_models
+        )
+        groups.append(
+            RankedDeductibleGroup(
+                deductible_chf=int(deductible),
+                all_selected_models=_ranked_offer_set(franchise_offers, criteria),
+                models=model_groups,
+            )
+        )
+    return tuple(groups)
 
 
 class ComparePremiums:
@@ -56,6 +134,7 @@ class ComparePremiums:
             cheapest_by_deductible_and_model=(
                 cheapest_offers_by_deductible_and_model(eligible_offers)
             ),
+            ranked_by_deductible=_ranked_by_deductible(eligible_offers, criteria),
         )
 
 

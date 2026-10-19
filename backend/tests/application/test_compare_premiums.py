@@ -66,7 +66,13 @@ def make_criteria() -> SearchCriteria:
     )
 
 
-def make_offer(insurer_id: str, monthly: str) -> PremiumOffer:
+def make_offer(
+    insurer_id: str,
+    monthly: str,
+    *,
+    deductible: Deductible = Deductible.CHF_2500,
+    model: InsuranceModel = InsuranceModel.TEL_DIG,
+) -> PremiumOffer:
     return PremiumOffer(
         insurer_id=insurer_id,
         insurer_name=f"Insurer {insurer_id}",
@@ -76,9 +82,9 @@ def make_offer(insurer_id: str, monthly: str) -> PremiumOffer:
         canton="ZH",
         region="1",
         age_category=AgeCategory.ADULT,
-        deductible=Deductible.CHF_2500,
+        deductible=deductible,
         accident_coverage=False,
-        insurance_model=InsuranceModel.TEL_DIG,
+        insurance_model=model,
         premium_year=2027,
         monthly_premium_chf=Decimal(monthly),
     )
@@ -101,6 +107,73 @@ def test_compare_premiums_orchestrates_repository_and_domain_ranking() -> None:
     assert result.cheapest_by_deductible[0].insurer_id == "cheap"
     assert result.cheapest_by_model[0].insurer_id == "cheap"
     assert result.cheapest_by_deductible_and_model[0].insurer_id == "cheap"
+    assert result.ranked_by_deductible[0].deductible_chf == 2500
+    assert result.ranked_by_deductible[0].all_selected_models.offers[0].offer.insurer_id == "cheap"
+
+
+def test_compare_premiums_builds_independent_top_ten_for_each_franchise() -> None:
+    offers = [
+        make_offer(
+            f"low-{index}",
+            str(300 + index),
+            deductible=Deductible.CHF_2500,
+        )
+        for index in range(12)
+    ] + [
+        make_offer(
+            f"standard-{index}",
+            str(500 + index),
+            deductible=Deductible.CHF_300,
+        )
+        for index in range(12)
+    ]
+    criteria = SearchCriteria(
+        canton="ZH",
+        region="1",
+        age_category=AgeCategory.ADULT,
+        accident_coverage=False,
+        deductibles=(Deductible.CHF_300, Deductible.CHF_2500),
+        insurance_models=(InsuranceModel.TEL_DIG,),
+        premium_year=2027,
+        top_n=10,
+    )
+
+    result = asyncio.run(ComparePremiums(InMemoryPremiumRepository(offers)).execute(criteria))
+
+    assert [group.deductible_chf for group in result.ranked_by_deductible] == [300, 2500]
+    assert [group.all_selected_models.total_eligible_offers for group in result.ranked_by_deductible] == [12, 12]
+    assert len(result.ranked_by_deductible[0].all_selected_models.offers) == 10
+    assert result.ranked_by_deductible[0].all_selected_models.offers[0].offer.insurer_id == "standard-0"
+    assert result.ranked_by_deductible[1].all_selected_models.offers[0].offer.insurer_id == "low-0"
+
+
+def test_grouped_results_include_requested_empty_model_and_true_five_franc_counts() -> None:
+    offers = [
+        make_offer("a", "400.00"),
+        make_offer("a-second", "404.99"),
+        make_offer("b", "405.00"),
+        make_offer("c", "405.01"),
+    ]
+    criteria = SearchCriteria(
+        canton="ZH",
+        region="1",
+        age_category=AgeCategory.ADULT,
+        accident_coverage=False,
+        deductibles=(Deductible.CHF_2500,),
+        insurance_models=(InsuranceModel.TEL_DIG, InsuranceModel.PRAXIS),
+        premium_year=2027,
+        top_n=10,
+    )
+
+    group = asyncio.run(
+        ComparePremiums(InMemoryPremiumRepository(offers)).execute(criteria)
+    ).ranked_by_deductible[0]
+
+    assert group.all_selected_models.within_five_offer_count == 3
+    assert group.all_selected_models.within_five_insurer_count == 3
+    assert [model.insurance_model for model in group.models] == ["tel_dig", "praxis"]
+    assert group.models[1].ranking.total_eligible_offers == 0
+    assert group.models[1].ranking.offers == ()
 
 
 def test_explain_insurance_choices_uses_the_guide_port() -> None:

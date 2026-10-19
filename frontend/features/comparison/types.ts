@@ -73,6 +73,24 @@ export type CategoryMinimum = {
   annual_premium_chf: string;
 };
 
+export type RankedOfferSet = {
+  total_eligible_offers: number;
+  within_five_offer_count: number;
+  within_five_insurer_count: number;
+  offers: PremiumOffer[];
+};
+
+export type RankedModelOfferSet = {
+  insurance_model: string;
+  ranking: RankedOfferSet;
+};
+
+export type RankedDeductibleGroup = {
+  deductible_chf: number;
+  all_selected_models: RankedOfferSet;
+  models: RankedModelOfferSet[];
+};
+
 export type PremiumSearchResponse = {
   query: PremiumSearchQuery;
   source_year: number;
@@ -82,6 +100,7 @@ export type PremiumSearchResponse = {
   cheapest_by_deductible: CategoryMinimum[];
   cheapest_by_model: CategoryMinimum[];
   cheapest_by_deductible_and_model: CategoryMinimum[];
+  ranked_by_deductible: RankedDeductibleGroup[];
 };
 
 export type PremiumSearchQuery = {

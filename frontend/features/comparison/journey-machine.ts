@@ -18,8 +18,9 @@ export const journeyStages = [
 ] as const;
 
 export type JourneyStage = (typeof journeyStages)[number];
-export type JourneySection = "details" | "preferences" | "results";
+export type JourneySection = "intent" | "details" | "preferences" | "results";
 export type EditableJourneyStage = Exclude<JourneyStage, "welcome" | "results">;
+export type JourneyIntent = "compare_current" | "new_insurance" | "explore";
 export type JourneyAgeGroup = Exclude<AgeGroup, "">;
 export type JourneyAccident = Exclude<AccidentChoice, "">;
 export type InsuranceModel = "standard" | "flex" | "praxis" | "tel_dig" | "pharm";
@@ -38,16 +39,19 @@ export type JourneyProfile = {
 
 export type JourneyState = {
   readonly stage: JourneyStage;
+  readonly intent: JourneyIntent | null;
   readonly profile: JourneyProfile;
 };
 
 export type JourneyAction =
   | { readonly type: "start" }
+  | { readonly type: "select_intent"; readonly intent: JourneyIntent }
   | { readonly type: "set_location"; readonly location: LocationSuggestion }
   | { readonly type: "set_birth_year"; readonly birthYear: number }
   | { readonly type: "set_accident"; readonly accident: JourneyAccident }
   | { readonly type: "set_models"; readonly selection: Selection<InsuranceModel> }
   | { readonly type: "set_deductibles"; readonly selection: Selection<number> }
+  | { readonly type: "comparison_started" }
   | { readonly type: "comparison_succeeded" }
   | { readonly type: "edit"; readonly stage: EditableJourneyStage }
   | { readonly type: "restart" };
@@ -67,7 +71,8 @@ export function selectedValues<T extends string | number>(
 
 export function createJourneyState(): JourneyState {
   return {
-    stage: "location",
+    stage: "welcome",
+    intent: null,
     profile: {
       location: null,
       birthYear: null,
@@ -87,6 +92,7 @@ export function isPreviousOrCurrentStage(
 }
 
 export function journeySection(stage: JourneyStage): JourneySection {
+  if (stage === "welcome") return "intent";
   if (stage === "results") return "results";
   if (["models", "deductibles", "review"].includes(stage)) return "preferences";
   return "details";
@@ -113,6 +119,7 @@ export function isJourneyReady(state: JourneyState): boolean {
   const { profile } = state;
   return Boolean(
     profile.location
+    && state.intent
     && profile.birthYear
     && profile.ageGroup
     && profile.accident
@@ -152,8 +159,11 @@ export function journeyReducer(
   switch (action.type) {
     case "start":
       return state.stage === "welcome" ? { ...state, stage: "location" } : state;
+    case "select_intent":
+      return { ...state, intent: action.intent, stage: "location" };
     case "set_location":
       return {
+        ...state,
         stage: "birth_year",
         profile: { ...state.profile, location: action.location },
       };
@@ -162,6 +172,7 @@ export function journeyReducer(
       const ageGroup = ageGroupForBirthYear(String(action.birthYear));
       if (!ageGroup) return state;
       return {
+        ...state,
         stage: "accident",
         profile: {
           ...state.profile,
@@ -174,12 +185,14 @@ export function journeyReducer(
     case "set_accident":
       if (!state.profile.ageGroup) return state;
       return {
+        ...state,
         stage: "models",
         profile: { ...state.profile, accident: action.accident },
       };
     case "set_models":
       if (!state.profile.accident || !validModels(action.selection)) return state;
       return {
+        ...state,
         stage: "deductibles",
         profile: { ...state.profile, models: action.selection },
       };
@@ -190,9 +203,11 @@ export function journeyReducer(
         || !validDeductibles(action.selection, state.profile.ageGroup)
       ) return state;
       return {
+        ...state,
         stage: "review",
         profile: { ...state.profile, deductibles: action.selection },
       };
+    case "comparison_started":
     case "comparison_succeeded":
       return isJourneyReady(state) ? { ...state, stage: "results" } : state;
     case "edit":

@@ -29,6 +29,41 @@ def _minimum(offer: PremiumOffer) -> dict[str, Any]:
     }
 
 
+def _ranked_offer(ranked: Any) -> dict[str, Any]:
+    return {
+        "rank": ranked.rank,
+        **_minimum(ranked.offer),
+        "monthly_difference_from_cheapest_chf": str(
+            ranked.monthly_difference_from_cheapest_chf
+        ),
+        "annual_difference_from_cheapest_chf": str(
+            ranked.annual_difference_from_cheapest_chf
+        ),
+        "reference_comparison": (
+            {
+                "relation": ranked.reference_comparison.relation.value,
+                "monthly_difference_chf": str(
+                    ranked.reference_comparison.monthly_difference_chf
+                ),
+                "annual_difference_chf": str(
+                    ranked.reference_comparison.annual_difference_chf
+                ),
+            }
+            if ranked.reference_comparison is not None
+            else None
+        ),
+    }
+
+
+def _ranked_set(ranking: Any) -> dict[str, Any]:
+    return {
+        "total_eligible_offers": ranking.total_eligible_offers,
+        "within_five_offer_count": ranking.within_five_offer_count,
+        "within_five_insurer_count": ranking.within_five_insurer_count,
+        "offers": [_ranked_offer(offer) for offer in ranking.offers],
+    }
+
+
 def premium_comparison_payload(
     comparison: PremiumComparison,
     *,
@@ -59,32 +94,7 @@ def premium_comparison_payload(
         "source": SOURCE_NAME,
         "citations": [PREMIUM_DATA_CITATION],
         "total_eligible_offers": comparison.total_eligible_offers,
-        "offers": [
-            {
-                "rank": ranked.rank,
-                **_minimum(ranked.offer),
-                "monthly_difference_from_cheapest_chf": str(
-                    ranked.monthly_difference_from_cheapest_chf
-                ),
-                "annual_difference_from_cheapest_chf": str(
-                    ranked.annual_difference_from_cheapest_chf
-                ),
-                "reference_comparison": (
-                    {
-                        "relation": ranked.reference_comparison.relation.value,
-                        "monthly_difference_chf": str(
-                            ranked.reference_comparison.monthly_difference_chf
-                        ),
-                        "annual_difference_chf": str(
-                            ranked.reference_comparison.annual_difference_chf
-                        ),
-                    }
-                    if ranked.reference_comparison is not None
-                    else None
-                ),
-            }
-            for ranked in comparison.offers
-        ],
+        "offers": [_ranked_offer(ranked) for ranked in comparison.offers],
         "cheapest_by_deductible": [
             _minimum(offer) for offer in comparison.cheapest_by_deductible
         ],
@@ -94,5 +104,19 @@ def premium_comparison_payload(
         "cheapest_by_deductible_and_model": [
             _minimum(offer)
             for offer in comparison.cheapest_by_deductible_and_model
+        ],
+        "ranked_by_deductible": [
+            {
+                "deductible_chf": group.deductible_chf,
+                "all_selected_models": _ranked_set(group.all_selected_models),
+                "models": [
+                    {
+                        "insurance_model": model_group.insurance_model,
+                        "ranking": _ranked_set(model_group.ranking),
+                    }
+                    for model_group in group.models
+                ],
+            }
+            for group in comparison.ranked_by_deductible
         ],
     }

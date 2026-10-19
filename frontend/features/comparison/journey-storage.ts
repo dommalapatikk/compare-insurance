@@ -22,6 +22,7 @@ const stages = new Set<string>(journeyStages);
 const ageGroups = new Set<string>(["child", "young_adult", "adult"]);
 const accidents = new Set<string>(["included", "excluded"]);
 const models = new Set<string>(["standard", "flex", "praxis", "tel_dig", "pharm"]);
+const intents = new Set<string>(["compare_current", "new_insurance", "explore"]);
 const profileKeys = new Set([
   "location",
   "birthYear",
@@ -120,8 +121,11 @@ function validForStage(stage: JourneyStage, profile: JourneyProfile): boolean {
 }
 
 function isJourneyState(value: unknown): value is JourneyState {
-  if (!isRecord(value) || !hasOnlyKeys(value, new Set(["stage", "profile"]))) return false;
+  if (!isRecord(value) || !hasOnlyKeys(value, new Set(["stage", "intent", "profile"]))) return false;
   if (typeof value.stage !== "string" || !stages.has(value.stage)) return false;
+  if (value.intent !== null && (typeof value.intent !== "string" || !intents.has(value.intent))) return false;
+  if (value.stage === "welcome" && value.intent !== null) return false;
+  if (value.stage !== "welcome" && value.intent === null) return false;
   if (!isProfile(value.profile)) return false;
   return validForStage(value.stage as JourneyStage, value.profile);
 }

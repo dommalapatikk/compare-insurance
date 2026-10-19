@@ -18,7 +18,7 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
       {flow.isSearching && <div className="result-state">Finding available premiums…</div>}
       {!flow.isSearching && flow.searchNotice && !flow.results?.offers.length && <div className="result-state error" role="alert">{flow.searchNotice}</div>}
       {flow.results && flow.results.offers.length > 0 && <>
-        <ResultsExplorer results={flow.results} />
+        <ResultsExplorer results={flow.results} intent={flow.journeyIntent} currentPremium={flow.currentPremium} />
         <BeforeSwitching />
       </>}
     </section>

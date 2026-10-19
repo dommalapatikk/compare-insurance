@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { modelChoices } from "../config";
 import { journeySection } from "../journey-machine";
+import type { InsuranceModel, JourneyIntent } from "../journey-machine";
 import type { ComparisonFlow } from "../use-comparison-flow";
 import { AdvisorComposer } from "./advisor-composer";
 
@@ -17,6 +18,28 @@ function ContinueButton({ disabled, onClick, children = "Continue" }: {
 }) {
   return <button className="continue-button" disabled={disabled} onClick={onClick} type="button">{children}<span aria-hidden="true">→</span></button>;
 }
+
+const journeyChoices: Array<{
+  intent: JourneyIntent;
+  title: string;
+  description: string;
+}> = [
+  {
+    intent: "compare_current",
+    title: "Compare with my current premium",
+    description: "Use the same franchise and insurance model to see the price difference.",
+  },
+  {
+    intent: "new_insurance",
+    title: "Find a new insurance plan",
+    description: "Choose the franchises and insurance models you would consider.",
+  },
+  {
+    intent: "explore",
+    title: "Explore all premiums",
+    description: "Browse premiums across every franchise and insurance model.",
+  },
+];
 
 export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -44,8 +67,23 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
   return (
     <section className="guided-advisor" id="guided-comparison" aria-label="Premium comparison">
       <div className="advisor-workspace" ref={workspaceRef}>
+        {section === "intent" && <div className="journey-step intent-step">
+          <Question title="What would you like to do?"><p>Choose a starting point. You can change your details later.</p></Question>
+          <div className="journey-intent-cards">
+            {journeyChoices.map((choice) => <button
+              key={choice.intent}
+              type="button"
+              onClick={() => flow.selectJourneyIntent(choice.intent)}
+            >
+              <span><strong>{choice.title}</strong><small>{choice.description}</small></span>
+              <span aria-hidden="true">→</span>
+            </button>)}
+          </div>
+        </div>}
+
         {section === "details" && <div className="journey-step details-step">
-          <p className="step-kicker">Step 1 of 2</p>
+          <button className="back-button" onClick={flow.restartJourney} type="button"><span aria-hidden="true">←</span> Choose another journey</button>
+          <p className="step-kicker">{flow.journeyIntent === "explore" ? "Your profile" : "Step 1 of 2"}</p>
           <Question title="Your details"><p>Three quick answers are enough to find the premiums for you.</p></Question>
           <div className="details-grid">
             <div className="step-control location-combobox form-field">
@@ -89,7 +127,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
               </div>
               <small>Choose “Excluded” only if accident insurance is provided through work.</small>
             </fieldset>
-            <div className="details-action"><ContinueButton disabled={!detailsReady} onClick={flow.continueFromDetails}>Continue</ContinueButton></div>
+            <div className="details-action"><ContinueButton disabled={!detailsReady || flow.isSearching} onClick={() => void flow.continueFromDetails()}>{flow.isSearching ? "Finding premiums…" : flow.journeyIntent === "explore" ? "Explore premiums" : "Continue"}</ContinueButton></div>
           </div>
           {flow.formError && <p className="form-error" role="alert">{flow.formError}</p>}
         </div>}
@@ -97,21 +135,38 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
         {section === "preferences" && <div className="journey-step preferences-step">
           <button className="back-button" onClick={() => flow.goToStage("location")} type="button"><span aria-hidden="true">←</span> Your details</button>
           <p className="step-kicker">Step 2 of 2</p>
-          <Question title="Choose what to compare"><p>Keep every option selected for the widest comparison.</p></Question>
+          <Question title={flow.journeyIntent === "compare_current" ? "Your current cover" : "Choose what to compare"}>
+            <p>{flow.journeyIntent === "compare_current" ? "Enter what you pay and choose the matching model and franchise." : "Keep every option selected for the widest comparison."}</p>
+          </Question>
+          {flow.journeyIntent === "compare_current" && <label className="current-premium-control" htmlFor="current-premium">
+            <span>Current monthly premium</span>
+            <span><b>CHF</b><input id="current-premium" inputMode="decimal" min="0" max="2000" step="0.05" type="number" value={flow.currentPremium} onChange={(event) => flow.setCurrentPremium(event.target.value)} placeholder="420" /></span>
+            <small>Used only to calculate the price difference.</small>
+          </label>}
           <section className="preference-group" aria-labelledby="model-heading">
             <div className="preference-heading"><div><h4 id="model-heading">Insurance models</h4><p>How you first contact healthcare.</p></div>
-              {flow.models.length !== flow.allModelCount && <button onClick={flow.selectAllModels} type="button">Select all</button>}
+              {flow.journeyIntent !== "compare_current" && flow.models.length !== flow.allModelCount && <button onClick={flow.selectAllModels} type="button">Select all</button>}
             </div>
-            <div className="choice-cards models">{modelChoices.map((choice) => <label key={choice.value}><input type="checkbox" checked={flow.models.some((value) => value === choice.value)} onChange={() => flow.toggleModel(choice.value)} /><span><strong>{choice.label}</strong><small>{choice.description}</small></span></label>)}</div>
+            <div className="choice-cards models">{modelChoices.map((choice) => <label key={choice.value}><input
+              type={flow.journeyIntent === "compare_current" ? "radio" : "checkbox"}
+              name={flow.journeyIntent === "compare_current" ? "current-model" : undefined}
+              checked={flow.models.some((value) => value === choice.value)}
+              onChange={() => flow.journeyIntent === "compare_current" ? flow.selectSingleModel(choice.value as InsuranceModel) : flow.toggleModel(choice.value)}
+            /><span><strong>{choice.label}</strong><small>{choice.description}</small></span></label>)}</div>
           </section>
           <section className="preference-group" aria-labelledby="franchise-heading">
             <div className="preference-heading"><div><h4 id="franchise-heading">Franchises</h4><p>A higher franchise lowers the premium but increases what you may pay yourself.</p></div>
-              {flow.deductibles.length !== flow.availableDeductibles.length && <button onClick={flow.selectAllDeductibles} type="button">Select all</button>}
+              {flow.journeyIntent !== "compare_current" && flow.deductibles.length !== flow.availableDeductibles.length && <button onClick={flow.selectAllDeductibles} type="button">Select all</button>}
             </div>
-            <div className="deductible-choices">{flow.availableDeductibles.map((value) => <label key={value}><input type="checkbox" checked={flow.deductibles.includes(value)} onChange={() => flow.toggleDeductible(value)} /><span>CHF {value.toLocaleString("en-CH")}</span></label>)}</div>
+            <div className="deductible-choices">{flow.availableDeductibles.map((value) => <label key={value}><input
+              type={flow.journeyIntent === "compare_current" ? "radio" : "checkbox"}
+              name={flow.journeyIntent === "compare_current" ? "current-franchise" : undefined}
+              checked={flow.deductibles.includes(value)}
+              onChange={() => flow.journeyIntent === "compare_current" ? flow.selectSingleDeductible(value) : flow.toggleDeductible(value)}
+            /><span>CHF {value.toLocaleString("en-CH")}</span></label>)}</div>
           </section>
           {flow.formError && <p className="form-error" role="alert">{flow.formError}</p>}
-          <div className="step-primary-action"><ContinueButton disabled={!flow.deductibles.length || flow.isSearching} onClick={() => void flow.comparePlans()}>{flow.isSearching ? "Comparing…" : "Show lowest premiums"}</ContinueButton></div>
+          <div className="step-primary-action"><ContinueButton disabled={!flow.deductibles.length || !flow.models.length || flow.isSearching} onClick={() => void flow.comparePlans()}>{flow.isSearching ? "Comparing…" : flow.journeyIntent === "compare_current" ? "Compare like for like" : "Show matching premiums"}</ContinueButton></div>
           <details className="advisor-help-disclosure">
             <summary>Ask a question</summary>
             <AdvisorComposer flow={flow} suggestions={["What does the family-doctor model mean?", "How does the franchise affect my costs?"]} />
