@@ -33,6 +33,8 @@
   .brand-mark { width: 28px; height: 28px; }
   .source-status { font-size: .72rem; }
   .intro { gap: 16px; padding: 25px 0 18px; }
+  .desktop-premium-update { display: none; }
+  .mobile-premium-update { width: min(100% - 28px, 1160px); display: block; margin: -12px auto 28px; }
   .intro h1 { max-width: 100%; font-size: clamp(1.9rem, 9vw, 2.2rem); line-height: 1.12; overflow-wrap: normal; }
   .intro-description { margin-top: 9px; font-size: .94rem; line-height: 1.5; }
   .premium-update { padding: 13px 15px 10px; border-radius: 14px; }
@@ -65,11 +67,16 @@
   .result-profile { margin-top: 0; }
   .results-explorer { padding: 15px 12px 8px; border-radius: 14px; }
   .explorer-heading h3 { font-size: 1.05rem; }
-  .result-filters { align-items: stretch; flex-direction: column; gap: 8px; }
-  .result-filters label { width: 100%; }
-  .result-filters select { font-size: 16px; }
+  .desktop-result-filters { display: none; }
+  .mobile-result-filters { display: block; margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; }
+  .mobile-result-filters > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 12px; cursor: pointer; font-size: .8rem; font-weight: 700; }
+  .mobile-result-filters > summary span { color: var(--muted); font-size: .68rem; font-weight: 500; text-align: right; }
+  .mobile-result-filters .result-filter-fields { align-items: stretch; flex-direction: column; gap: 8px; padding: 0 12px 12px; }
+  .result-filter-fields label { width: 100%; }
+  .result-filter-fields select { font-size: 16px; }
   .result-count { margin: 2px 0 0; }
-  .selection-summary { line-height: 1.6; }
+  .selection-summary { display: none; }
+  .comparison-guidance { margin: 10px 0 2px; padding: 10px 12px; background: var(--soft); border-radius: 8px; font-size: .74rem; }
   .franchise-summary { grid-template-columns: 1fr; gap: 2px; }
   .franchise-group > summary, .franchise-group-heading { min-height: 78px; }
   .franchise-group-content { padding-right: 8px; padding-left: 8px; }
@@ -82,6 +89,7 @@
   .support-panel { margin-bottom: 24px; padding: 28px 0; }
   .before-switching { margin-top: 12px; }
   .site-footer { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .ask-guide { width: min(100% - 28px, 1160px); margin-top: -12px; margin-bottom: 28px; }
   .advisor-composer textarea, .advisor-workspace .step-control > input,
   .advisor-workspace label.step-control > input, .savings-form input,
   .current-premium-control input { font-size: 16px; }

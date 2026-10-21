@@ -1,6 +1,8 @@
 """Thin HTTP controllers that translate transport data into use-case calls."""
 
 from decimal import Decimal
+import logging
+import os
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -8,13 +10,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from compare_insurance_api.api.dependencies import (
     get_compare_premiums,
     get_explain_insurance_choices,
+    get_list_premium_offers,
     get_search_locations,
 )
 from compare_insurance_api.api.schemas import (
     ChatRequest,
     ChatResponse,
+    ChatAvailabilityResponse,
     HealthResponse,
     LocationSearchResponse,
+    PremiumOfferPageQuery,
+    PremiumOfferPageResponse,
     PremiumSearchRequest,
     PremiumSearchResponse,
 )
@@ -22,7 +28,7 @@ from compare_insurance_api.application.ports import ChatHistoryMessage
 from compare_insurance_api.application.use_cases import (
     ComparePremiums,
     ExplainInsuranceChoices,
-    RankedOfferSet,
+    ListPremiumOffers,
     SearchLocations,
 )
 from compare_insurance_api.domain.models import (
@@ -31,6 +37,7 @@ from compare_insurance_api.domain.models import (
     DomainValidationError,
     InsuranceModel,
     PremiumOffer,
+    RankedOfferSet,
     RankedPremiumOffer,
     SearchCriteria,
     age_category_for_birth_year,
@@ -39,6 +46,7 @@ from compare_insurance_api.domain.models import (
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _minimum_response(offer: PremiumOffer) -> dict[str, object]:
@@ -156,6 +164,7 @@ async def chat(
             ),
         )
     except RuntimeError as exc:
+        logger.warning("Insurance assistant request failed: %s", exc, exc_info=True)
         detail = str(exc)
         if "not configured" in detail:
             raise HTTPException(
@@ -167,6 +176,7 @@ async def chat(
             detail="The insurance chat assistant could not complete the request.",
         ) from exc
     except Exception as exc:
+        logger.exception("Unexpected insurance assistant failure")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="The insurance chat assistant could not complete the request.",
@@ -184,6 +194,17 @@ async def chat(
             or None
         ),
         profile=reply.profile,
+    )
+
+
+@router.get(
+    "/v1/chat/availability",
+    response_model=ChatAvailabilityResponse,
+    tags=["assistant"],
+)
+async def chat_availability() -> ChatAvailabilityResponse:
+    return ChatAvailabilityResponse(
+        available=bool(os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_MODEL")),
     )
 
 
@@ -304,5 +325,96 @@ async def search_premiums(
             }
             for group in comparison.ranked_by_deductible
         ],
+    )
+
+
+@router.get(
+    "/v1/premiums/offers",
+    response_model=PremiumOfferPageResponse,
+    tags=["premiums"],
+)
+async def list_premium_offers(
+    use_case: Annotated[ListPremiumOffers, Depends(get_list_premium_offers)],
+    canton: Annotated[str, Query(min_length=2, max_length=2)],
+    region: Annotated[str, Query(min_length=1, max_length=8)],
+    deductible: Annotated[Deductible, Query()],
+    insurance_model: Annotated[list[InsuranceModel], Query(min_length=1)],
+    age_category: AgeCategory | None = None,
+    birth_year: Annotated[int | None, Query(ge=1900, le=2100)] = None,
+    accident_coverage: bool = True,
+    year: Annotated[int, Query(ge=2020, le=2100)] = 2027,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=50)] = 10,
+    reference_monthly_premium_chf: Annotated[Decimal | None, Query(ge=0)] = None,
+) -> PremiumOfferPageResponse:
+    try:
+        if birth_year is not None:
+            derived_age_category = age_category_for_birth_year(
+                birth_year,
+                premium_year=year,
+            )
+            if age_category is not None and age_category is not derived_age_category:
+                raise DomainValidationError(
+                    "age_category does not match birth_year for the premium year"
+                )
+        elif age_category is not None:
+            derived_age_category = age_category
+        else:
+            raise DomainValidationError("birth_year or age_category is required")
+
+        request = PremiumOfferPageQuery(
+            canton=canton,
+            region=region,
+            age_category=derived_age_category,
+            birth_year=birth_year,
+            deductible_chf=deductible,
+            accident_coverage=accident_coverage,
+            insurance_models=insurance_model,
+            year=year,
+            reference_monthly_premium_chf=reference_monthly_premium_chf,
+        )
+        criteria = SearchCriteria(
+            canton=request.canton,
+            region=request.region,
+            age_category=request.age_category,
+            accident_coverage=request.accident_coverage,
+            deductibles=(request.deductible_chf,),
+            insurance_models=tuple(request.insurance_models),
+            premium_year=request.year,
+            reference_monthly_premium_chf=(
+                request.reference_monthly_premium_chf
+            ),
+        )
+        page = await use_case.execute(criteria, offset=offset, limit=limit)
+    except DomainValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
+    except RuntimeError as exc:
+        if "not configured" in str(exc):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The official premium catalogue is not configured.",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The official premium catalogue could not be queried.",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The official premium catalogue could not be queried.",
+        ) from exc
+
+    return PremiumOfferPageResponse(
+        query=request,
+        source_year=criteria.premium_year,
+        source_name="Swiss Federal Office of Public Health (BAG)",
+        total_eligible_offers=page.total_eligible_offers,
+        offset=page.offset,
+        limit=page.limit,
+        has_more=page.has_more,
+        offers=[_ranked_response(ranked) for ranked in page.offers],
     )
 

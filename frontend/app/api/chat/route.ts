@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 
 const DEFAULT_API_URL = "http://127.0.0.1:8000";
 
+export async function GET() {
+  const apiUrl = (process.env.COMPARE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
+  try {
+    const upstream = await fetch(`${apiUrl}/v1/chat/availability`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!upstream.ok) return NextResponse.json({ available: false });
+    const result = await upstream.json() as { available?: unknown };
+    return NextResponse.json({ available: result.available === true });
+  } catch {
+    return NextResponse.json({ available: false });
+  }
+}
+
 export async function POST(request: Request) {
   let payload: unknown;
   try {

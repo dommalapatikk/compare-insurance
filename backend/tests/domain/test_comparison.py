@@ -9,7 +9,16 @@ from compare_insurance_api.domain.models import (
     DomainValidationError,
     InsuranceModel,
     PremiumOffer,
+    RankedDeductibleGroup,
     SearchCriteria,
+)
+from compare_insurance_api.domain.services import (
+    cheapest_offers_by_deductible,
+    cheapest_offers_by_deductible_and_model,
+    cheapest_offers_by_model,
+    paginate_ranked_premium_offers,
+    rank_premium_offers,
+    ranked_offers_by_deductible,
 )
 
 
@@ -21,12 +30,6 @@ def test_uses_the_official_2027_priminfo_model_categories() -> None:
         "tel_dig",
         "pharm",
     }
-from compare_insurance_api.domain.services import (
-    cheapest_offers_by_deductible,
-    cheapest_offers_by_deductible_and_model,
-    cheapest_offers_by_model,
-    rank_premium_offers,
-)
 
 
 def make_offer(
@@ -154,6 +157,105 @@ def test_ranking_honours_top_n_without_changing_total_input() -> None:
 
     assert len(ranked) == 3
     assert [item.rank for item in ranked] == [1, 2, 3]
+
+
+def test_search_criteria_requires_a_bounded_top_n() -> None:
+    with pytest.raises(DomainValidationError, match="top_n must be between 1 and 10"):
+        SearchCriteria(
+            canton="ZH",
+            region="1",
+            age_category=AgeCategory.ADULT,
+            accident_coverage=False,
+            deductibles=(Deductible.CHF_2500,),
+            insurance_models=(InsuranceModel.TEL_DIG,),
+            premium_year=2027,
+            top_n=None,  # type: ignore[arg-type]
+        )
+
+
+def test_grouped_ranking_is_a_domain_rule_over_the_complete_eligible_set() -> None:
+    criteria = SearchCriteria(
+        canton="ZH",
+        region="1",
+        age_category=AgeCategory.ADULT,
+        accident_coverage=False,
+        deductibles=(Deductible.CHF_300, Deductible.CHF_2500),
+        insurance_models=(InsuranceModel.STANDARD, InsuranceModel.TEL_DIG),
+        premium_year=2027,
+        top_n=2,
+    )
+    offers = [
+        make_offer(
+            insurer_id="standard-low",
+            plan_id="1",
+            monthly_premium="400.00",
+            deductible=Deductible.CHF_300,
+            insurance_model=InsuranceModel.STANDARD,
+        ),
+        make_offer(
+            insurer_id="standard-near",
+            plan_id="2",
+            monthly_premium="405.00",
+            deductible=Deductible.CHF_300,
+            insurance_model=InsuranceModel.STANDARD,
+        ),
+        make_offer(
+            insurer_id="telmed-expensive",
+            plan_id="3",
+            monthly_premium="406.00",
+            deductible=Deductible.CHF_300,
+            insurance_model=InsuranceModel.TEL_DIG,
+        ),
+    ]
+
+    groups = ranked_offers_by_deductible(offers, criteria=criteria)
+
+    assert all(isinstance(group, RankedDeductibleGroup) for group in groups)
+    assert [int(group.deductible_chf) for group in groups] == [300, 2500]
+    assert groups[0].all_selected_models.total_eligible_offers == 3
+    assert groups[0].all_selected_models.within_five_offer_count == 2
+    assert len(groups[0].all_selected_models.offers) == 2
+    assert [group.insurance_model for group in groups[0].models] == [
+        InsuranceModel.STANDARD,
+        InsuranceModel.TEL_DIG,
+    ]
+    assert groups[1].all_selected_models.total_eligible_offers == 0
+
+
+def test_offer_pagination_preserves_global_ranks_and_stable_differences() -> None:
+    offers = [
+        make_offer(
+            insurer_id=insurer_id,
+            plan_id=plan_id,
+            monthly_premium=monthly,
+        )
+        for insurer_id, plan_id, monthly in [
+            ("B", "2", "300.00"),
+            ("A", "1", "300.00"),
+            ("C", "3", "304.00"),
+            ("D", "4", "310.00"),
+            ("E", "5", "320.00"),
+        ]
+    ]
+
+    page = paginate_ranked_premium_offers(offers, offset=1, limit=2)
+
+    assert page.total_eligible_offers == 5
+    assert page.offset == 1
+    assert page.limit == 2
+    assert page.has_more is True
+    assert [(item.rank, item.offer.insurer_id) for item in page.offers] == [
+        (2, "B"),
+        (3, "C"),
+    ]
+    assert page.offers[0].monthly_difference_from_cheapest_chf == Decimal("0.00")
+    assert page.offers[1].monthly_difference_from_cheapest_chf == Decimal("4.00")
+
+
+@pytest.mark.parametrize(("offset", "limit"), [(-1, 10), (0, 0), (0, 51)])
+def test_offer_pagination_enforces_public_page_bounds(offset: int, limit: int) -> None:
+    with pytest.raises(ValueError):
+        paginate_ranked_premium_offers([], offset=offset, limit=limit)
 
 
 def test_cheapest_by_deductible_uses_all_eligible_offers() -> None:

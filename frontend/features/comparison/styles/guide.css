@@ -10,7 +10,7 @@
 }
 .journey-step { display: grid; gap: 18px; margin: 0; padding: 0; border: 0; animation: step-enter .22s ease-out both; }
 .intent-step { max-width: 940px; margin: 0 auto; }
-.journey-intent-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.journey-intent-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .journey-intent-cards button {
   min-height: 132px;
   display: flex;
@@ -32,9 +32,16 @@
 .journey-intent-cards button > span:last-child { color: var(--action-ink); font-size: 1.2rem; }
 .current-premium-control { width: min(100%, 270px); display: grid; gap: 6px; font-size: .84rem; font-weight: 700; }
 .current-premium-control > span:nth-child(2) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; overflow: hidden; background: var(--card); border: 1px solid #a9a9a5; border-radius: 10px; }
+.current-premium-control > span:nth-child(2):focus-within { border-color: var(--action); box-shadow: 0 0 0 3px rgba(26, 115, 232, .2); }
 .current-premium-control b { padding: 0 12px; color: var(--muted); font-size: .78rem; }
 .current-premium-control input { width: 100%; min-width: 0; min-height: 52px; padding: 0 12px; border: 0; border-left: 1px solid var(--line); outline: 0; }
 .current-premium-control small { color: var(--muted); font-size: .72rem; font-weight: 500; }
+.current-premium-control small.field-error { color: var(--warning); font-weight: 650; }
+.current-cover-fields { display: flex; flex-wrap: wrap; gap: 14px; }
+.current-insurer-control { width: min(100%, 360px); display: grid; gap: 6px; font-size: .84rem; font-weight: 700; }
+.current-insurer-control > span small { margin-left: 5px; color: var(--muted); font-size: .68rem; font-weight: 500; }
+.current-insurer-control select { min-height: 54px; padding: 0 12px; color: var(--ink); background: var(--card); border: 1px solid #a9a9a5; border-radius: 10px; font-size: .88rem; }
+.current-insurer-control > small { color: var(--muted); font-size: .72rem; font-weight: 500; }
 .step-kicker { margin: 0 0 -12px; color: var(--action-ink); font-size: .72rem; font-weight: 750; letter-spacing: .04em; }
 @keyframes step-enter {
   from { opacity: .55; transform: translateY(6px); }
@@ -73,6 +80,8 @@
   font-size: 1rem;
 }
 .step-control > small, label.step-control > small { color: var(--muted); font-size: .76rem; font-weight: 500; }
+.step-control > small.field-error, label.step-control > small.field-error { color: var(--warning); font-weight: 650; }
+.step-control input::placeholder { color: #858b93; font-weight: 400; opacity: 1; }
 .accident-control { min-width: 0; margin: 0; padding: 0; border: 0; }
 .accident-control legend { margin-bottom: 6px; padding: 0; font-size: .84rem; font-weight: 700; }
 .accident-control > small { display: block; margin-top: 6px; color: var(--muted); font-size: .69rem; line-height: 1.35; }
@@ -108,6 +117,7 @@
 .final-action { min-height: 84px; align-content: center; }
 .comparison-loading { min-height: 84px; align-content: center; color: var(--muted); font-weight: 650; }
 .form-error { margin: 0; color: var(--warning); font-size: .82rem; font-weight: 650; }
+.form-guidance { margin: -8px 0 0; color: var(--muted); font-size: .74rem; }
 
 .location-combobox { position: relative; }
 .location-combobox > input { padding-right: 42px; }
@@ -149,7 +159,9 @@
   transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 .choice-cards label > span::before { position: absolute; top: 13px; right: 13px; width: 15px; height: 15px; content: ""; border: 1px solid #a9a9a5; border-radius: 2px; }
+.choice-cards label > span.radio-card::before { border-radius: 50%; }
 .choice-cards input:checked + span::before { content: "✓"; display: grid; place-items: center; color: white; background: var(--action); border-color: var(--action); font-size: .62rem; font-weight: 900; }
+.choice-cards input:checked + span.radio-card::before { content: ""; border: 4px solid var(--action); background: white; }
 .choice-cards strong { font-size: .84rem; }
 .choice-cards small { margin-top: 4px; color: var(--muted); font-size: .78rem; line-height: 1.4; }
 .choice-cards input:checked + span, .deductible-choices input:checked + span { background: #f7faff; border-color: var(--action); box-shadow: inset 0 0 0 1px var(--action); }
@@ -169,6 +181,7 @@
 .message-citations a { color: var(--muted); font-size: .68rem; }
 .advisor-composer > label { display: block; margin-bottom: 7px; font-size: .8rem; font-weight: 700; }
 .advisor-composer > div { display: flex; align-items: flex-end; gap: 8px; padding: 6px; background: var(--card); border: 1px solid #a9a9a5; border-radius: 4px; }
+.advisor-composer > div:focus-within { border-color: var(--action); box-shadow: 0 0 0 3px rgba(26, 115, 232, .2); }
 .advisor-composer textarea { min-width: 0; min-height: 40px; flex: 1; padding: 6px; resize: none; border: 0; outline: 0; line-height: 1.4; }
 .advisor-composer button { min-height: 44px; padding: 0 14px; color: white; background: var(--action); border: 0; border-radius: 3px; font-size: .78rem; font-weight: 700; }
 .advisor-composer button:disabled { opacity: .45; }
@@ -178,11 +191,11 @@
 .advisor-privacy { margin: 8px 0 0; }
 .restore-notice { max-width: 650px; margin: 12px auto 0; }
 .preferences-step { max-width: 940px; margin: 0 auto; }
-.preference-group { display: grid; gap: 10px; }
+.preference-group { min-width: 0; display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
 .preference-group + .preference-group { padding-top: 17px; border-top: 1px solid var(--line); }
-.preference-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
-.preference-heading h4 { margin: 0; font-size: .93rem; }
-.preference-heading p { margin: 3px 0 0; color: var(--muted); font-size: .76rem; }
+.preference-group > legend { padding: 0; font-size: .93rem; font-weight: 700; }
+.preference-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.preference-heading p { margin: -7px 0 0; color: var(--muted); font-size: .76rem; }
 .preference-heading > button { min-height: 44px; padding: 0; color: var(--action-ink); background: transparent; border: 0; cursor: pointer; font-size: .74rem; font-weight: 700; }
 
 @media (hover: hover) {

@@ -27,7 +27,7 @@ const bern: LocationSuggestion = {
 
 function throughAccident(): JourneyState {
   let state = createJourneyState();
-  state = journeyReducer(state, { type: "select_intent", intent: "new_insurance" });
+  state = journeyReducer(state, { type: "select_intent", intent: "explore" });
   state = journeyReducer(state, { type: "set_location", location: bern });
   state = journeyReducer(state, { type: "set_birth_year", birthYear: 1980 });
   return journeyReducer(state, { type: "set_accident", accident: "excluded" });
@@ -37,7 +37,7 @@ describe("guided comparison journey", () => {
   it("moves through every requested stage without a gender step", () => {
     let state = createJourneyState();
     expect(state.stage).toBe("welcome");
-    state = journeyReducer(state, { type: "select_intent", intent: "new_insurance" });
+    state = journeyReducer(state, { type: "select_intent", intent: "explore" });
     expect(state.stage).toBe("location");
     state = journeyReducer(state, { type: "set_location", location: bern });
     expect(state.stage).toBe("birth_year");
@@ -88,6 +88,7 @@ describe("guided comparison journey", () => {
     expect(state.profile.ageGroup).toBe("child");
     expect(state.profile.deductibles).toEqual(allSelection());
     expect(resolveDeductibles(state.profile)).toEqual(childDeductibles);
+    expect(state.profile.accident).toBe("included");
   });
 
   it("edits an answer without discarding unrelated answers and can restart", () => {
@@ -118,8 +119,8 @@ describe("guided comparison journey", () => {
     expect(journeySection("results")).toBe("results");
   });
 
-  it("keeps the three customer intents in one deterministic journey", () => {
-    for (const intent of ["compare_current", "new_insurance", "explore"] as const) {
+  it("keeps the two customer intents in one deterministic journey", () => {
+    for (const intent of ["compare_current", "explore"] as const) {
       const state = journeyReducer(createJourneyState(), { type: "select_intent", intent });
       expect(state.intent).toBe(intent);
       expect(state.stage).toBe("location");

@@ -22,7 +22,7 @@ const stages = new Set<string>(journeyStages);
 const ageGroups = new Set<string>(["child", "young_adult", "adult"]);
 const accidents = new Set<string>(["included", "excluded"]);
 const models = new Set<string>(["standard", "flex", "praxis", "tel_dig", "pharm"]);
-const intents = new Set<string>(["compare_current", "new_insurance", "explore"]);
+const intents = new Set<string>(["compare_current", "explore"]);
 const profileKeys = new Set([
   "location",
   "birthYear",

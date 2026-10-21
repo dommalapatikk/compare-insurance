@@ -2,40 +2,58 @@
 
 import { useEffect, useState } from "react";
 
-import { requestGuideReply } from "./comparison-api";
-import { clearConversationState, loadConversationState, saveConversationState } from "./conversation-storage";
+import { requestGuideAvailability, requestGuideReply } from "./comparison-api";
+import {
+  clearConversationState,
+  conversationStateForJourney,
+  loadConversationState,
+  saveConversationState,
+} from "./conversation-storage";
 import type { ChatResponse, Message } from "./types";
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function useGuideConversation(onResponse: (response: ChatResponse) => void) {
+export function useGuideConversation(
+  journeyId: string | null,
+  onResponse: (response: ChatResponse) => void,
+) {
   const [hydrated, setHydrated] = useState(false);
   const [threadId, setThreadId] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(false);
   const [currentPremium, setCurrentPremium] = useState("");
+  const [currentInsurerId, setCurrentInsurerId] = useState("");
 
   useEffect(() => {
-    const saved = loadConversationState(window.sessionStorage);
+    const urlJourneyId = new URL(window.location.href).searchParams.get("journeyId");
+    const saved = conversationStateForJourney(
+      loadConversationState(window.sessionStorage),
+      urlJourneyId,
+    );
     if (saved) {
       setThreadId(saved.threadId);
       setMessages(saved.messages);
       setCurrentPremium(saved.currentPremium);
+      setCurrentInsurerId(saved.currentInsurerId ?? "");
     } else {
       setThreadId(crypto.randomUUID().replaceAll("-", ""));
     }
     setHydrated(true);
+    void requestGuideAvailability().then(setIsAvailable);
   }, []);
 
   useEffect(() => {
-    if (!hydrated || !threadId) return;
+    if (!hydrated || !threadId || !journeyId) return;
     try {
-      saveConversationState(window.sessionStorage, { threadId, messages, currentPremium });
+      saveConversationState(window.sessionStorage, {
+        journeyId, threadId, messages, currentPremium, currentInsurerId,
+      });
     } catch { /* optional */ }
-  }, [currentPremium, hydrated, messages, threadId]);
+  }, [currentInsurerId, currentPremium, hydrated, journeyId, messages, threadId]);
 
   async function sendMessage(text: string) {
     const message = text.trim();
@@ -54,7 +72,7 @@ export function useGuideConversation(onResponse: (response: ChatResponse) => voi
       setMessages((current) => [...current, {
         id: makeId(),
         role: "assistant",
-        content: "Questions are unavailable right now. You can still use the guided comparison and help topics.",
+        content: "Questions are temporarily unavailable. Your premium comparison still works.",
       }]);
     } finally {
       setIsSending(false);
@@ -65,12 +83,13 @@ export function useGuideConversation(onResponse: (response: ChatResponse) => voi
     try { clearConversationState(window.sessionStorage); } catch { /* optional */ }
     setMessages([]);
     setCurrentPremium("");
+    setCurrentInsurerId("");
     setDraft("");
     setThreadId(crypto.randomUUID().replaceAll("-", ""));
   }
 
   return {
-    currentPremium, draft, isSending, messages, resetConversation, sendMessage,
-    setCurrentPremium, setDraft, threadId,
+    currentInsurerId, currentPremium, draft, isAvailable, isSending, messages, resetConversation, sendMessage,
+    setCurrentInsurerId, setCurrentPremium, setDraft, threadId,
   };
 }

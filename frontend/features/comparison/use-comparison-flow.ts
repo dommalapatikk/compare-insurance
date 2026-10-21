@@ -1,21 +1,28 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { applyAgentProfile } from "./agent-profile-sync";
-import { searchPremiums } from "./comparison-api";
-import { adultDeductibles, ageChoices, ageGroupForBirthYear, childDeductibles, modelChoices } from "./config";
-import { clearJourneyState, loadJourneyState, saveJourneyState } from "./journey-storage";
-import { allSelection, createJourneyState, isPreviousOrCurrentStage, journeyReducer, resolveDeductibles, resolveModels, selectedValues } from "./journey-machine";
+import { adultDeductibles, ageChoices, ageGroupForBirthYear, birthYearError, childDeductibles, modelChoices } from "./config";
+import { currentPremiumError } from "./current-premium-validation";
+import { createJourneyId, tombstoneJourney } from "./journey-history";
+import { clearJourneyState, saveJourneyState } from "./journey-storage";
+import { allSelection, createJourneyState, isPreviousOrCurrentStage, journeyReducer, selectedValues } from "./journey-machine";
 import type { InsuranceModel, JourneyAction, JourneyIntent, JourneyStage } from "./journey-machine";
 import { synchronizeDetails, synchronizePreferences } from "./journey-synchronizer";
+import { isJourneyUrlIntent, serializeJourneyUrl } from "./journey-url";
+import { officialInsurers } from "./insurer-links";
 import type { AccidentChoice, PremiumSearchResponse } from "./types";
 import { useGuideConversation } from "./use-guide-conversation";
+import { useJourneyRestoration } from "./use-journey-restoration";
 import { useLocationPicker } from "./use-location-picker";
+import { usePremiumSearch } from "./use-premium-search";
 export function useComparisonFlow() {
   const [journey, setJourney] = useState(createJourneyState);
+  const [journeyId, setJourneyId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [restoredNotice, setRestoredNotice] = useState("");
   const locationPicker = useLocationPicker();
   const [birthYear, setBirthYearValue] = useState("");
+  const [birthYearTouched, setBirthYearTouched] = useState(false);
   const [accident, setAccidentValue] = useState<AccidentChoice>("");
   const [deductibles, setDeductibles] = useState<number[]>(adultDeductibles);
   const [models, setModels] = useState<InsuranceModel[]>(
@@ -24,16 +31,11 @@ export function useComparisonFlow() {
   const [formError, setFormError] = useState("");
   const [results, setResults] = useState<PremiumSearchResponse | null>(null);
   const [searchNotice, setSearchNotice] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const resultsRef = useRef<HTMLElement>(null);
-  const guide = useGuideConversation((response) => {
+  const resultsRef = useRef<HTMLElement>(null), hadResultsRef = useRef(false);
+  const guide = useGuideConversation(journeyId, (response) => {
     applyAgentProfile(response.profile, response.comparison, {
-      chooseLocation: locationPicker.chooseLocation,
-      setBirthYear: setBirthYearValue,
-      setAccident: setAccidentValue,
-      setModels,
-      setDeductibles,
-      setJourney,
+      chooseLocation: locationPicker.chooseLocation, setBirthYear: setBirthYearValue,
+      setAccident: setAccidentValue, setModels, setDeductibles, setJourney,
     });
     if (response.comparison) {
       setResults(response.comparison);
@@ -44,50 +46,39 @@ export function useComparisonFlow() {
     setJourney((current) => journeyReducer(current, action));
     setRestoredNotice("");
   }
-  useEffect(() => {
-    try {
-      const savedJourney = loadJourneyState(window.sessionStorage);
-      if (savedJourney) {
-        const restored = savedJourney.stage === "results"
-          ? journeyReducer(savedJourney, { type: "edit", stage: savedJourney.intent === "explore" ? "location" : "models" })
-          : savedJourney;
-        setJourney(restored);
-        const profile = restored.profile;
-        if (profile.location) locationPicker.chooseLocation(profile.location);
-        if (profile.birthYear) setBirthYearValue(String(profile.birthYear));
-        if (profile.accident) setAccidentValue(profile.accident);
-        if (profile.models) setModels(resolveModels(profile));
-        if (profile.deductibles) setDeductibles(resolveDeductibles(profile));
-        const hasSavedAnswers = Object.values(savedJourney.profile).some((value) => value !== null);
-        if (hasSavedAnswers) {
-          setRestoredNotice(savedJourney.stage === "results"
-            ? "Your answers were restored. Compare again to refresh the official premiums."
-            : "Your answers were restored for this browser tab.");
-        }
-      }
-    } finally {
-      setHydrated(true);
-    }
-    // The location picker is intentionally hydrated once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const ageGroup = ageGroupForBirthYear(birthYear);
+  const premiumSearch = usePremiumSearch({
+    accident, ageGroup, birthYear,
+    currentPremium: guide.currentPremium,
+    deductibles, journey, journeyId, models, results, resultsRef,
+    selectedLocation: locationPicker.selectedLocation,
+    setFormError, setJourney, setResults, setSearchNotice,
+  });
+  useJourneyRestoration({
+    chooseLocation: locationPicker.chooseLocation,
+    setAccident: setAccidentValue, setBirthYear: setBirthYearValue,
+    setDeductibles, setHydrated,
+    setIsSearching: premiumSearch.setIsSearching,
+    setJourney, setJourneyId, setModels, setRestoredNotice, setResults, setSearchNotice,
+  });
   useEffect(() => {
     if (!hydrated) return;
     try { saveJourneyState(window.sessionStorage, journey); } catch { /* optional */ }
   }, [hydrated, journey]);
   useEffect(() => {
-    if (results || searchNotice) resultsRef.current?.focus();
+    const receivedFirstResults = Boolean(results) && !hadResultsRef.current;
+    if (receivedFirstResults || searchNotice) resultsRef.current?.focus();
+    hadResultsRef.current = Boolean(results);
   }, [results, searchNotice]);
-  const ageGroup = ageGroupForBirthYear(birthYear);
+  const birthYearValidation = birthYearTouched ? birthYearError(birthYear) : "";
   const availableDeductibles = ageGroup === "child" ? childDeductibles : adultDeductibles;
   const ageLabel = ageChoices.find(({ value }) => value === ageGroup)?.label || "Not chosen";
+  const currentInsurerName = officialInsurers.find(({ id }) => id === guide.currentInsurerId)?.name ?? "";
   const accidentLabel = accident === "included" ? "Included" : accident === "excluded" ? "Excluded" : "Not chosen";
-
   const journeyDraft = {
     location: locationPicker.selectedLocation, birthYear, accident, models, deductibles,
     allModelCount: modelChoices.length, allDeductibleCount: availableDeductibles.length,
   };
-
   function setBirthYear(value: string) {
     const nextAgeGroup = ageGroupForBirthYear(value);
     setBirthYearValue(value);
@@ -96,15 +87,32 @@ export function useComparisonFlow() {
         ? []
         : nextAgeGroup === "child" ? childDeductibles : adultDeductibles);
     }
+    if (nextAgeGroup === "child") setAccidentValue("included");
     setFormError("");
   }
-
   function goToStage(target: JourneyStage) {
     setFormError("");
     setSearchNotice("");
     if (journey.stage === "results" || isPreviousOrCurrentStage(journey.stage, target)) {
       if (target !== "welcome" && target !== "results") reduce({ type: "edit", stage: target });
       if (target !== "results") setResults(null);
+      if (target === "location" && journeyId && isJourneyUrlIntent(journey.intent)) {
+        window.history.pushState({}, "", serializeJourneyUrl({
+          journeyId,
+          step: "details",
+          intent: journey.intent,
+        }));
+      }
+      if (target === "models" && journeyId && isJourneyUrlIntent(journey.intent) && locationPicker.selectedLocation && ageGroup && accident) {
+        window.history.pushState({}, "", serializeJourneyUrl({
+          journeyId,
+          step: "preferences",
+          intent: journey.intent,
+          location: locationPicker.selectedLocation,
+          birthYear: Number(birthYear),
+          accident: accident as Exclude<AccidentChoice, "">,
+        }));
+      }
       return;
     }
     if (journey.stage === "location" && locationPicker.selectedLocation) reduce({ type: "set_location", location: locationPicker.selectedLocation });
@@ -133,54 +141,33 @@ export function useComparisonFlow() {
         selection: allSelection(),
       });
       setJourney(readyJourney);
-      await runPremiumSearch(availableDeductibles, modelChoices.map(({ value }) => value as InsuranceModel), "");
+      await premiumSearch.runPremiumSearch(
+        availableDeductibles,
+        modelChoices.map(({ value }) => value as InsuranceModel),
+        "",
+        { intent: journey.intent },
+      );
     } else {
       setJourney(detailedJourney);
+      if (journeyId && isJourneyUrlIntent(journey.intent)) {
+        window.history.pushState({}, "", serializeJourneyUrl({
+          journeyId,
+          step: "preferences",
+          intent: journey.intent,
+          location: locationPicker.selectedLocation,
+          birthYear: Number(birthYear),
+          accident: accident as Exclude<AccidentChoice, "">,
+        }));
+      }
     }
     setRestoredNotice("");
   }
 
-  async function runPremiumSearch(
-    selectedDeductibles: number[],
-    selectedModels: InsuranceModel[],
-    referencePremium: string,
-  ) {
-    const selectedLocation = locationPicker.selectedLocation;
-    if (!selectedLocation || !ageGroup || !birthYear || !accident || !selectedDeductibles.length || !selectedModels.length) {
-      setFormError("Complete each answer before comparing premiums."); return;
-    }
-    setJourney((current) => journeyReducer(current, { type: "comparison_started" }));
-    setFormError(""); setIsSearching(true); setSearchNotice(""); setResults(null);
-    try {
-      const payload = await searchPremiums({
-        canton: selectedLocation.canton,
-        region: selectedLocation.premium_region,
-        birthYear,
-        accidentCoverage: accident === "included",
-        deductibles: selectedDeductibles,
-        models: selectedModels,
-        currentPremium: referencePremium,
-      });
-      setResults(payload);
-      setJourney((current) => journeyReducer(current, { type: "comparison_succeeded" }));
-      if (!payload.offers.length) setSearchNotice("No published offers match every selected filter.");
-    } catch (error) {
-      setSearchNotice(error instanceof Error ? error.message : "We couldn't load premiums right now. Please try again.");
-      setJourney((current) => journeyReducer(current, { type: "edit", stage: journey.intent === "explore" ? "location" : "models" }));
-    } finally {
-      setIsSearching(false);
-      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth";
-      window.setTimeout(() => resultsRef.current?.scrollIntoView({ behavior }), 50);
-    }
-  }
-
   async function comparePlans() {
     if (journey.intent === "compare_current") {
-      const premium = Number(guide.currentPremium);
-      if (!Number.isFinite(premium) || premium <= 0) {
-        setFormError("Enter the monthly premium you pay now.");
+      const premiumValidation = currentPremiumError(guide.currentPremium);
+      if (premiumValidation) {
+        setFormError(premiumValidation);
         return;
       }
       if (models.length !== 1 || deductibles.length !== 1) {
@@ -189,10 +176,11 @@ export function useComparisonFlow() {
       }
     }
     setJourney((current) => synchronizePreferences(current, journeyDraft));
-    await runPremiumSearch(
+    await premiumSearch.runPremiumSearch(
       deductibles,
       models,
       journey.intent === "compare_current" ? guide.currentPremium : "",
+      { intent: journey.intent },
     );
   }
 
@@ -200,22 +188,34 @@ export function useComparisonFlow() {
   function toggleModel(value: string) { setModels((current) => current.includes(value as InsuranceModel) ? current.filter((item) => item !== value) : [...current, value as InsuranceModel]); }
   function restartJourney() {
     try {
+      tombstoneJourney(window.sessionStorage, journeyId);
       clearJourneyState(window.sessionStorage);
     } catch { /* optional */ }
     setJourney(createJourneyState());
+    setJourneyId(null);
     locationPicker.updateLocationQuery("");
-    setBirthYearValue(""); setAccidentValue(""); setDeductibles(adultDeductibles);
+    setBirthYearValue(""); setBirthYearTouched(false); setAccidentValue(""); setDeductibles(adultDeductibles);
     setModels(modelChoices.map(({ value }) => value as InsuranceModel));
     guide.resetConversation(); setResults(null); setSearchNotice("");
     setFormError(""); setRestoredNotice("");
+    window.history.replaceState({}, "", "/");
   }
 
   function selectJourneyIntent(intent: JourneyIntent) {
+    if (!isJourneyUrlIntent(intent)) return;
+    const nextJourneyId = createJourneyId();
+    setJourneyId(nextJourneyId);
     setJourney((current) => journeyReducer(current, { type: "select_intent", intent }));
     setResults(null);
     setSearchNotice("");
     setFormError("");
     guide.setCurrentPremium("");
+    guide.setCurrentInsurerId("");
+    window.history.pushState({}, "", serializeJourneyUrl({
+      journeyId: nextJourneyId,
+      step: "details",
+      intent,
+    }));
     if (intent === "compare_current") {
       setModels([]);
       setDeductibles([]);
@@ -224,19 +224,20 @@ export function useComparisonFlow() {
       setDeductibles(availableDeductibles);
     }
   }
-
   return {
     ...locationPicker, accident, accidentLabel, ageGroup, ageLabel, allModelCount: modelChoices.length,
-    availableDeductibles, birthYear, comparePlans, currentPremium: guide.currentPremium, deductibles, draft: guide.draft, formError,
+    availableDeductibles, birthYear, birthYearError: birthYearValidation, chatAvailable: guide.isAvailable,
+    comparePlans, currentInsurerId: guide.currentInsurerId, currentInsurerName, currentPremium: guide.currentPremium, deductibles, draft: guide.draft, formError,
     completedStages: {
       location: Boolean(journey.profile.location), birth_year: Boolean(journey.profile.birthYear),
       accident: Boolean(journey.profile.accident), models: Boolean(journey.profile.models),
       deductibles: Boolean(journey.profile.deductibles),
     },
-    continueFromDetails, goToStage, isSearching, isSending: guide.isSending, journeyStage: journey.stage, location: locationPicker.selectedLocation?.label || "",
+    continueFromDetails, goToStage, isSearching: premiumSearch.isSearching, isSending: guide.isSending, journeyStage: journey.stage, loadMorePlans: premiumSearch.loadMorePlans, loadingPlansKey: premiumSearch.loadingPlansKey, location: locationPicker.selectedLocation?.label || "",
     journeyIntent: journey.intent, messages: guide.messages, models, restartJourney, restoredNotice, results, resultsRef, searchNotice, sendMessage: guide.sendMessage,
     setAccident: (value: AccidentChoice) => { setAccidentValue(value); setFormError(""); }, setBirthYear,
-    setCurrentPremium: guide.setCurrentPremium, setDraft: guide.setDraft, selectJourneyIntent, startJourney: () => reduce({ type: "start" }), threadId: guide.threadId,
+    touchBirthYear: () => setBirthYearTouched(true),
+    setCurrentInsurerId: guide.setCurrentInsurerId, setCurrentPremium: guide.setCurrentPremium, setDraft: guide.setDraft, selectJourneyIntent, startJourney: () => reduce({ type: "start" }), threadId: guide.threadId,
     toggleDeductible, toggleModel, selectAllModels: () => setModels(modelChoices.map(({ value }) => value as InsuranceModel)),
     selectAllDeductibles: () => setDeductibles(availableDeductibles),
     selectSingleModel: (value: InsuranceModel) => { setModels([value]); setFormError(""); },
@@ -245,5 +246,4 @@ export function useComparisonFlow() {
     chooseSpecificDeductibles: () => setDeductibles((current) => current.length === availableDeductibles.length ? [] : current),
   };
 }
-
 export type ComparisonFlow = ReturnType<typeof useComparisonFlow>;

@@ -4,6 +4,7 @@ import {
   CONVERSATION_SCHEMA_VERSION,
   CONVERSATION_STORAGE_KEY,
   clearConversationState,
+  conversationStateForJourney,
   loadConversationState,
   parseConversationSnapshot,
   saveConversationState,
@@ -17,11 +18,15 @@ class MemoryStorage {
 }
 
 describe("conversation session storage", () => {
+  const journeyId = "0123456789abcdef0123456789abcdef";
+
   it("round-trips bounded, source-linked chat state", () => {
     const storage = new MemoryStorage();
     const state = {
+      journeyId,
       threadId: "thread_123456",
       currentPremium: "412.50",
+      currentInsurerId: "8",
       messages: [{
         id: "m1",
         role: "assistant" as const,
@@ -36,11 +41,24 @@ describe("conversation session storage", () => {
     expect(storage.getItem(CONVERSATION_STORAGE_KEY)).toBeNull();
   });
 
+  it("restores private conversation and current-cover data only for the same journey", () => {
+    const state = {
+      journeyId,
+      threadId: "thread_123456",
+      currentPremium: "412.50",
+      currentInsurerId: "8",
+      messages: [{ id: "m1", role: "user" as const, content: "Compare my premium" }],
+    };
+
+    expect(conversationStateForJourney(state, journeyId)).toEqual(state);
+    expect(conversationStateForJourney(state, "fedcba9876543210fedcba9876543210")).toBeNull();
+  });
+
   it("removes an outdated conversation instead of restoring it again", () => {
     const storage = new MemoryStorage();
     storage.setItem(CONVERSATION_STORAGE_KEY, JSON.stringify({
       schemaVersion: CONVERSATION_SCHEMA_VERSION - 1,
-      state: { threadId: "thread_123456", currentPremium: "", messages: [] },
+      state: { journeyId, threadId: "thread_123456", currentPremium: "", messages: [] },
     }));
 
     expect(loadConversationState(storage)).toBeNull();
@@ -50,7 +68,7 @@ describe("conversation session storage", () => {
   it("rejects executable links, excessive history and unknown fields", () => {
     const valid = {
       schemaVersion: CONVERSATION_SCHEMA_VERSION,
-      state: { threadId: "thread_123456", currentPremium: "", messages: [] },
+      state: { journeyId, threadId: "thread_123456", currentPremium: "", messages: [] },
     };
     expect(parseConversationSnapshot(JSON.stringify({
       ...valid,

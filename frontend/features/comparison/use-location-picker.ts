@@ -9,6 +9,19 @@ export function normalizePostcode(value: string) {
   return value.replace(/\D/g, "").slice(0, 4);
 }
 
+export function resolveExactPostcode(
+  query: string,
+  locations: LocationSuggestion[],
+):
+  | { kind: "selected"; location: LocationSuggestion }
+  | { kind: "choose"; locations: LocationSuggestion[] }
+  | { kind: "not_found" } {
+  const exact = locations.filter((location) => location.postal_code === query);
+  if (exact.length === 1) return { kind: "selected", location: exact[0] };
+  if (exact.length > 1) return { kind: "choose", locations: exact };
+  return { kind: "not_found" };
+}
+
 export function useLocationPicker() {
   const [locationQuery, setLocationQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
@@ -33,10 +46,24 @@ export function useLocationPicker() {
       setLocationNotice("");
       try {
         const payload = await searchLocations(query, controller.signal);
-        setLocationSuggestions(payload.locations);
-        setActiveLocationIndex(payload.locations.length ? 0 : -1);
-        setLocationNotice(payload.locations.length ? "" : "No Swiss postcode found.");
-        setShowLocationSuggestions(true);
+        const resolution = resolveExactPostcode(query, payload.locations);
+        if (resolution.kind === "selected") {
+          setSelectedLocation(resolution.location);
+          setLocationSuggestions([]);
+          setActiveLocationIndex(-1);
+          setLocationNotice("");
+          setShowLocationSuggestions(false);
+        } else if (resolution.kind === "choose") {
+          setLocationSuggestions(resolution.locations);
+          setActiveLocationIndex(0);
+          setLocationNotice("Choose your municipality.");
+          setShowLocationSuggestions(true);
+        } else {
+          setLocationSuggestions([]);
+          setActiveLocationIndex(-1);
+          setLocationNotice("We couldn't find this postcode.");
+          setShowLocationSuggestions(false);
+        }
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
         setLocationSuggestions([]);

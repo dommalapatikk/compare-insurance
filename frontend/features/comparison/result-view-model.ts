@@ -37,6 +37,12 @@ export type SavingsExplanation = {
   relation: "less" | "more" | "same";
 };
 
+export type CurrentPremiumMessage = {
+  tone: "positive" | "neutral";
+  title: string;
+  detail: string;
+};
+
 export function explainSavings(
   offer: PremiumOffer,
   currentPremium: string,
@@ -60,5 +66,43 @@ export function explainSavings(
     monthlyDifference: formatCurrency(difference),
     annualDifference: formatCurrency(difference * 12),
     relation,
+  };
+}
+
+export function buildCurrentPremiumMessage(
+  offer: PremiumOffer,
+  currentPremium: string,
+  currentInsurerName = "",
+): CurrentPremiumMessage | null {
+  const explanation = explainSavings(offer, currentPremium);
+  if (!explanation) return null;
+
+  const premium = Number(offer.monthly_premium_chf);
+  const reference = Number(currentPremium);
+  const lowest = `${formatCurrency(premium)}/month`;
+  const insurerContext = currentInsurerName ? ` Your current insurer is ${currentInsurerName}.` : "";
+  const largeGap = Math.abs(reference - premium) / Math.max(reference, premium) > 0.3;
+  const checkInputs = "Please check that your premium, franchise, insurance model and accident cover match your policy — subsidies or a different setup can explain the gap.";
+
+  if (explanation.relation === "more") {
+    return {
+      tone: "neutral",
+      title: `You're paying less than every plan we found for this setup (lowest: ${formatCurrency(premium)}).`,
+      detail: `${checkInputs}${insurerContext}`,
+    };
+  }
+  if (explanation.relation === "same") {
+    return {
+      tone: "neutral",
+      title: "You already have the lowest premium for this setup.",
+      detail: `The matching premium is ${lowest}.${insurerContext}`,
+    };
+  }
+  return {
+    tone: "positive",
+    title: `You could save ${explanation.monthlyDifference}/month (${explanation.annualDifference}/year).`,
+    detail: largeGap
+      ? `${checkInputs} The lowest matching premium is ${lowest}, compared with the ${explanation.baseline} you entered.${insurerContext}`
+      : `The lowest matching premium is ${lowest}, compared with the ${explanation.baseline} you entered.${insurerContext}`,
   };
 }

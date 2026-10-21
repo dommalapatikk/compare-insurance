@@ -190,7 +190,11 @@ class SearchCriteria:
             raise DomainValidationError("at least one deductible is required")
         if not self.insurance_models:
             raise DomainValidationError("at least one insurance model is required")
-        if not 1 <= self.top_n <= 10:
+        if (
+            not isinstance(self.top_n, int)
+            or isinstance(self.top_n, bool)
+            or not 1 <= self.top_n <= 10
+        ):
             raise DomainValidationError("top_n must be between 1 and 10")
         if self.premium_year < 2020:
             raise DomainValidationError("premium_year must be 2020 or later")
@@ -256,4 +260,42 @@ class RankedPremiumOffer:
     monthly_difference_from_cheapest_chf: Decimal
     annual_difference_from_cheapest_chf: Decimal
     reference_comparison: ReferenceComparison | None
+
+
+@dataclass(frozen=True, slots=True)
+class RankedOfferSet:
+    """A bounded ranking plus facts calculated over its complete eligible set."""
+
+    total_eligible_offers: int
+    within_five_offer_count: int
+    within_five_insurer_count: int
+    offers: tuple[RankedPremiumOffer, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class RankedModelOfferSet:
+    """The ranking for one requested insurance model."""
+
+    insurance_model: InsuranceModel
+    ranking: RankedOfferSet
+
+
+@dataclass(frozen=True, slots=True)
+class RankedDeductibleGroup:
+    """Rankings for one requested deductible across selected models."""
+
+    deductible_chf: Deductible
+    all_selected_models: RankedOfferSet
+    models: tuple[RankedModelOfferSet, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class RankedPremiumOfferPage:
+    """One bounded page from a single deductible/model comparison scope."""
+
+    total_eligible_offers: int
+    offset: int
+    limit: int
+    has_more: bool
+    offers: tuple[RankedPremiumOffer, ...]
 

@@ -2,6 +2,7 @@ import type {
   ChatResponse,
   LocationSearchResponse,
   Message,
+  PremiumOfferPageResponse,
   PremiumSearchResponse,
 } from "./types";
 
@@ -13,6 +14,12 @@ export type PremiumSearchInput = {
   deductibles: number[];
   models: string[];
   currentPremium: string;
+};
+
+export type PremiumOfferPageInput = Omit<PremiumSearchInput, "deductibles"> & {
+  deductible: number;
+  offset: number;
+  limit?: number;
 };
 
 async function responseJson<T>(response: Response): Promise<T> {
@@ -49,7 +56,18 @@ export async function requestGuideReply(
   return responseJson<ChatResponse>(response);
 }
 
-export async function searchPremiums(input: PremiumSearchInput): Promise<PremiumSearchResponse> {
+export async function requestGuideAvailability(): Promise<boolean> {
+  try {
+    const response = await fetch("/api/chat", { cache: "no-store" });
+    if (!response.ok) return false;
+    const payload = await response.json() as { available?: unknown };
+    return payload.available === true;
+  } catch {
+    return false;
+  }
+}
+
+export function buildPremiumSearchParams(input: PremiumSearchInput) {
   const params = new URLSearchParams({
     canton: input.canton,
     region: input.region,
@@ -61,6 +79,33 @@ export async function searchPremiums(input: PremiumSearchInput): Promise<Premium
   input.deductibles.forEach((value) => params.append("deductible", String(value)));
   input.models.forEach((value) => params.append("insurance_model", value));
   if (input.currentPremium) params.set("reference_monthly_premium_chf", input.currentPremium);
+  return params;
+}
+
+export function buildPremiumOfferPageParams(input: PremiumOfferPageInput) {
+  const params = new URLSearchParams({
+    canton: input.canton,
+    region: input.region,
+    birth_year: input.birthYear,
+    accident_coverage: String(input.accidentCoverage),
+    deductible: String(input.deductible),
+    year: "2027",
+    offset: String(input.offset),
+    limit: String(input.limit ?? 10),
+  });
+  input.models.forEach((value) => params.append("insurance_model", value));
+  if (input.currentPremium) params.set("reference_monthly_premium_chf", input.currentPremium);
+  return params;
+}
+
+export async function searchPremiums(input: PremiumSearchInput): Promise<PremiumSearchResponse> {
+  const params = buildPremiumSearchParams(input);
   const response = await fetch(`/api/premiums?${params.toString()}`, { cache: "no-store" });
   return responseJson<PremiumSearchResponse>(response);
+}
+
+export async function searchPremiumOfferPage(input: PremiumOfferPageInput): Promise<PremiumOfferPageResponse> {
+  const params = buildPremiumOfferPageParams(input);
+  const response = await fetch(`/api/premium-offers?${params.toString()}`, { cache: "no-store" });
+  return responseJson<PremiumOfferPageResponse>(response);
 }

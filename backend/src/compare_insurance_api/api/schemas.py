@@ -17,6 +17,10 @@ class HealthResponse(BaseModel):
     status: str
 
 
+class ChatAvailabilityResponse(BaseModel):
+    available: bool
+
+
 class PremiumSearchRequest(BaseModel):
     """Transport representation of premium-search filters."""
 
@@ -102,6 +106,35 @@ class PremiumSearchResponse(BaseModel):
     cheapest_by_model: list[CategoryMinimumResponse]
     cheapest_by_deductible_and_model: list[CategoryMinimumResponse]
     ranked_by_deductible: list[RankedDeductibleGroupResponse] = Field(default_factory=list)
+
+
+class PremiumOfferPageQuery(BaseModel):
+    """Exact comparison group represented by a paginated offer request."""
+
+    canton: str = Field(min_length=2, max_length=2)
+    region: str = Field(min_length=1, max_length=8)
+    age_category: AgeCategory
+    birth_year: int | None = Field(default=None, ge=1900, le=2100)
+    deductible_chf: Deductible
+    accident_coverage: bool = True
+    insurance_models: list[InsuranceModel] = Field(min_length=1)
+    year: int = Field(default=2027, ge=2020, le=2100)
+    reference_monthly_premium_chf: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=2,
+    )
+
+
+class PremiumOfferPageResponse(BaseModel):
+    query: PremiumOfferPageQuery
+    source_year: int
+    source_name: str
+    total_eligible_offers: int = Field(ge=0)
+    offset: int = Field(ge=0)
+    limit: int = Field(ge=1, le=50)
+    has_more: bool
+    offers: list[PremiumOfferResponse]
 
 
 class LocationResponse(BaseModel):

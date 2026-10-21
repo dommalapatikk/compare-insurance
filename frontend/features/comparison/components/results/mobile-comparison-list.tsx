@@ -13,6 +13,7 @@ export type MobileComparisonItem = {
   insurerUrl?: string | null;
   status?: string;
   best?: boolean;
+  currentInsurer?: boolean;
 };
 
 export function MobileComparisonList({
@@ -33,7 +34,7 @@ export function MobileComparisonList({
           <div className="mobile-result-price">
             <strong>{formatCurrency(item.premium)}</strong><small>/month</small>
           </div>
-          <strong className="mobile-result-insurer">{item.insurer}</strong>
+          <strong className="mobile-result-insurer">{item.insurer}{item.currentInsurer && <em className="current-insurer-badge">Your insurer</em>}</strong>
           <span className="mobile-result-plan">{item.plan}</span>
           <div className="mobile-result-meta">
             <span>{formatDeductible(item.franchise)}</span>

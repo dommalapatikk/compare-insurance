@@ -50,13 +50,16 @@
 .explorer-heading h3 { margin: 0; font-size: 1.15rem; font-weight: 700; }
 .explorer-heading p { margin: 4px 0 0; color: var(--muted); font-size: .78rem; }
 .explorer-heading > span { color: var(--muted); font-size: .72rem; white-space: nowrap; }
-.result-filters { display: flex; align-items: flex-end; gap: 10px; margin-top: 18px; padding: 12px; background: var(--soft); border-radius: 12px; }
-.result-filters label { width: min(230px, 100%); display: grid; gap: 5px; color: var(--muted); font-size: .7rem; font-weight: 700; }
-.result-filters select { min-height: 46px; padding: 0 38px 0 12px; color: var(--ink); background: var(--card); border: 1px solid #a9a9a5; border-radius: 9px; font-size: .82rem; }
+.result-filters { margin-top: 18px; padding: 12px; background: var(--soft); border-radius: 12px; }
+.result-filter-fields { display: flex; align-items: flex-end; gap: 10px; }
+.result-filter-fields label { width: min(230px, 100%); display: grid; gap: 5px; color: var(--muted); font-size: .7rem; font-weight: 700; }
+.result-filter-fields select { min-height: 46px; padding: 0 38px 0 12px; color: var(--ink); background: var(--card); border: 1px solid #a9a9a5; border-radius: 9px; font-size: .82rem; }
 .result-count { margin: 0 0 13px auto; color: var(--muted); font-size: .74rem; white-space: nowrap; }
+.mobile-result-filters { display: none; }
 .current-comparison { display: grid; gap: 3px; margin-top: 16px; padding: 13px 15px; color: #075e4c; background: var(--positive-pale); border-radius: 10px; }
 .current-comparison strong { font-size: .84rem; }
 .current-comparison span { font-size: .76rem; line-height: 1.45; }
+.current-comparison.neutral { color: var(--ink); background: var(--soft); }
 .selection-summary { margin: 13px 0 0; color: var(--ink); font-size: .78rem; }
 .selection-summary span { padding: 0 5px; color: var(--muted); }
 .comparison-guidance { margin: 12px 0 4px; color: var(--muted); font-size: .76rem; line-height: 1.5; }
@@ -90,8 +93,8 @@
 .franchise-group > summary, .franchise-group-heading { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 16px; }
 .franchise-group > summary { cursor: pointer; list-style: none; }
 .franchise-group > summary::-webkit-details-marker { display: none; }
-.franchise-group > summary > span { color: var(--action-ink); font-size: 1.2rem; transition: transform .16s ease; }
-.franchise-group[open] > summary > span { transform: rotate(180deg); }
+.franchise-group > summary > span:last-child { color: var(--action-ink); font-size: 1.2rem; transition: transform .16s ease; }
+.franchise-group[open] > summary > span:last-child { transform: rotate(180deg); }
 .franchise-summary { min-width: 0; display: grid; grid-template-columns: minmax(150px, .9fr) minmax(180px, 1fr) minmax(150px, .8fr); align-items: baseline; gap: 14px; width: 100%; }
 .franchise-summary strong { font-size: .88rem; }
 .franchise-summary span { font-size: .82rem; font-weight: 700; }
@@ -100,6 +103,9 @@
 .franchise-group-heading { border-bottom: 1px solid var(--line); }
 .franchise-near-note { margin: 0; padding: 11px 12px 3px; color: var(--muted); font-size: .72rem; }
 .franchise-empty { margin: 0; padding: 18px 12px; color: var(--muted); font-size: .8rem; }
+.show-all-plans { min-height: 44px; margin: 10px 12px 4px; padding: 0; color: var(--action-ink); background: transparent; border: 0; cursor: pointer; font-size: .78rem; font-weight: 700; }
+.show-all-plans[aria-disabled="true"] { opacity: .55; cursor: default; }
+.plans-page-error { margin: 4px 12px 8px; color: var(--warning); font-size: .76rem; font-weight: 650; }
 .ranked-franchise-table th:nth-child(1) { width: 7%; }
 .ranked-franchise-table th:nth-child(2) { width: 17%; }
 .ranked-franchise-table th:nth-child(3) { width: 29%; }
@@ -144,3 +150,4 @@
 .before-switching li::before { position: absolute; top: 16px; left: 15px; width: 25px; height: 25px; display: grid; place-items: center; content: counter(switch-step); color: var(--action-ink); background: var(--action-pale); border-radius: 50%; font-size: .74rem; font-weight: 750; }
 .before-switching li strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: .82rem; }
 .before-switching > p { margin: 10px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.5; }
+.current-insurer-badge { width: max-content; display: inline-flex; align-items: center; min-height: 20px; margin-left: 7px; padding: 0 6px; color: var(--action-ink); background: var(--action-pale); border-radius: 999px; font-size: .62rem; font-style: normal; font-weight: 750; vertical-align: middle; }

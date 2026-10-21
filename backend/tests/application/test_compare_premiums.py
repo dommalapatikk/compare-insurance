@@ -9,6 +9,7 @@ from compare_insurance_api.application.ports import (
 from compare_insurance_api.application.use_cases import (
     ComparePremiums,
     ExplainInsuranceChoices,
+    ListPremiumOffers,
 )
 from compare_insurance_api.domain.models import (
     AgeCategory,
@@ -138,13 +139,28 @@ def test_compare_premiums_builds_independent_top_ten_for_each_franchise() -> Non
         top_n=10,
     )
 
-    result = asyncio.run(ComparePremiums(InMemoryPremiumRepository(offers)).execute(criteria))
+    result = asyncio.run(
+        ComparePremiums(InMemoryPremiumRepository(offers)).execute(criteria)
+    )
 
     assert [group.deductible_chf for group in result.ranked_by_deductible] == [300, 2500]
-    assert [group.all_selected_models.total_eligible_offers for group in result.ranked_by_deductible] == [12, 12]
+    assert [
+        group.all_selected_models.total_eligible_offers
+        for group in result.ranked_by_deductible
+    ] == [12, 12]
     assert len(result.ranked_by_deductible[0].all_selected_models.offers) == 10
-    assert result.ranked_by_deductible[0].all_selected_models.offers[0].offer.insurer_id == "standard-0"
-    assert result.ranked_by_deductible[1].all_selected_models.offers[0].offer.insurer_id == "low-0"
+    assert (
+        result.ranked_by_deductible[0]
+        .all_selected_models.offers[0]
+        .offer.insurer_id
+        == "standard-0"
+    )
+    assert (
+        result.ranked_by_deductible[1]
+        .all_selected_models.offers[0]
+        .offer.insurer_id
+        == "low-0"
+    )
 
 
 def test_grouped_results_include_requested_empty_model_and_true_five_franc_counts() -> None:
@@ -174,6 +190,60 @@ def test_grouped_results_include_requested_empty_model_and_true_five_franc_count
     assert [model.insurance_model for model in group.models] == ["tel_dig", "praxis"]
     assert group.models[1].ranking.total_eligible_offers == 0
     assert group.models[1].ranking.offers == ()
+
+
+def test_list_premium_offers_uses_exact_scope_and_returns_one_bounded_page() -> None:
+    repository = InMemoryPremiumRepository(
+        [make_offer(str(index), str(300 + index)) for index in range(12)]
+    )
+    criteria = SearchCriteria(
+        canton="ZH",
+        region="1",
+        age_category=AgeCategory.ADULT,
+        accident_coverage=False,
+        deductibles=(Deductible.CHF_2500,),
+        insurance_models=(InsuranceModel.TEL_DIG, InsuranceModel.PRAXIS),
+        premium_year=2027,
+    )
+
+    page = asyncio.run(
+        ListPremiumOffers(repository).execute(criteria, offset=5, limit=5)
+    )
+
+    assert repository.received_criteria is criteria
+    assert repository.received_criteria.deductibles == (Deductible.CHF_2500,)
+    assert repository.received_criteria.insurance_models == (
+        InsuranceModel.TEL_DIG,
+        InsuranceModel.PRAXIS,
+    )
+    assert page.total_eligible_offers == 12
+    assert page.has_more is True
+    assert [item.rank for item in page.offers] == [6, 7, 8, 9, 10]
+
+
+def test_list_premium_offers_rejects_more_than_one_franchise() -> None:
+    criteria = SearchCriteria(
+        canton="ZH",
+        region="1",
+        age_category=AgeCategory.ADULT,
+        accident_coverage=False,
+        deductibles=(Deductible.CHF_300, Deductible.CHF_2500),
+        insurance_models=(InsuranceModel.TEL_DIG,),
+        premium_year=2027,
+    )
+
+    try:
+        asyncio.run(
+            ListPremiumOffers(InMemoryPremiumRepository([])).execute(
+                criteria,
+                offset=0,
+                limit=10,
+            )
+        )
+    except ValueError as exc:
+        assert str(exc) == "offer pagination requires exactly one deductible"
+    else:  # pragma: no cover - explicit failure branch
+        raise AssertionError("expected exact-scope validation")
 
 
 def test_explain_insurance_choices_uses_the_guide_port() -> None:

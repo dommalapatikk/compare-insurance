@@ -5,6 +5,7 @@ from functools import lru_cache
 from compare_insurance_api.application.use_cases import (
     ComparePremiums,
     ExplainInsuranceChoices,
+    ListPremiumOffers,
     SearchLocations,
 )
 from compare_insurance_api.infrastructure.langchain_guide import LangChainInsuranceGuide
@@ -19,6 +20,13 @@ def get_compare_premiums() -> ComparePremiums:
     """Compose deterministic ranking with the Supabase catalogue adapter."""
 
     return ComparePremiums(SupabasePremiumRepository.from_env())
+
+
+@lru_cache(maxsize=1)
+def get_list_premium_offers() -> ListPremiumOffers:
+    """Compose group-scoped pagination with the Supabase catalogue adapter."""
+
+    return ListPremiumOffers(SupabasePremiumRepository.from_env())
 
 
 @lru_cache(maxsize=1)

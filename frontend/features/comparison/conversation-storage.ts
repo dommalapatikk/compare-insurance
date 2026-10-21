@@ -1,14 +1,17 @@
 import type { Message } from "./types";
 import { APP_SESSION_SCHEMA_VERSION } from "./session-version";
+import { isSafeJourneyId } from "./journey-history";
 
 export const CONVERSATION_SCHEMA_VERSION = APP_SESSION_SCHEMA_VERSION;
 export const CONVERSATION_STORAGE_KEY = "compare-insurance:conversation";
 export const MAX_STORED_MESSAGES = 24;
 
 export type ConversationState = {
+  journeyId: string;
   threadId: string;
   messages: Message[];
   currentPremium: string;
+  currentInsurerId?: string;
 };
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -44,19 +47,30 @@ export function parseConversationSnapshot(raw: string): ConversationState | null
     if (!isRecord(snapshot) || snapshot.schemaVersion !== CONVERSATION_SCHEMA_VERSION) return null;
     if (!isRecord(snapshot.state)) return null;
     if (Object.keys(snapshot.state).some(
-      (key) => !["threadId", "messages", "currentPremium"].includes(key),
+      (key) => !["journeyId", "threadId", "messages", "currentPremium", "currentInsurerId"].includes(key),
     )) return null;
-    const { threadId, messages, currentPremium } = snapshot.state;
+    const { journeyId, threadId, messages, currentPremium, currentInsurerId } = snapshot.state;
+    if (!isSafeJourneyId(journeyId)) return null;
     if (typeof threadId !== "string" || !/^[A-Za-z0-9_-]{8,100}$/.test(threadId)) return null;
     if (!Array.isArray(messages) || messages.length > MAX_STORED_MESSAGES) return null;
     if (!messages.every(isMessage)) return null;
     if (typeof currentPremium !== "string" || !/^\d{0,6}(?:\.\d{0,2})?$/.test(currentPremium)) {
       return null;
     }
-    return { threadId, messages, currentPremium };
+    if (currentInsurerId !== undefined && (typeof currentInsurerId !== "string" || !/^\d{0,4}$/.test(currentInsurerId))) {
+      return null;
+    }
+    return { journeyId, threadId, messages, currentPremium, ...(currentInsurerId === undefined ? {} : { currentInsurerId }) };
   } catch {
     return null;
   }
+}
+
+export function conversationStateForJourney(
+  state: ConversationState | null,
+  journeyId: string | null,
+): ConversationState | null {
+  return state && state.journeyId === journeyId ? state : null;
 }
 
 export function loadConversationState(storage: StorageLike): ConversationState | null {

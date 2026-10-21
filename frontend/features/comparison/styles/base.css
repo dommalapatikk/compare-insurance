@@ -128,6 +128,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 .premium-update strong { flex: none; color: var(--ink); font-size: 1.18rem; }
 .premium-update span { color: var(--muted); font-size: .75rem; text-align: right; }
 .premium-update a { min-height: 38px; display: inline-flex; align-items: center; margin-top: 5px; font-size: .74rem; font-weight: 700; }
+.mobile-premium-update { display: none; }
 .support-panel {
   margin-bottom: 42px;
   padding: 34px 0;
@@ -181,6 +182,8 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   font-size: .78rem;
 }
 .site-footer p { margin: 0; }
+.ask-guide { width: min(1160px, calc(100% - 48px)); margin: -22px auto 42px; }
+.ask-guide .advisor-help-disclosure { margin-top: 0; }
 .sr-only {
   position: absolute;
   width: 1px;

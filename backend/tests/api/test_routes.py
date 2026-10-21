@@ -6,6 +6,7 @@ from compare_insurance_api.agent import get_insurance_agent
 from compare_insurance_api.api.dependencies import (
     get_compare_premiums,
     get_explain_insurance_choices,
+    get_list_premium_offers,
     get_search_locations,
 )
 from compare_insurance_api.application.ports import (
@@ -15,9 +16,6 @@ from compare_insurance_api.application.ports import (
 )
 from compare_insurance_api.application.use_cases import (
     PremiumComparison,
-    RankedDeductibleGroup,
-    RankedModelOfferSet,
-    RankedOfferSet,
 )
 from compare_insurance_api.domain.models import (
     AgeCategory,
@@ -26,6 +24,10 @@ from compare_insurance_api.domain.models import (
     InsuranceModel,
     PremiumOffer,
     PremiumLocation,
+    RankedDeductibleGroup,
+    RankedModelOfferSet,
+    RankedOfferSet,
+    RankedPremiumOfferPage,
     RankedPremiumOffer,
     ReferenceComparison,
     SearchCriteria,
@@ -160,6 +162,69 @@ class UnconfiguredComparePremiums:
         raise RuntimeError("Supabase is not configured")
 
 
+class StubListPremiumOffers:
+    def __init__(self) -> None:
+        self.criteria: SearchCriteria | None = None
+        self.offset: int | None = None
+        self.limit: int | None = None
+
+    async def execute(
+        self,
+        criteria: SearchCriteria,
+        *,
+        offset: int,
+        limit: int,
+    ) -> RankedPremiumOfferPage:
+        self.criteria = criteria
+        self.offset = offset
+        self.limit = limit
+        all_offers = tuple(
+            PremiumOffer(
+                insurer_id=str(index),
+                insurer_name=f"Insurer {index}",
+                plan_id=f"plan-{index}",
+                product_name=f"Product {index}",
+                municipality_id=None,
+                canton="AG",
+                region="0",
+                age_category=AgeCategory.ADULT,
+                deductible=Deductible.CHF_2500,
+                accident_coverage=False,
+                insurance_model=InsuranceModel.PRAXIS,
+                premium_year=2027,
+                monthly_premium_chf=Decimal(str(320 + index)),
+            )
+            for index in range(3)
+        )
+        ranked = tuple(
+            RankedPremiumOffer(
+                rank=rank,
+                offer=offer,
+                monthly_difference_from_cheapest_chf=(
+                    offer.monthly_premium_chf
+                    - all_offers[0].monthly_premium_chf
+                ),
+                annual_difference_from_cheapest_chf=(
+                    offer.monthly_premium_chf
+                    - all_offers[0].monthly_premium_chf
+                )
+                * 12,
+                reference_comparison=None,
+            )
+            for rank, offer in enumerate(
+                all_offers[offset : offset + limit],
+                start=offset + 1,
+            )
+        )
+        return RankedPremiumOfferPage(
+            total_eligible_offers=3,
+            offset=offset,
+            limit=limit,
+            has_more=offset + len(ranked) < 3,
+            offers=ranked,
+        )
+
+
 class StubSearchLocations:
     async def execute(self, query: str, *, limit: int):
         assert query == "3011"
@@ -181,6 +246,16 @@ def test_health() -> None:
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_chat_availability_reflects_server_configuration(monkeypatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    assert client.get("/v1/chat/availability").json() == {"available": False}
+
+    monkeypatch.setenv("OPENAI_API_KEY", "configured")
+    monkeypatch.setenv("OPENAI_MODEL", "configured-model")
+    assert client.get("/v1/chat/availability").json() == {"available": True}
 
 
 def test_location_search_resolves_postcode_to_premium_region() -> None:
@@ -259,6 +334,93 @@ def test_premium_search_maps_ranked_offers_to_the_http_contract() -> None:
     assert body["ranked_by_deductible"][0]["deductible_chf"] == 2500
     assert body["ranked_by_deductible"][0]["all_selected_models"]["offers"][0]["rank"] == 1
     assert body["ranked_by_deductible"][0]["models"][0]["insurance_model"] == "praxis"
+
+
+def test_premium_search_keeps_its_bounded_top_ten_contract() -> None:
+    class CaptureBoundedSearch(StubComparePremiums):
+        async def execute(self, criteria: SearchCriteria) -> PremiumComparison:
+            assert criteria.top_n == 10
+            return await super().execute(criteria)
+
+    app.dependency_overrides[get_compare_premiums] = lambda: CaptureBoundedSearch()
+    try:
+        response = client.get(
+            "/v1/premiums/search",
+            params={
+                "canton": "AG",
+                "region": "0",
+                "age_category": "adult",
+                "deductible": 2500,
+                "insurance_model": "praxis",
+                "all_offers": True,
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["query"]["top_n"] == 10
+
+
+def test_offer_page_is_scoped_to_one_franchise_and_selected_models() -> None:
+    use_case = StubListPremiumOffers()
+    app.dependency_overrides[get_list_premium_offers] = lambda: use_case
+    try:
+        response = client.get(
+            "/v1/premiums/offers",
+            params=[
+                ("canton", "AG"),
+                ("region", "0"),
+                ("age_category", "adult"),
+                ("deductible", "2500"),
+                ("accident_coverage", "false"),
+                ("insurance_model", "praxis"),
+                ("insurance_model", "tel_dig"),
+                ("offset", "1"),
+                ("limit", "2"),
+            ],
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert use_case.criteria is not None
+    assert use_case.criteria.deductibles == (Deductible.CHF_2500,)
+    assert use_case.criteria.insurance_models == (
+        InsuranceModel.PRAXIS,
+        InsuranceModel.TEL_DIG,
+    )
+    assert use_case.offset == 1
+    assert use_case.limit == 2
+    body = response.json()
+    assert body["query"]["deductible_chf"] == 2500
+    assert body["query"]["insurance_models"] == ["praxis", "tel_dig"]
+    assert body["offset"] == 1
+    assert body["limit"] == 2
+    assert body["total_eligible_offers"] == 3
+    assert body["has_more"] is False
+    assert [offer["rank"] for offer in body["offers"]] == [2, 3]
+
+
+def test_offer_page_enforces_pagination_bounds_and_required_scope() -> None:
+    base = {
+        "canton": "AG",
+        "region": "0",
+        "age_category": "adult",
+        "deductible": 2500,
+        "insurance_model": "praxis",
+    }
+
+    assert (
+        client.get("/v1/premiums/offers", params={**base, "limit": 51}).status_code
+        == 422
+    )
+    assert (
+        client.get("/v1/premiums/offers", params={**base, "offset": -1}).status_code
+        == 422
+    )
+    without_model = {key: value for key, value in base.items() if key != "insurance_model"}
+    assert client.get("/v1/premiums/offers", params=without_model).status_code == 422
 
 
 def test_premium_search_requires_source_filters() -> None:

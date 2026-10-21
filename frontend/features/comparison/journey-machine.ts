@@ -20,7 +20,7 @@ export const journeyStages = [
 export type JourneyStage = (typeof journeyStages)[number];
 export type JourneySection = "intent" | "details" | "preferences" | "results";
 export type EditableJourneyStage = Exclude<JourneyStage, "welcome" | "results">;
-export type JourneyIntent = "compare_current" | "new_insurance" | "explore";
+export type JourneyIntent = "compare_current" | "explore";
 export type JourneyAgeGroup = Exclude<AgeGroup, "">;
 export type JourneyAccident = Exclude<AccidentChoice, "">;
 export type InsuranceModel = "standard" | "flex" | "praxis" | "tel_dig" | "pharm";
@@ -178,6 +178,7 @@ export function journeyReducer(
           ...state.profile,
           birthYear: action.birthYear,
           ageGroup,
+          accident: ageGroup === "child" ? "included" : state.profile.accident,
           deductibles: resetInvalidDeductibles(state.profile.deductibles, ageGroup),
         },
       };

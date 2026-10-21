@@ -116,6 +116,14 @@ export type PremiumSearchQuery = {
   reference_monthly_premium_chf: string | null;
 };
 
+export type PremiumOfferPageResponse = {
+  total_eligible_offers: number;
+  offset: number;
+  limit: number;
+  has_more: boolean;
+  offers: PremiumOffer[];
+};
+
 export type ChatProfile = {
   resolved_location?: Partial<LocationSuggestion> & Pick<
     LocationSuggestion,

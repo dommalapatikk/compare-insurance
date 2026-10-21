@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { differenceFromLowest, explainSavings, filterAndSortMinimums } from "./result-view-model";
+import {
+  buildCurrentPremiumMessage,
+  differenceFromLowest,
+  explainSavings,
+  filterAndSortMinimums,
+} from "./result-view-model";
 import type { CategoryMinimum, PremiumOffer } from "./types";
 
 const offer = {
@@ -42,6 +47,38 @@ describe("result view model", () => {
 
   it("does not show savings without an explicit comparison premium", () => {
     expect(explainSavings(offer, "")).toBeNull();
+  });
+
+  it("explains when the current premium is below every matching plan", () => {
+    expect(buildCurrentPremiumMessage(offer, "250")).toEqual({
+      tone: "neutral",
+      title: "You're paying less than every plan we found for this setup (lowest: CHF\u00a0370.30).",
+      detail: "Please check that your premium, franchise, insurance model and accident cover match your policy — subsidies or a different setup can explain the gap.",
+    });
+  });
+
+  it("states savings when the matching plan costs less", () => {
+    expect(buildCurrentPremiumMessage(offer, "400")).toEqual({
+      tone: "positive",
+      title: "You could save CHF\u00a029.70/month (CHF\u00a0356.40/year).",
+      detail: "The lowest matching premium is CHF\u00a0370.30/month, compared with the CHF\u00a0400.00/month you entered.",
+    });
+  });
+
+  it("names the optional current insurer in the comparison summary", () => {
+    expect(buildCurrentPremiumMessage(offer, "400", "CSS Krankenversicherung AG")).toEqual({
+      tone: "positive",
+      title: "You could save CHF\u00a029.70/month (CHF\u00a0356.40/year).",
+      detail: "The lowest matching premium is CHF\u00a0370.30/month, compared with the CHF\u00a0400.00/month you entered. Your current insurer is CSS Krankenversicherung AG.",
+    });
+  });
+
+  it("recognises an equal current premium", () => {
+    expect(buildCurrentPremiumMessage(offer, "370.30")).toEqual({
+      tone: "neutral",
+      title: "You already have the lowest premium for this setup.",
+      detail: "The matching premium is CHF\u00a0370.30/month.",
+    });
   });
 
   it("filters category minimums and sorts them by monthly premium", () => {

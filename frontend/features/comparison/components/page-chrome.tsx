@@ -38,16 +38,20 @@ export function Intro() {
         <p className="eyebrow">Swiss health insurance</p>
         <h1 id="page-title">Compare 2027 health insurance premiums</h1>
         <p className="intro-description">
-          Start with what you need: compare your current price, find a new plan or explore every option.
+          Compare what you pay now or find the cheapest plan from the official 2027 premiums.
         </p>
       </div>
-      <aside className="premium-update" aria-label="2027 premium update">
-        <div><strong>+5.0%</strong><span>average premium increase in 2027</span></div>
-        <div><strong>CHF 412</strong><span>average monthly premium</span></div>
-        <a href="https://www.bag.admin.ch/en/premiums-and-costs-answers-to-frequently-asked-questions" target="_blank" rel="noreferrer">BAG update ↗</a>
-      </aside>
+      <PremiumUpdate className="desktop-premium-update" />
     </section>
   );
+}
+
+export function PremiumUpdate({ className = "" }: { className?: string }) {
+  return <aside className={`premium-update ${className}`.trim()} aria-label="2027 premium update">
+    <div><strong>+5.0%</strong><span>average premium increase in 2027</span></div>
+    <div><strong>CHF 412</strong><span>average monthly premium</span></div>
+    <a href="https://www.bag.admin.ch/en/premiums-and-costs-answers-to-frequently-asked-questions" target="_blank" rel="noreferrer">BAG update ↗</a>
+  </aside>;
 }
 
 export function SiteFooter() {
