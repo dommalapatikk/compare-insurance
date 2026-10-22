@@ -6,11 +6,13 @@ import {
   differenceFromLowest,
   explainSavings,
   filterAndSortMinimums,
+  nearbyOfferSentence,
+  shouldShowCurrentPlanDifferenceColumn,
 } from "./result-view-model";
 import type { CategoryMinimum, PremiumOffer } from "./types";
 
 const offer = {
-  insurer_id: "632",
+  insurer_id: "455",
   insurer_name: "ÖKK Kranken- und Unfallversicherungen AG",
   product_name: "ÖKK CASAMED HMO",
   deductible_chf: 300,
@@ -72,70 +74,64 @@ describe("result view model", () => {
     });
   });
 
-  it("compares the current plan without recommending that the user stay", () => {
+  it("presents one clear savings decision instead of numbered comparison instructions", () => {
     expect(buildCurrentPremiumMessage([offer], {
       currentPremium: "400",
       currentInsurerId: "",
       currentInsurerName: "",
-      insuranceModel: "Family doctor / HMO",
-      deductible: 300,
-    })).toEqual({
+    })).toMatchObject({
+      kind: "savings",
       tone: "positive",
-      heading: "Your current plan compared with the cheapest alternative",
-      points: [
-        {
-          title: "Your current plan",
-          detail: "You entered CHF\u00a0400.00/month (CHF\u00a04'800.00/year) from your 2027 renewal notice. We use it only as a comparison starting point — not as a recommendation to stay.",
-        },
-        {
-          title: "Cheapest matching offer",
-          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG is CHF\u00a0370.30/month. That is CHF\u00a029.70/month (CHF\u00a0356.40/year) less than your current plan. It matches your Family doctor / HMO model and CHF 300 franchise.",
-        },
-      ],
+      heading: "You could save CHF\u00a029.70/month",
+      detail: "That’s CHF\u00a0356.40 a year. ÖKK costs CHF\u00a0370.30, and you pay CHF\u00a0400.00.",
+      action: { label: "See ÖKK", offerInsurerId: "455" },
     });
   });
 
-  it("excludes the selected current insurer when naming the cheapest alternative", () => {
+  it("warns when the entered premium differs from the selected insurer's published price by more than five percent", () => {
     const cssOffer = {
       ...offer,
       insurer_id: "8",
       insurer_name: "CSS Krankenversicherung AG",
       product_name: "CSS Hausarztversicherung",
-      monthly_premium_chf: "380.00",
+      monthly_premium_chf: "573.80",
       reference_comparison: null,
     } as PremiumOffer;
-    expect(buildCurrentPremiumMessage([cssOffer, offer], {
-      currentPremium: "400",
+    expect(buildCurrentPremiumMessage([offer, cssOffer], {
+      currentPremium: "420",
       currentInsurerId: "8",
       currentInsurerName: "CSS Krankenversicherung AG",
-      insuranceModel: "Family doctor / HMO",
-      deductible: 300,
-    })).toEqual({
-      tone: "positive",
-      heading: "Your current plan compared with the cheapest alternative",
-      points: [
-        {
-          title: "Your current plan: CSS Krankenversicherung AG",
-          detail: "You entered CHF\u00a0400.00/month (CHF\u00a04'800.00/year) from your 2027 renewal notice. We use it only as a comparison starting point — not as a recommendation to stay.",
-        },
-        {
-          title: "Cheapest alternative from another insurer",
-          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG is CHF\u00a0370.30/month. That is CHF\u00a029.70/month (CHF\u00a0356.40/year) less than your current plan. It matches your Family doctor / HMO model and CHF 300 franchise.",
-        },
-      ],
+    })).toMatchObject({
+      kind: "premium_mismatch",
+      tone: "warning",
+      heading: "Please check your premium",
+      detail: "CSS costs CHF\u00a0573.80/month for this setup, but you entered CHF\u00a0420.00.",
+      action: { label: "Edit details" },
     });
   });
 
-  it("states when the cheapest alternative costs more than staying", () => {
+  it("reassures without telling the user to stay when no matching plan is cheaper", () => {
     const message = buildCurrentPremiumMessage([offer], {
       currentPremium: "350",
       currentInsurerId: "",
       currentInsurerName: "",
-      insuranceModel: "Family doctor / HMO",
-      deductible: 300,
     });
+    expect(message?.kind).toBe("already_best");
     expect(message?.tone).toBe("neutral");
-    expect(message?.points[1].detail).toContain("CHF\u00a020.30/month (CHF\u00a0243.60/year) more than your current plan");
+    expect(message?.heading).toBe("You already have a great price");
+    expect(message?.detail).toBe("No plan with your setup is cheaper than your CHF\u00a0350.00/month.");
+    expect(message?.action).toBeUndefined();
+  });
+
+  it("asks for the current premium when a shared comparison has none", () => {
+    expect(buildCurrentPremiumMessage([offer], {
+      currentPremium: "",
+      currentInsurerId: "",
+      currentInsurerName: "",
+    })).toMatchObject({
+      kind: "needs_premium",
+      heading: "Add your current premium to see how much you could save",
+    });
   });
 
   it("filters category minimums and sorts them by monthly premium", () => {
@@ -152,5 +148,16 @@ describe("result view model", () => {
   it("calculates the difference from the filtered lowest offer", () => {
     const lowest = { monthly_premium_chf: "410.00" } as CategoryMinimum;
     expect(differenceFromLowest({ monthly_premium_chf: "415.00" } as CategoryMinimum, lowest)).toBe(5);
+  });
+
+  it("hides the current-plan column when none of the visible offers is cheaper", () => {
+    expect(shouldShowCurrentPlanDifferenceColumn([offer], "350")).toBe(false);
+    expect(shouldShowCurrentPlanDifferenceColumn([offer], "400")).toBe(true);
+  });
+
+  it("uses singular grammar for one nearby offer", () => {
+    expect(nearbyOfferSentence(1, 1)).toBe(
+      "1 offer from 1 insurer is within CHF 5/month of the lowest in this franchise.",
+    );
   });
 });

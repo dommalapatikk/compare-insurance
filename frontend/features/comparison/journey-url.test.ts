@@ -85,7 +85,27 @@ describe("shareable journey URLs", () => {
     expect(parseJourneyUrl(new URL(`${base}&birthYear=2015&franchises=0,300,600`))?.deductibles).toEqual([0, 300, 600]);
   });
 
-  it("rejects incomplete results URLs", () => {
-    expect(parseJourneyUrl(new URL(`https://example.test/?journeyId=${journeyId}&journey=explore&step=results&postcode=8001`))).toBeNull();
+  it("accepts explore results without explicit filters so restoration can use all options", () => {
+    expect(parseJourneyUrl(new URL(`https://example.test/?journeyId=${journeyId}&journey=explore&step=results&postcode=8001&municipalityId=261&birthYear=1990&accident=excluded`)))
+      .toMatchObject({ step: "results", models: undefined, deductibles: undefined });
+  });
+
+  it("round-trips a complete profile in a details history entry", () => {
+    const url = serializeJourneyUrl({
+      journeyId,
+      step: "details",
+      intent: "compare_current",
+      location: zurich,
+      birthYear: 1990,
+      accident: "included",
+      models: ["praxis"],
+      deductibles: [1500],
+    });
+    expect(parseJourneyUrl(new URL(url, "https://example.test"))).toMatchObject({
+      step: "details",
+      location: { postal_code: "8001", municipality_id: "261" },
+      models: ["praxis"],
+      deductibles: [1500],
+    });
   });
 });

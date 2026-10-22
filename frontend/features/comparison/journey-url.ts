@@ -83,7 +83,9 @@ export function parseJourneyUrl(url: URL): JourneyUrlState | null {
   const parsedModels = parseModels(url.searchParams.get("models"));
   if (parsedModels === null) return null;
 
-  if (step === "details") return { journeyId, step, intent };
+  const hasProfileParameters = ["postcode", "municipalityId", "birthYear", "accident", "models", "franchises"]
+    .some((key) => url.searchParams.has(key));
+  if (step === "details" && !hasProfileParameters) return { journeyId, step, intent };
   const postcode = url.searchParams.get("postcode");
   const municipalityId = url.searchParams.get("municipalityId");
   const birthYear = Number(rawBirthYear);
@@ -93,7 +95,6 @@ export function parseJourneyUrl(url: URL): JourneyUrlState | null {
 
   const deductibles = parseDeductibles(url.searchParams.get("franchises"), birthYear);
   if (deductibles === null) return null;
-  if (step === "results" && (!parsedModels.length || !deductibles.length)) return null;
   return {
     journeyId,
     step,

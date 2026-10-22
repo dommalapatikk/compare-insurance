@@ -26,6 +26,9 @@ export function ResultsPreview({ flow }: { flow: ComparisonFlow }) {
           currentInsurerName={flow.currentInsurerName}
           loadingPlansKey={flow.loadingPlansKey}
           onLoadMorePlans={flow.loadMorePlans}
+          onEditComparison={() => flow.goToStage("models")}
+          onSetCurrentInsurerId={flow.setCurrentInsurerId}
+          onSetCurrentPremium={flow.setCurrentPremium}
         />
         <BeforeSwitching />
       </>}

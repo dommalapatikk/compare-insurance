@@ -1,4 +1,6 @@
-import { formatCurrency, formatDeductible } from "./formatters";
+import { decideCurrentCover } from "./domain/current-cover-decision";
+import { formatCurrency } from "./formatters";
+import { officialInsurerShortName } from "./insurer-links";
 import type { CategoryMinimum, PremiumOffer } from "./types";
 
 export type ResultFilters = {
@@ -38,20 +40,20 @@ export type SavingsExplanation = {
 };
 
 export type CurrentPremiumMessage = {
-  tone: "positive" | "neutral";
+  kind: "needs_premium" | "premium_mismatch" | "already_best" | "savings";
+  tone: "positive" | "neutral" | "warning";
   heading: string;
-  points: Array<{
-    title: string;
-    detail: string;
-  }>;
+  detail: string;
+  action?: {
+    label: string;
+    offerInsurerId?: string;
+  };
 };
 
 export type CurrentPremiumContext = {
   currentPremium: string;
   currentInsurerId: string;
   currentInsurerName: string;
-  insuranceModel: string;
-  deductible: number;
 };
 
 export function explainSavings(
@@ -105,41 +107,75 @@ export function compareOfferWithCurrentPremium(
 export function buildCurrentPremiumMessage(
   offers: PremiumOffer[],
   context: CurrentPremiumContext,
-): CurrentPremiumMessage | null {
-  const renewalPremium = Number(context.currentPremium);
-  if (!offers.length || !Number.isFinite(renewalPremium) || renewalPremium <= 0) return null;
+): CurrentPremiumMessage {
+  const decision = decideCurrentCover(offers, context.currentPremium, context.currentInsurerId);
+  if (decision.kind === "needs_premium") {
+    return {
+      kind: "needs_premium",
+      tone: "neutral",
+      heading: "Add your current premium to see how much you could save",
+      detail: "Use the monthly amount on your 2027 renewal notice.",
+    };
+  }
 
-  const otherInsurer = context.currentInsurerId
-    ? offers.find((offer) => offer.insurer_id !== context.currentInsurerId)
-    : offers[0];
-  const alternative = otherInsurer ?? offers[0];
-  const comparison = compareOfferWithCurrentPremium(alternative, context.currentPremium);
-  if (!comparison) return null;
+  if (decision.kind === "no_offers") {
+    return {
+      kind: "already_best",
+      tone: "neutral",
+      heading: "No matching offers found",
+      detail: "Change your comparison details and try again.",
+      action: { label: "Edit details" },
+    };
+  }
 
-  const currentPlanTitle = context.currentInsurerName
-    ? `Your current plan: ${context.currentInsurerName}`
-    : "Your current plan";
-  const alternativeTitle = context.currentInsurerId && otherInsurer
-    ? "Cheapest alternative from another insurer"
-    : "Cheapest matching offer";
-  const comparisonSentence = comparison.relation === "less"
-    ? `That is ${comparison.monthlyDifference}/month (${comparison.annualDifference}/year) less than your current plan.`
-    : comparison.relation === "more"
-      ? `That is ${comparison.monthlyDifference}/month (${comparison.annualDifference}/year) more than your current plan.`
-      : "That is the same monthly price as your current plan.";
+  if (decision.kind === "premium_mismatch") {
+    const insurer = officialInsurerShortName(
+      context.currentInsurerId,
+      context.currentInsurerName || decision.publishedOffer.insurer_name,
+    );
+    return {
+      kind: "premium_mismatch",
+      tone: "warning",
+      heading: "Please check your premium",
+      detail: `${insurer} costs ${formatCurrency(decision.publishedPremium)}/month for this setup, but you entered ${formatCurrency(decision.enteredPremium)}.`,
+      action: { label: "Edit details" },
+    };
+  }
+
+  if (decision.kind === "already_best") {
+    return {
+      kind: "already_best",
+      tone: "neutral",
+      heading: "You already have a great price",
+      detail: `No plan with your setup is cheaper than your ${formatCurrency(decision.currentPremium)}/month.`,
+    };
+  }
+
+  const alternativeName = officialInsurerShortName(decision.cheapestOffer.insurer_id, decision.cheapestOffer.insurer_name);
+  const currentName = context.currentInsurerId
+    ? officialInsurerShortName(context.currentInsurerId, context.currentInsurerName)
+    : "you";
 
   return {
-    tone: comparison.tone,
-    heading: "Your current plan compared with the cheapest alternative",
-    points: [
-      {
-        title: currentPlanTitle,
-        detail: `You entered ${formatCurrency(renewalPremium)}/month (${formatCurrency(renewalPremium * 12)}/year) from your 2027 renewal notice. We use it only as a comparison starting point — not as a recommendation to stay.`,
-      },
-      {
-        title: alternativeTitle,
-        detail: `${alternative.product_name} from ${alternative.insurer_name} is ${formatCurrency(Number(alternative.monthly_premium_chf))}/month. ${comparisonSentence} It matches your ${context.insuranceModel} model and ${formatDeductible(context.deductible)} franchise.`,
-      },
-    ],
+    kind: "savings",
+    tone: "positive",
+    heading: `You could save ${formatCurrency(decision.monthlySavings)}/month`,
+    detail: `That’s ${formatCurrency(decision.monthlySavings * 12)} a year. ${alternativeName} costs ${formatCurrency(decision.cheapestPremium)}, and ${currentName === "you" ? "you pay" : `you pay ${currentName}`} ${formatCurrency(decision.currentPremium)}.`,
+    action: { label: `See ${alternativeName}`, offerInsurerId: decision.cheapestOffer.insurer_id },
   };
+}
+
+export function shouldShowCurrentPlanDifferenceColumn(
+  offers: PremiumOffer[],
+  currentPremium: string,
+) {
+  const premium = Number(currentPremium);
+  return Number.isFinite(premium)
+    && premium > 0
+    && offers.some((offer) => Number(offer.monthly_premium_chf) < premium);
+}
+
+export function nearbyOfferSentence(offerCount: number, insurerCount: number) {
+  const offerVerb = offerCount === 1 ? "is" : "are";
+  return `${offerCount} offer${offerCount === 1 ? "" : "s"} from ${insurerCount} insurer${insurerCount === 1 ? "" : "s"} ${offerVerb} within CHF 5/month of the lowest in this franchise.`;
 }

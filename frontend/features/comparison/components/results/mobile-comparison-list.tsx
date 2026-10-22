@@ -6,6 +6,7 @@ export type MobileComparisonItem = {
   eyebrow: string;
   premium: number;
   insurer: string;
+  legalInsurer?: string;
   plan: string;
   model: string;
   franchise: number;
@@ -18,6 +19,8 @@ export type MobileComparisonItem = {
     label: string;
     tone: "positive" | "neutral";
   };
+  highlighted?: boolean;
+  insurerId?: string;
 };
 
 export function MobileComparisonList({
@@ -30,7 +33,7 @@ export function MobileComparisonList({
   return (
     <ol className="mobile-comparison-list" aria-label={label}>
       {items.map((item) => (
-        <li className={item.best ? "best" : ""} key={item.key}>
+        <li className={[item.best ? "best" : "", item.highlighted ? "highlighted-offer" : ""].filter(Boolean).join(" ")} data-offer-insurer={item.insurerId} tabIndex={-1} key={item.key}>
           <div className="mobile-result-heading">
             <span>{item.rank ? `#${item.rank} · ` : ""}{item.eyebrow}</span>
             {item.status && <em>{item.status}</em>}
@@ -39,6 +42,7 @@ export function MobileComparisonList({
             <strong>{formatCurrency(item.premium)}</strong><small>/month</small>
           </div>
           <strong className="mobile-result-insurer">{item.insurer}{item.currentInsurer && <em className="current-insurer-badge">Your insurer</em>}</strong>
+          {item.legalInsurer && <span className="mobile-result-legal-insurer">{item.legalInsurer}</span>}
           <span className="mobile-result-plan">{item.plan}</span>
           <div className="mobile-result-meta">
             <span>{formatDeductible(item.franchise)}</span>

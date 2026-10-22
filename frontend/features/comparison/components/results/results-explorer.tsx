@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 
 import { modelLabels } from "../../config";
-import { formatCurrency, formatDeductible } from "../../formatters";
+import { currentPremiumError } from "../../current-premium-validation";
+import { formatDeductible } from "../../formatters";
+import { officialInsurers } from "../../insurer-links";
 import type { JourneyIntent } from "../../journey-machine";
 import { buildCurrentPremiumMessage } from "../../result-view-model";
 import type { PremiumSearchResponse, RankedDeductibleGroup } from "../../types";
@@ -65,6 +67,9 @@ export function ResultsExplorer({
   currentInsurerName,
   loadingPlansKey,
   onLoadMorePlans,
+  onEditComparison,
+  onSetCurrentInsurerId,
+  onSetCurrentPremium,
 }: {
   results: PremiumSearchResponse;
   intent: JourneyIntent | null;
@@ -73,6 +78,9 @@ export function ResultsExplorer({
   currentInsurerName: string;
   loadingPlansKey: string | null;
   onLoadMorePlans: (franchise: number, model: string) => Promise<void>;
+  onEditComparison: () => void;
+  onSetCurrentInsurerId: (value: string) => void;
+  onSetCurrentPremium: (value: string) => void;
 }) {
   const groups = results.ranked_by_deductible ?? [];
   const [deductible, setDeductible] = useState<typeof ALL | number>(
@@ -81,6 +89,10 @@ export function ResultsExplorer({
   const [model, setModel] = useState<typeof ALL | string>(
     results.query.insurance_models.length === 1 ? results.query.insurance_models[0] : ALL,
   );
+  const [premiumDraft, setPremiumDraft] = useState(currentPremium);
+  const [insurerDraft, setInsurerDraft] = useState(currentInsurerId);
+  const [premiumPromptError, setPremiumPromptError] = useState("");
+  const [highlightedInsurerId, setHighlightedInsurerId] = useState("");
   const visibleGroups = useMemo(
     () => groups
       .filter((group) => deductible === ALL || group.deductible_chf === deductible)
@@ -91,15 +103,36 @@ export function ResultsExplorer({
     (sum, group) => sum + group.selectedRanking.total_eligible_offers,
     0,
   );
-  const currentComparison = intent === "compare_current" && results.offers[0]
+  const currentComparison = intent === "compare_current"
     ? buildCurrentPremiumMessage(results.offers, {
       currentPremium,
       currentInsurerId,
       currentInsurerName,
-      insuranceModel: modelLabels[results.query.insurance_models[0]] || results.query.insurance_models[0],
-      deductible: results.query.deductibles[0],
     })
     : null;
+
+  function updateCurrentComparison() {
+    const error = currentPremiumError(premiumDraft);
+    if (error) {
+      setPremiumPromptError(error);
+      return;
+    }
+    setPremiumPromptError("");
+    onSetCurrentInsurerId(insurerDraft);
+    onSetCurrentPremium(premiumDraft);
+  }
+
+  function showOffer(insurerId: string) {
+    setHighlightedInsurerId(insurerId);
+    window.setTimeout(() => {
+      const candidates = Array.from(document.querySelectorAll<HTMLElement>(
+        `[data-offer-insurer="${insurerId}"]`,
+      ));
+      const target = candidates.find((candidate) => candidate.getClientRects().length) ?? candidates[0];
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      target?.focus({ preventScroll: true });
+    }, 0);
+  }
 
   return (
     <section className="results-explorer" aria-labelledby="explorer-title">
@@ -112,11 +145,28 @@ export function ResultsExplorer({
       </div>
 
       {currentComparison && <div className={`current-comparison ${currentComparison.tone}`} role="status">
-        <h4>{currentComparison.heading}</h4>
-        <ol>{currentComparison.points.map((point) => <li key={point.title}>
-          <strong>{point.title}</strong>
-          <span>{point.detail}</span>
-        </li>)}</ol>
+        <div>
+          <h4>{currentComparison.heading}</h4>
+          <p>{currentComparison.detail}</p>
+        </div>
+        {currentComparison.kind === "needs_premium" && <form className="current-premium-prompt" onSubmit={(event) => { event.preventDefault(); updateCurrentComparison(); }}>
+          <label>
+            <span>Monthly premium</span>
+            <span className="currency-input"><b>CHF</b><input inputMode="decimal" min="0.05" max="2000" step="0.05" value={premiumDraft} onChange={(event) => setPremiumDraft(event.target.value)} aria-describedby={premiumPromptError ? "shared-premium-error" : undefined} /></span>
+          </label>
+          <label>
+            <span>Current insurer <small>Optional</small></span>
+            <select value={insurerDraft} onChange={(event) => setInsurerDraft(event.target.value)}>
+              <option value="">Choose insurer</option>
+              {officialInsurers.map((insurer) => <option key={insurer.id} value={insurer.id}>{insurer.shortName}</option>)}
+            </select>
+          </label>
+          <button type="submit">Compare</button>
+          {premiumPromptError && <small id="shared-premium-error" role="alert">{premiumPromptError}</small>}
+        </form>}
+        {currentComparison.action && currentComparison.kind !== "needs_premium" && <button className="comparison-action" type="button" onClick={() => currentComparison.kind === "savings" && currentComparison.action?.offerInsurerId
+          ? showOffer(currentComparison.action.offerInsurerId)
+          : onEditComparison()}>{currentComparison.action.label}</button>}
       </div>}
 
       {intent !== "compare_current" && <>
@@ -130,9 +180,12 @@ export function ResultsExplorer({
       </>}
 
       {intent !== "compare_current" && <p className="selection-summary"><strong>Franchise:</strong> {deductible === ALL ? "All franchises" : formatDeductible(deductible)} <span>·</span> <strong>Insurance model:</strong> {model === ALL ? "All models" : modelLabels[model] || model}</p>}
-      <p className="comparison-guidance">{deductible === ALL
-        ? "Each franchise has its own ranking. A higher franchise can lower the premium but increases what you may pay yourself, so compare within each group."
-        : `Every result uses a ${formatDeductible(deductible)} franchise, so the premiums can be compared directly.`}</p>
+      <details className="ranking-help">
+        <summary>How these rankings work</summary>
+        <p>{deductible === ALL
+          ? "Plans are ranked within each franchise. A higher franchise may reduce the monthly premium but increases what you pay before insurance contributes."
+          : `All shown plans use a ${formatDeductible(deductible)} franchise, so their monthly premiums can be compared directly.`}</p>
+      </details>
 
       {!groups.length && <p className="result-state error">Grouped results are unavailable. Please refresh and try again.</p>}
       <div className="franchise-groups">
@@ -147,6 +200,7 @@ export function ResultsExplorer({
           onLoadMorePlans={onLoadMorePlans}
           currentInsurerId={currentInsurerId}
           currentPremium={intent === "compare_current" ? currentPremium : ""}
+          highlightedInsurerId={highlightedInsurerId}
         />)}
       </div>
 

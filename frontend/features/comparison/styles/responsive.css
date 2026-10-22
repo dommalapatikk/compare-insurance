@@ -66,8 +66,10 @@
   .result-facts dd { margin: 0; font-size: .74rem; }
   .result-profile { margin-top: 0; }
   .results-explorer { padding: 15px 12px 8px; border-radius: 14px; }
-  .current-comparison ol { grid-template-columns: 1fr; }
-  .current-comparison li { min-height: 0; }
+  .current-comparison { align-items: stretch; flex-direction: column; }
+  .current-comparison h4 { font-size: .94rem; }
+  .current-premium-prompt { grid-template-columns: 1fr; }
+  .current-premium-prompt > button { width: 100%; }
   .explorer-heading h3 { font-size: 1.05rem; }
   .desktop-result-filters { display: none; }
   .mobile-result-filters { display: block; margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; }
@@ -78,7 +80,7 @@
   .result-filter-fields select { font-size: 16px; }
   .result-count { margin: 2px 0 0; }
   .selection-summary { display: none; }
-  .comparison-guidance { margin: 10px 0 2px; padding: 10px 12px; background: var(--soft); border-radius: 8px; font-size: .74rem; }
+  .ranking-help { margin-top: 7px; }
   .franchise-summary { grid-template-columns: 1fr; gap: 2px; }
   .franchise-group > summary, .franchise-group-heading { min-height: 78px; }
   .franchise-group-content { padding-right: 8px; padding-left: 8px; }

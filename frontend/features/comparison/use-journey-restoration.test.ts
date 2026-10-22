@@ -51,7 +51,7 @@ describe("URL journey restoration", () => {
     expect(searchPremiums).not.toHaveBeenCalled();
   });
 
-  it("fails closed when postcode and municipality do not match and never requests premiums", async () => {
+  it("recovers at the details step when postcode and municipality do not match", async () => {
     const searchPremiums = vi.fn().mockResolvedValue(premiumPayload);
     const result = await resolveJourneyUrl(
       new URL(`https://example.test/?journey=explore&step=results&journeyId=${journeyId}&postcode=8001&municipalityId=999&birthYear=1990&accident=excluded&models=standard&franchises=300`),
@@ -63,7 +63,13 @@ describe("URL journey restoration", () => {
       },
     );
 
-    expect(result).toEqual({ kind: "reset", canonicalUrl: "/" });
+    expect(result).toMatchObject({
+      kind: "details",
+      journeyId,
+      notice: "Some details were missing — please check and continue.",
+      birthYear: 1990,
+      accident: "excluded",
+    });
     expect(searchPremiums).not.toHaveBeenCalled();
   });
 
@@ -78,7 +84,11 @@ describe("URL journey restoration", () => {
       },
     );
 
-    expect(result).toEqual({ kind: "reset", canonicalUrl: "/" });
+    expect(result).toMatchObject({
+      kind: "details",
+      journeyId,
+      notice: "Some details were missing — please check and continue.",
+    });
     expect(searchLocations).not.toHaveBeenCalled();
     expect(searchPremiums).not.toHaveBeenCalled();
   });
@@ -119,6 +129,48 @@ describe("URL journey restoration", () => {
       deductibles: [300],
       models: ["standard"],
       currentPremium: "",
+    });
+  });
+
+  it("opens a shared explore-results URL without an id or filters using all options", async () => {
+    const searchPremiums = vi.fn().mockResolvedValue(premiumPayload);
+    const generatedId = "fedcba9876543210fedcba9876543210";
+    const result = await resolveJourneyUrl(
+      new URL("https://example.test/?journey=explore&step=results&postcode=8001&municipalityId=261&birthYear=1990&accident=excluded"),
+      {
+        storage: new MemoryStorage(),
+        searchLocations: vi.fn().mockResolvedValue(locationPayload([zurich])),
+        searchPremiums,
+        signal: new AbortController().signal,
+        createJourneyId: () => generatedId,
+      },
+    );
+
+    expect(result).toMatchObject({ kind: "results", journeyId: generatedId });
+    expect(searchPremiums).toHaveBeenCalledWith(expect.objectContaining({
+      deductibles: [300, 500, 1000, 1500, 2000, 2500],
+      models: ["standard", "flex", "praxis", "tel_dig", "pharm"],
+    }));
+  });
+
+  it("restores profile and preferences encoded in a details history entry", async () => {
+    const result = await resolveJourneyUrl(
+      new URL(`https://example.test/?journey=compare_current&step=details&journeyId=${journeyId}&postcode=8001&municipalityId=261&birthYear=1990&accident=included&models=praxis&franchises=1500`),
+      {
+        storage: new MemoryStorage(),
+        searchLocations: vi.fn().mockResolvedValue(locationPayload([zurich])),
+        searchPremiums: vi.fn(),
+        signal: new AbortController().signal,
+      },
+    );
+
+    expect(result).toMatchObject({
+      kind: "details",
+      location: zurich,
+      birthYear: 1990,
+      accident: "included",
+      models: ["praxis"],
+      deductibles: [1500],
     });
   });
 });

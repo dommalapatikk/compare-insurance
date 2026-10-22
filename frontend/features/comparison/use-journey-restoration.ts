@@ -46,13 +46,13 @@ export function useJourneyRestoration(controls: RestorationControls) {
 
     function applyProfile(resolution: Extract<
       JourneyUrlResolution,
-      { kind: "preferences" | "results" }
+      { kind: "details" | "preferences" | "results" }
     >) {
-      controls.chooseLocation(resolution.location);
-      controls.setBirthYear(String(resolution.birthYear));
-      controls.setAccident(resolution.accident);
-      controls.setModels(resolution.models);
-      controls.setDeductibles(resolution.deductibles);
+      if (resolution.location) controls.chooseLocation(resolution.location);
+      if (resolution.birthYear) controls.setBirthYear(String(resolution.birthYear));
+      if (resolution.accident) controls.setAccident(resolution.accident);
+      if (resolution.models) controls.setModels(resolution.models);
+      if (resolution.deductibles) controls.setDeductibles(resolution.deductibles);
     }
 
     async function restoreUrl() {
@@ -84,9 +84,11 @@ export function useJourneyRestoration(controls: RestorationControls) {
       controls.setJourneyId(resolution.journeyId);
       controls.setJourney(resolution.journey);
       window.history.replaceState({}, "", resolution.canonicalUrl);
-      if (resolution.kind === "details") return true;
-
       applyProfile(resolution);
+      if (resolution.kind === "details") {
+        controls.setRestoredNotice(resolution.notice ?? "");
+        return true;
+      }
       if (resolution.kind === "preferences") return true;
 
       controls.setResults(resolution.results);

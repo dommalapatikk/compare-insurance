@@ -4,6 +4,7 @@ import { applyAgentProfile } from "./agent-profile-sync";
 import { adultDeductibles, ageChoices, ageGroupForBirthYear, birthYearError, childDeductibles, modelChoices } from "./config";
 import { currentPremiumError } from "./current-premium-validation";
 import { createJourneyId, tombstoneJourney } from "./journey-history";
+import { serializeProfileJourneyUrl } from "./journey-navigation";
 import { clearJourneyState, saveJourneyState } from "./journey-storage";
 import { allSelection, createJourneyState, isPreviousOrCurrentStage, journeyReducer, selectedValues } from "./journey-machine";
 import type { InsuranceModel, JourneyAction, JourneyIntent, JourneyStage } from "./journey-machine";
@@ -97,21 +98,13 @@ export function useComparisonFlow() {
       if (target !== "welcome" && target !== "results") reduce({ type: "edit", stage: target });
       if (target !== "results") setResults(null);
       if (target === "location" && journeyId && isJourneyUrlIntent(journey.intent)) {
-        window.history.pushState({}, "", serializeJourneyUrl({
-          journeyId,
-          step: "details",
-          intent: journey.intent,
-        }));
+        const url = locationPicker.selectedLocation && ageGroup && accident
+          ? serializeProfileJourneyUrl({ journeyId, step: "details", intent: journey.intent, location: locationPicker.selectedLocation, birthYear, accident: accident as Exclude<AccidentChoice, "">, models, deductibles })
+          : serializeJourneyUrl({ journeyId, step: "details", intent: journey.intent });
+        window.history.pushState({}, "", url);
       }
       if (target === "models" && journeyId && isJourneyUrlIntent(journey.intent) && locationPicker.selectedLocation && ageGroup && accident) {
-        window.history.pushState({}, "", serializeJourneyUrl({
-          journeyId,
-          step: "preferences",
-          intent: journey.intent,
-          location: locationPicker.selectedLocation,
-          birthYear: Number(birthYear),
-          accident: accident as Exclude<AccidentChoice, "">,
-        }));
+        window.history.pushState({}, "", serializeProfileJourneyUrl({ journeyId, step: "preferences", intent: journey.intent, location: locationPicker.selectedLocation, birthYear, accident: accident as Exclude<AccidentChoice, "">, models, deductibles }));
       }
       return;
     }
@@ -131,6 +124,9 @@ export function useComparisonFlow() {
     setSearchNotice("");
     setResults(null);
     const detailedJourney = synchronizeDetails(journey, journeyDraft);
+    if (journeyId && isJourneyUrlIntent(journey.intent)) {
+      window.history.replaceState({}, "", serializeProfileJourneyUrl({ journeyId, step: "details", intent: journey.intent, location: locationPicker.selectedLocation, birthYear, accident: accident as Exclude<AccidentChoice, "">, models, deductibles }));
+    }
     if (journey.intent === "explore") {
       const withModels = journeyReducer(detailedJourney, {
         type: "set_models",
@@ -176,6 +172,9 @@ export function useComparisonFlow() {
       }
     }
     setJourney((current) => synchronizePreferences(current, journeyDraft));
+    if (journeyId && isJourneyUrlIntent(journey.intent) && locationPicker.selectedLocation && accident) {
+      window.history.replaceState({}, "", serializeProfileJourneyUrl({ journeyId, step: "preferences", intent: journey.intent, location: locationPicker.selectedLocation, birthYear, accident: accident as Exclude<AccidentChoice, "">, models, deductibles }));
+    }
     await premiumSearch.runPremiumSearch(
       deductibles,
       models,

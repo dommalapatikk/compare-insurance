@@ -173,7 +173,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
               <span>Current insurer <small>Optional</small></span>
               <select id="current-insurer" value={flow.currentInsurerId} onChange={(event) => flow.setCurrentInsurerId(event.target.value)}>
                 <option value="">Not selected</option>
-                {officialInsurers.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
+                {officialInsurers.map(({ id, shortName }) => <option key={id} value={id}>{shortName}</option>)}
               </select>
               <small>Used to mark your insurer in the results.</small>
             </label>

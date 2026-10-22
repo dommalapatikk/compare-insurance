@@ -2,12 +2,12 @@ import { useRef, useState } from "react";
 
 import { modelLabels } from "../../config";
 import { formatCurrency, formatDeductible } from "../../formatters";
-import { officialInsurerWebsite } from "../../insurer-links";
-import { compareOfferWithCurrentPremium } from "../../result-view-model";
+import { officialInsurerShortName, officialInsurerWebsite } from "../../insurer-links";
+import { compareOfferWithCurrentPremium, nearbyOfferSentence, shouldShowCurrentPlanDifferenceColumn } from "../../result-view-model";
 import type { RankedOfferSet } from "../../types";
 import { MobileComparisonList } from "./mobile-comparison-list";
 
-function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMorePlans, currentInsurerId, currentPremium }: {
+function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMorePlans, currentInsurerId, currentPremium, highlightedInsurerId }: {
   franchise: number;
   model: string;
   ranking: RankedOfferSet;
@@ -15,6 +15,7 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
   onLoadMorePlans: (franchise: number, model: string) => Promise<void>;
   currentInsurerId: string;
   currentPremium: string;
+  highlightedInsurerId: string;
 }) {
   const hadMorePlans = useRef(ranking.offers.length < ranking.total_eligible_offers);
   const [loadError, setLoadError] = useState("");
@@ -25,6 +26,7 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
 
   const allPlansShown = ranking.offers.length >= ranking.total_eligible_offers;
   const statusId = `plans-status-${franchise}-${model}`;
+  const showCurrentDifference = shouldShowCurrentPlanDifferenceColumn(ranking.offers, currentPremium);
 
   async function loadMore() {
     if (isLoadingMorePlans || allPlansShown) return;
@@ -39,15 +41,17 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
   }
 
   const mobileItems = ranking.offers.map((offer) => {
-    const currentComparison = currentPremium
+    const currentComparison = showCurrentDifference
       ? compareOfferWithCurrentPremium(offer, currentPremium)
       : null;
+    const insurerShortName = officialInsurerShortName(offer.insurer_id, offer.insurer_name);
     return {
       key: `${offer.rank}-${offer.insurer_id}-${offer.plan_id ?? offer.product_name}`,
       rank: offer.rank,
       eyebrow: modelLabels[offer.insurance_model] || offer.insurance_model,
       premium: Number(offer.monthly_premium_chf),
-      insurer: offer.insurer_name,
+      insurer: insurerShortName,
+      legalInsurer: insurerShortName === offer.insurer_name ? undefined : offer.insurer_name,
       plan: offer.product_name,
       model: modelLabels[offer.insurance_model] || offer.insurance_model,
       franchise: offer.deductible_chf,
@@ -61,12 +65,14 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
       currentComparison: currentComparison
         ? { label: currentComparison.label, tone: currentComparison.tone }
         : undefined,
+      highlighted: offer.insurer_id === highlightedInsurerId,
+      insurerId: offer.insurer_id,
     };
   });
 
   return <>
     <div className="comparison-scroll">
-      <table className={`comparison-table ranked-franchise-table${currentPremium ? " with-current-premium" : ""}`}>
+      <table className={`comparison-table ranked-franchise-table${showCurrentDifference ? " with-current-premium" : ""}`}>
         <caption>Top premiums with a {formatDeductible(franchise)} franchise</caption>
         <thead><tr>
           <th scope="col">Rank</th>
@@ -74,18 +80,20 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
           <th scope="col">Insurer and plan</th>
           <th scope="col">Insurance model</th>
           <th scope="col">Vs cheapest</th>
-          {currentPremium && <th scope="col">Vs your current plan</th>}
+          {showCurrentDifference && <th scope="col">Vs your current plan</th>}
           <th scope="col"><span className="sr-only">Insurer website</span></th>
         </tr></thead>
         <tbody>{ranking.offers.map((offer) => {
           const insurerUrl = officialInsurerWebsite(offer.insurer_id);
-          const currentComparison = currentPremium
+          const currentComparison = showCurrentDifference
             ? compareOfferWithCurrentPremium(offer, currentPremium)
             : null;
-          return <tr className={offer.rank === 1 ? "best-row" : ""} key={`${offer.rank}-${offer.insurer_id}-${offer.plan_id ?? offer.product_name}`}>
+          const insurerShortName = officialInsurerShortName(offer.insurer_id, offer.insurer_name);
+          const rowClasses = [offer.rank === 1 ? "best-row" : "", offer.insurer_id === highlightedInsurerId ? "highlighted-offer" : ""].filter(Boolean).join(" ");
+          return <tr className={rowClasses} data-offer-insurer={offer.insurer_id} tabIndex={-1} key={`${offer.rank}-${offer.insurer_id}-${offer.plan_id ?? offer.product_name}`}>
             <td>#{offer.rank}</td>
             <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>
-            <th scope="row"><strong>{offer.insurer_name}</strong>{offer.insurer_id === currentInsurerId && <em className="current-insurer-badge">Your insurer</em>}<small>{offer.product_name}</small></th>
+            <th scope="row"><strong>{insurerShortName}</strong>{offer.insurer_id === currentInsurerId && <em className="current-insurer-badge">Your insurer</em>}{insurerShortName !== offer.insurer_name && <small className="legal-insurer-name">{offer.insurer_name}</small>}<small>{offer.product_name}</small></th>
             <td>{modelLabels[offer.insurance_model] || offer.insurance_model}</td>
             <td className={offer.rank === 1 ? "difference best" : "difference"}>{offer.rank === 1 ? `Lowest at ${formatDeductible(franchise)}` : `${formatCurrency(Number(offer.monthly_difference_from_cheapest_chf))} more`}</td>
             {currentComparison && <td className={`current-plan-difference ${currentComparison.tone}`}>{currentComparison.label}</td>}
@@ -124,6 +132,7 @@ export function RankedFranchiseGroup({
   onLoadMorePlans,
   currentInsurerId,
   currentPremium,
+  highlightedInsurerId,
 }: {
   franchise: number;
   model: string;
@@ -134,6 +143,7 @@ export function RankedFranchiseGroup({
   onLoadMorePlans: (franchise: number, model: string) => Promise<void>;
   currentInsurerId: string;
   currentPremium: string;
+  highlightedInsurerId: string;
 }) {
   const lowest = ranking.offers[0];
   const summary = <span className="franchise-summary">
@@ -145,16 +155,16 @@ export function RankedFranchiseGroup({
   if (!collapsible) {
     return <section className="franchise-group" aria-labelledby={`franchise-${franchise}`}>
       <div className="franchise-group-heading" id={`franchise-${franchise}`}>{summary}</div>
-      <p className="franchise-near-note">{ranking.within_five_offer_count} offer{ranking.within_five_offer_count === 1 ? "" : "s"} from {ranking.within_five_insurer_count} insurer{ranking.within_five_insurer_count === 1 ? "" : "s"} are within CHF 5/month of the lowest in this franchise.</p>
-      <GroupResults franchise={franchise} model={model} ranking={ranking} isLoadingMorePlans={isLoadingMorePlans} onLoadMorePlans={onLoadMorePlans} currentInsurerId={currentInsurerId} currentPremium={currentPremium} />
+      <p className="franchise-near-note">{nearbyOfferSentence(ranking.within_five_offer_count, ranking.within_five_insurer_count)}</p>
+      <GroupResults franchise={franchise} model={model} ranking={ranking} isLoadingMorePlans={isLoadingMorePlans} onLoadMorePlans={onLoadMorePlans} currentInsurerId={currentInsurerId} currentPremium={currentPremium} highlightedInsurerId={highlightedInsurerId} />
     </section>;
   }
 
   return <details className="franchise-group" open={initiallyOpen}>
     <summary>{summary}<span aria-hidden="true">⌄</span></summary>
     <div className="franchise-group-content">
-      <p className="franchise-near-note">{ranking.within_five_offer_count} offer{ranking.within_five_offer_count === 1 ? "" : "s"} from {ranking.within_five_insurer_count} insurer{ranking.within_five_insurer_count === 1 ? "" : "s"} are within CHF 5/month of the lowest in this franchise.</p>
-      <GroupResults franchise={franchise} model={model} ranking={ranking} isLoadingMorePlans={isLoadingMorePlans} onLoadMorePlans={onLoadMorePlans} currentInsurerId={currentInsurerId} currentPremium={currentPremium} />
+      <p className="franchise-near-note">{nearbyOfferSentence(ranking.within_five_offer_count, ranking.within_five_insurer_count)}</p>
+      <GroupResults franchise={franchise} model={model} ranking={ranking} isLoadingMorePlans={isLoadingMorePlans} onLoadMorePlans={onLoadMorePlans} currentInsurerId={currentInsurerId} currentPremium={currentPremium} highlightedInsurerId={highlightedInsurerId} />
     </div>
   </details>;
 }
