@@ -1,5 +1,5 @@
 export function currentPremiumError(value: string) {
-  if (!value.trim()) return "Enter your current monthly premium.";
+  if (!value.trim()) return "Enter your 2027 renewal premium.";
 
   const premium = Number(value);
   if (!Number.isFinite(premium) || premium <= 0) {

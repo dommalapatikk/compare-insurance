@@ -92,7 +92,13 @@ export function ResultsExplorer({
     0,
   );
   const currentComparison = intent === "compare_current" && results.offers[0]
-    ? buildCurrentPremiumMessage(results.offers[0], currentPremium, currentInsurerName)
+    ? buildCurrentPremiumMessage(results.offers, {
+      currentPremium,
+      currentInsurerId,
+      currentInsurerName,
+      insuranceModel: modelLabels[results.query.insurance_models[0]] || results.query.insurance_models[0],
+      deductible: results.query.deductibles[0],
+    })
     : null;
 
   return (
@@ -106,8 +112,11 @@ export function ResultsExplorer({
       </div>
 
       {currentComparison && <div className={`current-comparison ${currentComparison.tone}`} role="status">
-        <strong>{currentComparison.title}</strong>
-        <span>{currentComparison.detail}</span>
+        <h4>{currentComparison.heading}</h4>
+        <ol>{currentComparison.points.map((point) => <li key={point.title}>
+          <strong>{point.title}</strong>
+          <span>{point.detail}</span>
+        </li>)}</ol>
       </div>}
 
       {intent !== "compare_current" && <>
@@ -137,6 +146,7 @@ export function ResultsExplorer({
           isLoadingMorePlans={loadingPlansKey === `${group.deductible_chf}:${model}`}
           onLoadMorePlans={onLoadMorePlans}
           currentInsurerId={currentInsurerId}
+          currentPremium={intent === "compare_current" ? currentPremium : ""}
         />)}
       </div>
 

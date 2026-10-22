@@ -14,6 +14,10 @@ export type MobileComparisonItem = {
   status?: string;
   best?: boolean;
   currentInsurer?: boolean;
+  currentComparison?: {
+    label: string;
+    tone: "positive" | "neutral";
+  };
 };
 
 export function MobileComparisonList({
@@ -40,6 +44,9 @@ export function MobileComparisonList({
             <span>{formatDeductible(item.franchise)}</span>
             {item.difference && <span>{item.difference}</span>}
           </div>
+          {item.currentComparison && <span className={`mobile-current-plan-difference ${item.currentComparison.tone}`}>
+            Vs your current plan: {item.currentComparison.label}
+          </span>}
           {item.insurerUrl && <a
             className="mobile-insurer-link"
             href={item.insurerUrl}

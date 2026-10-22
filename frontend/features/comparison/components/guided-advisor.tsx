@@ -28,7 +28,7 @@ const journeyChoices: Array<{
   {
     intent: "compare_current",
     title: "Compare with my current premium",
-    description: "Compare premiums before subsidies with the same franchise and insurance model.",
+    description: "Use your 2027 renewal premium to compare the same franchise and insurance model.",
   },
   {
     intent: "explore",
@@ -150,7 +150,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
           </Question>
           {flow.journeyIntent === "compare_current" && <div className="current-cover-fields">
             <label className="current-premium-control" htmlFor="current-premium">
-              <span>Current monthly basic-insurance premium before subsidies</span>
+              <span>2027 premium if you stay on your current plan</span>
               <span><b>CHF</b><input
                 id="current-premium"
                 aria-describedby={`current-premium-hint${showPremiumError ? " current-premium-error" : ""}`}
@@ -166,7 +166,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
                 onChange={(event) => flow.setCurrentPremium(event.target.value)}
                 placeholder="420"
               /></span>
-              <small id="current-premium-hint">Required. Exclude supplementary insurance. Enter the amount before any subsidy or premium reduction.</small>
+              <small id="current-premium-hint">Required. Enter the monthly basic-insurance premium from your 2027 renewal notice, before subsidies.</small>
               {showPremiumError && <small className="field-error" id="current-premium-error" role="alert">{premiumError}</small>}
             </label>
             <label className="current-insurer-control" htmlFor="current-insurer">

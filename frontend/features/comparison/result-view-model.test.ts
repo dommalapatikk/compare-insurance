@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildCurrentPremiumMessage,
+  compareOfferWithCurrentPremium,
   differenceFromLowest,
   explainSavings,
   filterAndSortMinimums,
@@ -9,6 +10,11 @@ import {
 import type { CategoryMinimum, PremiumOffer } from "./types";
 
 const offer = {
+  insurer_id: "632",
+  insurer_name: "ÖKK Kranken- und Unfallversicherungen AG",
+  product_name: "ÖKK CASAMED HMO",
+  deductible_chf: 300,
+  insurance_model: "praxis",
   monthly_premium_chf: "370.30",
   reference_comparison: {
     relation: "cheaper",
@@ -49,36 +55,87 @@ describe("result view model", () => {
     expect(explainSavings(offer, "")).toBeNull();
   });
 
-  it("explains when the current premium is below every matching plan", () => {
-    expect(buildCurrentPremiumMessage(offer, "250")).toEqual({
-      tone: "neutral",
-      title: "You're paying less than every plan we found for this setup (lowest: CHF\u00a0370.30).",
-      detail: "Please check that your premium, franchise, insurance model and accident cover match your policy — subsidies or a different setup can explain the gap.",
-    });
-  });
-
-  it("states savings when the matching plan costs less", () => {
-    expect(buildCurrentPremiumMessage(offer, "400")).toEqual({
+  it("labels each offer against the premium for the current plan", () => {
+    expect(compareOfferWithCurrentPremium(offer, "400")).toEqual({
+      annualDifference: "CHF\u00a0356.40",
+      label: "Save CHF\u00a029.70/month",
+      monthlyDifference: "CHF\u00a029.70",
+      relation: "less",
       tone: "positive",
-      title: "You could save CHF\u00a029.70/month (CHF\u00a0356.40/year).",
-      detail: "The lowest matching premium is CHF\u00a0370.30/month, compared with the CHF\u00a0400.00/month you entered.",
     });
-  });
-
-  it("names the optional current insurer in the comparison summary", () => {
-    expect(buildCurrentPremiumMessage(offer, "400", "CSS Krankenversicherung AG")).toEqual({
-      tone: "positive",
-      title: "You could save CHF\u00a029.70/month (CHF\u00a0356.40/year).",
-      detail: "The lowest matching premium is CHF\u00a0370.30/month, compared with the CHF\u00a0400.00/month you entered. Your current insurer is CSS Krankenversicherung AG.",
-    });
-  });
-
-  it("recognises an equal current premium", () => {
-    expect(buildCurrentPremiumMessage(offer, "370.30")).toEqual({
+    expect(compareOfferWithCurrentPremium(offer, "350")).toEqual({
+      annualDifference: "CHF\u00a0243.60",
+      label: "CHF\u00a020.30 more/month",
+      monthlyDifference: "CHF\u00a020.30",
+      relation: "more",
       tone: "neutral",
-      title: "You already have the lowest premium for this setup.",
-      detail: "The matching premium is CHF\u00a0370.30/month.",
     });
+  });
+
+  it("shows the stay and switch decisions using the same model and franchise", () => {
+    expect(buildCurrentPremiumMessage([offer], {
+      currentPremium: "400",
+      currentInsurerId: "",
+      currentInsurerName: "",
+      insuranceModel: "Family doctor / HMO",
+      deductible: 300,
+    })).toEqual({
+      tone: "positive",
+      heading: "Stay or switch",
+      points: [
+        {
+          title: "Stay on your current plan",
+          detail: "CHF\u00a0400.00/month (CHF\u00a04'800.00/year), based on the 2027 renewal premium you entered.",
+        },
+        {
+          title: "Cheapest matching offer",
+          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG costs CHF\u00a0370.30/month — save CHF\u00a029.70/month (CHF\u00a0356.40/year) compared with staying. Same Family doctor / HMO model and CHF 300 franchise.",
+        },
+      ],
+    });
+  });
+
+  it("excludes the selected current insurer when naming the cheapest alternative", () => {
+    const cssOffer = {
+      ...offer,
+      insurer_id: "8",
+      insurer_name: "CSS Krankenversicherung AG",
+      product_name: "CSS Hausarztversicherung",
+      monthly_premium_chf: "380.00",
+      reference_comparison: null,
+    } as PremiumOffer;
+    expect(buildCurrentPremiumMessage([cssOffer, offer], {
+      currentPremium: "400",
+      currentInsurerId: "8",
+      currentInsurerName: "CSS Krankenversicherung AG",
+      insuranceModel: "Family doctor / HMO",
+      deductible: 300,
+    })).toEqual({
+      tone: "positive",
+      heading: "Stay or switch",
+      points: [
+        {
+          title: "Stay with CSS Krankenversicherung AG",
+          detail: "CHF\u00a0400.00/month (CHF\u00a04'800.00/year), based on the 2027 renewal premium you entered.",
+        },
+        {
+          title: "Cheapest other insurer",
+          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG costs CHF\u00a0370.30/month — save CHF\u00a029.70/month (CHF\u00a0356.40/year) compared with staying. Same Family doctor / HMO model and CHF 300 franchise.",
+        },
+      ],
+    });
+  });
+
+  it("states when the cheapest alternative costs more than staying", () => {
+    const message = buildCurrentPremiumMessage([offer], {
+      currentPremium: "350",
+      currentInsurerId: "",
+      currentInsurerName: "",
+      insuranceModel: "Family doctor / HMO",
+      deductible: 300,
+    });
+    expect(message?.tone).toBe("neutral");
+    expect(message?.points[1].detail).toContain("CHF\u00a020.30 more/month (CHF\u00a0243.60/year) than staying");
   });
 
   it("filters category minimums and sorts them by monthly premium", () => {

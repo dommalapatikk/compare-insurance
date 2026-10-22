@@ -66,6 +66,8 @@
   .result-facts dd { margin: 0; font-size: .74rem; }
   .result-profile { margin-top: 0; }
   .results-explorer { padding: 15px 12px 8px; border-radius: 14px; }
+  .current-comparison ol { grid-template-columns: 1fr; }
+  .current-comparison li { min-height: 0; }
   .explorer-heading h3 { font-size: 1.05rem; }
   .desktop-result-filters { display: none; }
   .mobile-result-filters { display: block; margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; }

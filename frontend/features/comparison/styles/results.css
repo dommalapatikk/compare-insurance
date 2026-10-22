@@ -56,10 +56,16 @@
 .result-filter-fields select { min-height: 46px; padding: 0 38px 0 12px; color: var(--ink); background: var(--card); border: 1px solid #a9a9a5; border-radius: 9px; font-size: .82rem; }
 .result-count { margin: 0 0 13px auto; color: var(--muted); font-size: .74rem; white-space: nowrap; }
 .mobile-result-filters { display: none; }
-.current-comparison { display: grid; gap: 3px; margin-top: 16px; padding: 13px 15px; color: #075e4c; background: var(--positive-pale); border-radius: 10px; }
-.current-comparison strong { font-size: .84rem; }
-.current-comparison span { font-size: .76rem; line-height: 1.45; }
+.current-comparison { display: grid; gap: 10px; margin-top: 16px; padding: 15px; color: #075e4c; background: var(--positive-pale); border-radius: 10px; }
+.current-comparison h4 { margin: 0; color: var(--ink); font-size: .9rem; }
+.current-comparison ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: comparison-choice; }
+.current-comparison li { position: relative; min-height: 94px; padding: 12px 12px 12px 42px; background: rgba(255, 255, 255, .72); border: 1px solid rgba(7, 94, 76, .15); border-radius: 8px; counter-increment: comparison-choice; }
+.current-comparison li::before { position: absolute; top: 12px; left: 11px; width: 22px; height: 22px; display: grid; place-items: center; content: counter(comparison-choice); color: white; background: var(--positive); border-radius: 50%; font-size: .68rem; font-weight: 750; }
+.current-comparison strong { display: block; font-size: .82rem; }
+.current-comparison span { display: block; margin-top: 3px; font-size: .74rem; line-height: 1.45; }
 .current-comparison.neutral { color: var(--ink); background: var(--soft); }
+.current-comparison.neutral li { border-color: var(--line); }
+.current-comparison.neutral li::before { background: var(--action-ink); }
 .selection-summary { margin: 13px 0 0; color: var(--ink); font-size: .78rem; }
 .selection-summary span { padding: 0 5px; color: var(--muted); }
 .comparison-guidance { margin: 12px 0 4px; color: var(--muted); font-size: .76rem; line-height: 1.5; }
@@ -112,6 +118,17 @@
 .ranked-franchise-table th:nth-child(4) { width: 18%; }
 .ranked-franchise-table th:nth-child(5) { width: 17%; }
 .ranked-franchise-table th:nth-child(6) { width: 12%; }
+.ranked-franchise-table.with-current-premium th:nth-child(1) { width: 6%; }
+.ranked-franchise-table.with-current-premium th:nth-child(2) { width: 15%; }
+.ranked-franchise-table.with-current-premium th:nth-child(3) { width: 24%; }
+.ranked-franchise-table.with-current-premium th:nth-child(4) { width: 15%; }
+.ranked-franchise-table.with-current-premium th:nth-child(5) { width: 14%; }
+.ranked-franchise-table.with-current-premium th:nth-child(6) { width: 16%; }
+.ranked-franchise-table.with-current-premium th:nth-child(7) { width: 10%; }
+.current-plan-difference { color: var(--muted); font-size: .72rem; font-weight: 700; }
+.current-plan-difference.positive { color: var(--positive); }
+.mobile-current-plan-difference { display: block; margin-top: 8px; color: var(--muted); font-size: .72rem; font-weight: 700; }
+.mobile-current-plan-difference.positive { color: var(--positive); }
 
 .ranked-results { padding-top: 10px; }
 .ranked-results .section-heading h3 { font-size: 1rem; }

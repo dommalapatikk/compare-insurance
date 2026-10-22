@@ -1,4 +1,4 @@
-import { formatCurrency } from "./formatters";
+import { formatCurrency, formatDeductible } from "./formatters";
 import type { CategoryMinimum, PremiumOffer } from "./types";
 
 export type ResultFilters = {
@@ -39,8 +39,19 @@ export type SavingsExplanation = {
 
 export type CurrentPremiumMessage = {
   tone: "positive" | "neutral";
-  title: string;
-  detail: string;
+  heading: string;
+  points: Array<{
+    title: string;
+    detail: string;
+  }>;
+};
+
+export type CurrentPremiumContext = {
+  currentPremium: string;
+  currentInsurerId: string;
+  currentInsurerName: string;
+  insuranceModel: string;
+  deductible: number;
 };
 
 export function explainSavings(
@@ -69,40 +80,66 @@ export function explainSavings(
   };
 }
 
-export function buildCurrentPremiumMessage(
+export function compareOfferWithCurrentPremium(
   offer: PremiumOffer,
   currentPremium: string,
-  currentInsurerName = "",
-): CurrentPremiumMessage | null {
+) {
   const explanation = explainSavings(offer, currentPremium);
   if (!explanation) return null;
 
-  const premium = Number(offer.monthly_premium_chf);
-  const reference = Number(currentPremium);
-  const lowest = `${formatCurrency(premium)}/month`;
-  const insurerContext = currentInsurerName ? ` Your current insurer is ${currentInsurerName}.` : "";
-  const largeGap = Math.abs(reference - premium) / Math.max(reference, premium) > 0.3;
-  const checkInputs = "Please check that your premium, franchise, insurance model and accident cover match your policy — subsidies or a different setup can explain the gap.";
+  const label = explanation.relation === "less"
+    ? `Save ${explanation.monthlyDifference}/month`
+    : explanation.relation === "more"
+      ? `${explanation.monthlyDifference} more/month`
+      : "Same price";
 
-  if (explanation.relation === "more") {
-    return {
-      tone: "neutral",
-      title: `You're paying less than every plan we found for this setup (lowest: ${formatCurrency(premium)}).`,
-      detail: `${checkInputs}${insurerContext}`,
-    };
-  }
-  if (explanation.relation === "same") {
-    return {
-      tone: "neutral",
-      title: "You already have the lowest premium for this setup.",
-      detail: `The matching premium is ${lowest}.${insurerContext}`,
-    };
-  }
   return {
-    tone: "positive",
-    title: `You could save ${explanation.monthlyDifference}/month (${explanation.annualDifference}/year).`,
-    detail: largeGap
-      ? `${checkInputs} The lowest matching premium is ${lowest}, compared with the ${explanation.baseline} you entered.${insurerContext}`
-      : `The lowest matching premium is ${lowest}, compared with the ${explanation.baseline} you entered.${insurerContext}`,
+    annualDifference: explanation.annualDifference,
+    label,
+    monthlyDifference: explanation.monthlyDifference,
+    relation: explanation.relation,
+    tone: explanation.relation === "less" ? "positive" as const : "neutral" as const,
+  };
+}
+
+export function buildCurrentPremiumMessage(
+  offers: PremiumOffer[],
+  context: CurrentPremiumContext,
+): CurrentPremiumMessage | null {
+  const renewalPremium = Number(context.currentPremium);
+  if (!offers.length || !Number.isFinite(renewalPremium) || renewalPremium <= 0) return null;
+
+  const otherInsurer = context.currentInsurerId
+    ? offers.find((offer) => offer.insurer_id !== context.currentInsurerId)
+    : offers[0];
+  const alternative = otherInsurer ?? offers[0];
+  const comparison = compareOfferWithCurrentPremium(alternative, context.currentPremium);
+  if (!comparison) return null;
+
+  const stayTitle = context.currentInsurerName
+    ? `Stay with ${context.currentInsurerName}`
+    : "Stay on your current plan";
+  const alternativeTitle = context.currentInsurerId && otherInsurer
+    ? "Cheapest other insurer"
+    : "Cheapest matching offer";
+  const comparisonText = comparison.relation === "less"
+    ? `save ${comparison.monthlyDifference}/month (${comparison.annualDifference}/year) compared with staying`
+    : comparison.relation === "more"
+      ? `${comparison.monthlyDifference} more/month (${comparison.annualDifference}/year) than staying`
+      : "the same monthly price as staying";
+
+  return {
+    tone: comparison.tone,
+    heading: "Stay or switch",
+    points: [
+      {
+        title: stayTitle,
+        detail: `${formatCurrency(renewalPremium)}/month (${formatCurrency(renewalPremium * 12)}/year), based on the 2027 renewal premium you entered.`,
+      },
+      {
+        title: alternativeTitle,
+        detail: `${alternative.product_name} from ${alternative.insurer_name} costs ${formatCurrency(Number(alternative.monthly_premium_chf))}/month — ${comparisonText}. Same ${context.insuranceModel} model and ${formatDeductible(context.deductible)} franchise.`,
+      },
+    ],
   };
 }

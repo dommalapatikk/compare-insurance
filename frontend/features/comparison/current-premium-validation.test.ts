@@ -4,7 +4,7 @@ import { currentPremiumError } from "./current-premium-validation";
 
 describe("current premium validation", () => {
   it("requires a positive monthly premium", () => {
-    expect(currentPremiumError("")).toBe("Enter your current monthly premium.");
+    expect(currentPremiumError("")).toBe("Enter your 2027 renewal premium.");
     expect(currentPremiumError("0")).toBe("Enter a monthly premium greater than CHF 0.");
     expect(currentPremiumError("-5")).toBe("Enter a monthly premium greater than CHF 0.");
   });
