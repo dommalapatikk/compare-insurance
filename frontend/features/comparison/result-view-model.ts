@@ -116,29 +116,29 @@ export function buildCurrentPremiumMessage(
   const comparison = compareOfferWithCurrentPremium(alternative, context.currentPremium);
   if (!comparison) return null;
 
-  const stayTitle = context.currentInsurerName
-    ? `Stay with ${context.currentInsurerName}`
-    : "Stay on your current plan";
+  const currentPlanTitle = context.currentInsurerName
+    ? `Your current plan: ${context.currentInsurerName}`
+    : "Your current plan";
   const alternativeTitle = context.currentInsurerId && otherInsurer
-    ? "Cheapest other insurer"
+    ? "Cheapest alternative from another insurer"
     : "Cheapest matching offer";
-  const comparisonText = comparison.relation === "less"
-    ? `save ${comparison.monthlyDifference}/month (${comparison.annualDifference}/year) compared with staying`
+  const comparisonSentence = comparison.relation === "less"
+    ? `That is ${comparison.monthlyDifference}/month (${comparison.annualDifference}/year) less than your current plan.`
     : comparison.relation === "more"
-      ? `${comparison.monthlyDifference} more/month (${comparison.annualDifference}/year) than staying`
-      : "the same monthly price as staying";
+      ? `That is ${comparison.monthlyDifference}/month (${comparison.annualDifference}/year) more than your current plan.`
+      : "That is the same monthly price as your current plan.";
 
   return {
     tone: comparison.tone,
-    heading: "Stay or switch",
+    heading: "Your current plan compared with the cheapest alternative",
     points: [
       {
-        title: stayTitle,
-        detail: `${formatCurrency(renewalPremium)}/month (${formatCurrency(renewalPremium * 12)}/year), based on the 2027 renewal premium you entered.`,
+        title: currentPlanTitle,
+        detail: `You entered ${formatCurrency(renewalPremium)}/month (${formatCurrency(renewalPremium * 12)}/year) from your 2027 renewal notice. We use it only as a comparison starting point — not as a recommendation to stay.`,
       },
       {
         title: alternativeTitle,
-        detail: `${alternative.product_name} from ${alternative.insurer_name} costs ${formatCurrency(Number(alternative.monthly_premium_chf))}/month — ${comparisonText}. Same ${context.insuranceModel} model and ${formatDeductible(context.deductible)} franchise.`,
+        detail: `${alternative.product_name} from ${alternative.insurer_name} is ${formatCurrency(Number(alternative.monthly_premium_chf))}/month. ${comparisonSentence} It matches your ${context.insuranceModel} model and ${formatDeductible(context.deductible)} franchise.`,
       },
     ],
   };

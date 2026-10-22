@@ -72,7 +72,7 @@ describe("result view model", () => {
     });
   });
 
-  it("shows the stay and switch decisions using the same model and franchise", () => {
+  it("compares the current plan without recommending that the user stay", () => {
     expect(buildCurrentPremiumMessage([offer], {
       currentPremium: "400",
       currentInsurerId: "",
@@ -81,15 +81,15 @@ describe("result view model", () => {
       deductible: 300,
     })).toEqual({
       tone: "positive",
-      heading: "Stay or switch",
+      heading: "Your current plan compared with the cheapest alternative",
       points: [
         {
-          title: "Stay on your current plan",
-          detail: "CHF\u00a0400.00/month (CHF\u00a04'800.00/year), based on the 2027 renewal premium you entered.",
+          title: "Your current plan",
+          detail: "You entered CHF\u00a0400.00/month (CHF\u00a04'800.00/year) from your 2027 renewal notice. We use it only as a comparison starting point — not as a recommendation to stay.",
         },
         {
           title: "Cheapest matching offer",
-          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG costs CHF\u00a0370.30/month — save CHF\u00a029.70/month (CHF\u00a0356.40/year) compared with staying. Same Family doctor / HMO model and CHF 300 franchise.",
+          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG is CHF\u00a0370.30/month. That is CHF\u00a029.70/month (CHF\u00a0356.40/year) less than your current plan. It matches your Family doctor / HMO model and CHF 300 franchise.",
         },
       ],
     });
@@ -112,15 +112,15 @@ describe("result view model", () => {
       deductible: 300,
     })).toEqual({
       tone: "positive",
-      heading: "Stay or switch",
+      heading: "Your current plan compared with the cheapest alternative",
       points: [
         {
-          title: "Stay with CSS Krankenversicherung AG",
-          detail: "CHF\u00a0400.00/month (CHF\u00a04'800.00/year), based on the 2027 renewal premium you entered.",
+          title: "Your current plan: CSS Krankenversicherung AG",
+          detail: "You entered CHF\u00a0400.00/month (CHF\u00a04'800.00/year) from your 2027 renewal notice. We use it only as a comparison starting point — not as a recommendation to stay.",
         },
         {
-          title: "Cheapest other insurer",
-          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG costs CHF\u00a0370.30/month — save CHF\u00a029.70/month (CHF\u00a0356.40/year) compared with staying. Same Family doctor / HMO model and CHF 300 franchise.",
+          title: "Cheapest alternative from another insurer",
+          detail: "ÖKK CASAMED HMO from ÖKK Kranken- und Unfallversicherungen AG is CHF\u00a0370.30/month. That is CHF\u00a029.70/month (CHF\u00a0356.40/year) less than your current plan. It matches your Family doctor / HMO model and CHF 300 franchise.",
         },
       ],
     });
@@ -135,7 +135,7 @@ describe("result view model", () => {
       deductible: 300,
     });
     expect(message?.tone).toBe("neutral");
-    expect(message?.points[1].detail).toContain("CHF\u00a020.30 more/month (CHF\u00a0243.60/year) than staying");
+    expect(message?.points[1].detail).toContain("CHF\u00a020.30/month (CHF\u00a0243.60/year) more than your current plan");
   });
 
   it("filters category minimums and sorts them by monthly premium", () => {
