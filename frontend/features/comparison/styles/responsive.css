@@ -68,6 +68,13 @@
   .results-explorer { padding: 15px 12px 8px; border-radius: 14px; }
   .current-comparison { align-items: stretch; flex-direction: column; }
   .current-comparison h4 { font-size: .94rem; }
+  .current-comparison.needs-premium { margin-top: 10px; padding: 9px 11px; }
+  .current-premium-mobile-summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .current-premium-mobile-summary strong { font-size: .78rem; }
+  .current-premium-mobile-summary button { min-width: 62px; min-height: 40px; padding: 0 14px; color: var(--action-ink); background: white; border: 1px solid var(--action); border-radius: 999px; cursor: pointer; font-size: .76rem; font-weight: 750; }
+  .current-comparison.needs-premium:not(.premium-prompt-open) .current-comparison-copy,
+  .current-comparison.needs-premium:not(.premium-prompt-open) .current-premium-prompt { display: none; }
+  .current-comparison.needs-premium.premium-prompt-open .current-premium-mobile-summary { display: none; }
   .current-premium-prompt { grid-template-columns: 1fr; }
   .current-premium-prompt > button { width: 100%; }
   .explorer-heading h3 { font-size: 1.05rem; }

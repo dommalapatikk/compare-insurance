@@ -33,8 +33,10 @@ const answers = [
   },
   {
     question: "What does the family-doctor model mean?",
-    answer:
-      "For 2027, family-doctor and HMO plans are grouped under PRAXIS. You agree to contact a designated doctor or medical practice first. That practice coordinates further treatment and referrals. The exact rules differ by plan, so check them before choosing.",
+    answer: [
+      "HMO centre: use a specific group practice. Family-doctor plan: choose a doctor from the insurer’s list.",
+      "Check which nearby doctors or centres belong to the plan before switching.",
+    ],
     source: BAG_MODELS,
     sourceLabel: "BAG",
   },
@@ -57,12 +59,14 @@ export function OfficialHelp() {
         {answers.map((item) => (
           <details key={item.question}>
             <summary>{item.question}</summary>
-            <p>
-              {item.answer}{" "}
+            <div className="faq-answer">
+              {Array.isArray(item.answer)
+                ? <ul>{item.answer.map((line) => <li key={line}>{line}</li>)}</ul>
+                : <>{item.answer}{" "}</>}
               <a href={item.source} target="_blank" rel="noreferrer">
                 {item.sourceLabel} ↗
               </a>
-            </p>
+            </div>
           </details>
         ))}
       </div>

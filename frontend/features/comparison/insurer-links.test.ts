@@ -3,11 +3,14 @@ import { describe, expect, it } from "vitest";
 import { officialInsurers, officialInsurerShortName, officialInsurerWebsite } from "./insurer-links";
 
 describe("official insurer catalogue", () => {
-  it("offers unique, alphabetically sorted insurer choices with official websites", () => {
+  it("offers unique insurer choices sorted A–Z by the visible short name", () => {
     expect(new Set(officialInsurers.map(({ id }) => id)).size).toBe(officialInsurers.length);
-    expect(officialInsurers.map(({ name }) => name)).toEqual(
-      officialInsurers.map(({ name }) => name).toSorted((left, right) => left.localeCompare(right)),
+    const collator = new Intl.Collator("de", { sensitivity: "base" });
+    expect(officialInsurers.map(({ shortName }) => shortName)).toEqual(
+      officialInsurers.map(({ shortName }) => shortName).toSorted(collator.compare),
     );
+    expect(officialInsurers.every(({ shortName }) => !shortName.startsWith("Krankenkasse"))).toBe(true);
+    expect(officialInsurerShortName("246")).toBe("Steffisburg");
     expect(officialInsurers.every(({ id, website }) => officialInsurerWebsite(id) === website)).toBe(true);
   });
 

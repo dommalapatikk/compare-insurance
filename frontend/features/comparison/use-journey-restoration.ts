@@ -37,6 +37,7 @@ type RestorationControls = {
   setRestoredNotice: Dispatch<SetStateAction<string>>;
   setResults: Dispatch<SetStateAction<PremiumSearchResponse | null>>;
   setSearchNotice: Dispatch<SetStateAction<string>>;
+  updateLocationQuery: (value: string) => void;
 };
 
 export function useJourneyRestoration(controls: RestorationControls) {
@@ -53,6 +54,9 @@ export function useJourneyRestoration(controls: RestorationControls) {
       if (resolution.accident) controls.setAccident(resolution.accident);
       if (resolution.models) controls.setModels(resolution.models);
       if (resolution.deductibles) controls.setDeductibles(resolution.deductibles);
+      if (resolution.kind === "details" && resolution.invalidPostcode) {
+        controls.updateLocationQuery(resolution.invalidPostcode);
+      }
     }
 
     async function restoreUrl() {

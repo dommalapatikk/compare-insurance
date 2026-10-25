@@ -82,10 +82,24 @@ describe("result view model", () => {
     })).toMatchObject({
       kind: "savings",
       tone: "positive",
-      heading: "You could save CHF\u00a029.70/month",
+      heading: "You could save CHF\u00a030/month",
       detail: "That’s CHF\u00a0356.40 a year. ÖKK costs CHF\u00a0370.30, and you pay CHF\u00a0400.00.",
       action: { label: "See ÖKK", offerInsurerId: "455" },
     });
+  });
+
+  it("rounds only the headline saving while preserving exact comparison amounts", () => {
+    const message = buildCurrentPremiumMessage([
+      { ...offer, monthly_premium_chf: "563.00" } as PremiumOffer,
+    ], {
+      currentPremium: "700",
+      currentInsurerId: "",
+      currentInsurerName: "",
+    });
+
+    expect(message.heading).toBe("You could save CHF\u00a0137/month");
+    expect(message.detail).toContain("CHF\u00a0563.00");
+    expect(message.detail).toContain("CHF\u00a0700.00");
   });
 
   it("warns when the entered premium differs from the selected insurer's published price by more than five percent", () => {

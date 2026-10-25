@@ -33,7 +33,7 @@ type RestoredProfile = {
 export type JourneyUrlResolution =
   | { kind: "none" }
   | { kind: "reset"; canonicalUrl: "/" }
-  | (RestoredBase & { kind: "details"; notice?: string } & Partial<RestoredProfile>)
+  | (RestoredBase & { kind: "details"; notice?: string; invalidPostcode?: string } & Partial<RestoredProfile>)
   | (RestoredBase & { kind: "preferences" } & RestoredProfile)
   | (RestoredBase & { kind: "results";
       results: PremiumSearchResponse;
@@ -131,6 +131,7 @@ export async function resolveJourneyUrl(
       journeyId: urlState.journeyId,
       journey: restored,
       notice: "Some details were missing — please check and continue.",
+      invalidPostcode: urlState.location.postal_code,
       birthYear: urlState.birthYear,
       accident: urlState.accident,
     };

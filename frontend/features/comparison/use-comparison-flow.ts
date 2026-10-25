@@ -61,6 +61,7 @@ export function useComparisonFlow() {
     setDeductibles, setHydrated,
     setIsSearching: premiumSearch.setIsSearching,
     setJourney, setJourneyId, setModels, setRestoredNotice, setResults, setSearchNotice,
+    updateLocationQuery: locationPicker.updateLocationQuery,
   });
   useEffect(() => {
     if (!hydrated) return;

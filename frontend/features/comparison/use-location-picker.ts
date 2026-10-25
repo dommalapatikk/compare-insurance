@@ -61,7 +61,7 @@ export function useLocationPicker() {
         } else {
           setLocationSuggestions([]);
           setActiveLocationIndex(-1);
-          setLocationNotice("We couldn't find this postcode.");
+          setLocationNotice(`We couldn't find postcode ${query}.`);
           setShowLocationSuggestions(false);
         }
       } catch (error) {

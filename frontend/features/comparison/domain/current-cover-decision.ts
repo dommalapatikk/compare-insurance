@@ -49,10 +49,9 @@ export function decideCurrentCover<TOffer extends ComparableOffer>(
     : undefined;
   if (publishedOffer) {
     const publishedPremium = Number(publishedOffer.monthly_premium_chf);
-    // The catalogue result is the insurer's cheapest matching plan. A higher entered
-    // premium may be a different product; a materially lower one cannot be explained
-    // by that and should be checked before we claim savings.
-    const differenceRatio = (publishedPremium - enteredPremium) / publishedPremium;
+    // The catalogue result is the insurer's cheapest matching plan. A material gap in
+    // either direction means the entered policy likely has different comparison inputs.
+    const differenceRatio = Math.abs(publishedPremium - enteredPremium) / publishedPremium;
     if (Number.isFinite(differenceRatio) && differenceRatio > PREMIUM_MISMATCH_TOLERANCE) {
       return { kind: "premium_mismatch", enteredPremium, publishedPremium, publishedOffer };
     }

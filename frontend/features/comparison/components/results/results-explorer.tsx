@@ -92,6 +92,7 @@ export function ResultsExplorer({
   const [premiumDraft, setPremiumDraft] = useState(currentPremium);
   const [insurerDraft, setInsurerDraft] = useState(currentInsurerId);
   const [premiumPromptError, setPremiumPromptError] = useState("");
+  const [premiumPromptOpen, setPremiumPromptOpen] = useState(false);
   const [highlightedInsurerId, setHighlightedInsurerId] = useState("");
   const visibleGroups = useMemo(
     () => groups
@@ -120,6 +121,7 @@ export function ResultsExplorer({
     setPremiumPromptError("");
     onSetCurrentInsurerId(insurerDraft);
     onSetCurrentPremium(premiumDraft);
+    setPremiumPromptOpen(false);
   }
 
   function showOffer(insurerId: string) {
@@ -144,8 +146,12 @@ export function ResultsExplorer({
         <span>{results.source_year} · Before subsidies</span>
       </div>
 
-      {currentComparison && <div className={`current-comparison ${currentComparison.tone}`} role="status">
-        <div>
+      {currentComparison && <div className={`current-comparison ${currentComparison.tone} ${currentComparison.kind.replaceAll("_", "-")}${premiumPromptOpen ? " premium-prompt-open" : ""}`} role="status">
+        {currentComparison.kind === "needs_premium" && <div className="current-premium-mobile-summary">
+          <strong>Add your premium to see savings</strong>
+          <button type="button" aria-expanded={premiumPromptOpen} onClick={() => setPremiumPromptOpen(true)}>Add</button>
+        </div>}
+        <div className="current-comparison-copy">
           <h4>{currentComparison.heading}</h4>
           <p>{currentComparison.detail}</p>
         </div>
@@ -199,7 +205,7 @@ export function ResultsExplorer({
           isLoadingMorePlans={loadingPlansKey === `${group.deductible_chf}:${model}`}
           onLoadMorePlans={onLoadMorePlans}
           currentInsurerId={currentInsurerId}
-          currentPremium={intent === "compare_current" ? currentPremium : ""}
+          currentPremium={intent === "compare_current" && currentComparison?.kind !== "premium_mismatch" ? currentPremium : ""}
           highlightedInsurerId={highlightedInsurerId}
         />)}
       </div>

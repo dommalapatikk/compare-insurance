@@ -69,6 +69,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
 
   const showWorkspace = section !== "results";
   const detailsReady = Boolean(flow.selectedLocation && flow.ageGroup && flow.accident);
+  const locationError = flow.locationNotice.startsWith("We couldn't find postcode");
   if (!showWorkspace) return null;
 
   return (
@@ -92,12 +93,13 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
           <button className="back-button" onClick={flow.restartJourney} type="button"><span aria-hidden="true">←</span> Choose another journey</button>
           <p className="step-kicker">{flow.journeyIntent === "explore" ? "Your profile" : "Step 1 of 2"}</p>
           <Question title="Your details"><p>Three quick answers are enough to find the premiums for you.</p></Question>
+          {flow.restoredNotice && <p className="restore-notice form-restore-notice" role="status">{flow.restoredNotice}</p>}
           <div className="details-grid">
             <div className="step-control location-combobox form-field">
               <label htmlFor="location-search">Postcode</label>
               <input
               id="location-search" type="text" role="combobox" autoComplete="postal-code" inputMode="numeric" maxLength={4}
-              aria-autocomplete="list" aria-controls="location-suggestions" aria-describedby="location-hint"
+              aria-autocomplete="list" aria-controls="location-suggestions" aria-describedby="location-hint" aria-invalid={locationError}
               aria-expanded={flow.showLocationSuggestions && flow.locationSuggestions.length > 0}
               aria-activedescendant={flow.activeLocationIndex >= 0 ? `location-option-${flow.activeLocationIndex}` : undefined}
               value={flow.locationQuery} onChange={(event) => flow.updateLocationQuery(event.target.value)}
@@ -118,7 +120,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
                 onClick={() => flow.chooseLocation(item)}
               ><strong>{item.postal_code} {item.locality}</strong><small>{item.municipality_name}, {item.canton}</small></li>)}
             </ul>}
-              <small aria-live="polite" id="location-hint">{flow.isLoadingLocations ? "Looking up postcode…" : flow.selectedLocation ? flow.selectedLocation.label : flow.locationNotice || "Enter your 4-digit Swiss postcode."}</small>
+              <small className={locationError ? "field-error" : ""} aria-live="polite" id="location-hint">{flow.isLoadingLocations ? "Looking up postcode…" : flow.selectedLocation ? flow.selectedLocation.label : flow.locationNotice || "Enter your 4-digit Swiss postcode."}</small>
             </div>
             <label className="step-control form-field" htmlFor="birth-year">Birth year
               <input id="birth-year" aria-describedby="birth-year-hint" aria-invalid={Boolean(flow.birthYearError)} inputMode="numeric" min="1907" max="2027" type="number" value={flow.birthYear} onBlur={flow.touchBirthYear} onChange={(event) => flow.setBirthYear(event.target.value)} placeholder="e.g. 1984" />
@@ -206,7 +208,7 @@ export function GuidedAdvisor({ flow }: { flow: ComparisonFlow }) {
           <div className="step-primary-action"><ContinueButton disabled={!flow.deductibles.length || !flow.models.length || flow.isSearching || (flow.journeyIntent === "compare_current" && Boolean(premiumError))} onClick={() => void flow.comparePlans()}>{flow.isSearching ? "Comparing…" : flow.journeyIntent === "compare_current" ? "Compare like for like" : "Show matching premiums"}</ContinueButton></div>
         </div>}
       </div>
-      {flow.restoredNotice && <p className="restore-notice" role="status">{flow.restoredNotice}</p>}
+      {section !== "details" && flow.restoredNotice && <p className="restore-notice" role="status">{flow.restoredNotice}</p>}
     </section>
   );
 }

@@ -67,10 +67,29 @@ describe("URL journey restoration", () => {
       kind: "details",
       journeyId,
       notice: "Some details were missing — please check and continue.",
+      invalidPostcode: "8001",
       birthYear: 1990,
       accident: "excluded",
     });
     expect(searchPremiums).not.toHaveBeenCalled();
+  });
+
+  it("preserves an unknown shared postcode so the form can explain the error", async () => {
+    const result = await resolveJourneyUrl(
+      new URL(`https://example.test/?journey=explore&step=results&journeyId=${journeyId}&postcode=9999&municipalityId=999&birthYear=1990&accident=excluded&models=standard&franchises=300`),
+      {
+        storage: new MemoryStorage(),
+        searchLocations: vi.fn().mockResolvedValue(locationPayload([])),
+        searchPremiums: vi.fn(),
+        signal: new AbortController().signal,
+      },
+    );
+
+    expect(result).toMatchObject({
+      kind: "details",
+      invalidPostcode: "9999",
+      notice: "Some details were missing — please check and continue.",
+    });
   });
 
   it("fails closed before any lookup or premium request for invalid filters", async () => {

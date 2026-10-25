@@ -1,5 +1,5 @@
 import { decideCurrentCover } from "./domain/current-cover-decision";
-import { formatCurrency } from "./formatters";
+import { formatCurrency, formatWholeCurrency } from "./formatters";
 import { officialInsurerShortName } from "./insurer-links";
 import type { CategoryMinimum, PremiumOffer } from "./types";
 
@@ -159,7 +159,7 @@ export function buildCurrentPremiumMessage(
   return {
     kind: "savings",
     tone: "positive",
-    heading: `You could save ${formatCurrency(decision.monthlySavings)}/month`,
+    heading: `You could save ${formatWholeCurrency(decision.monthlySavings)}/month`,
     detail: `That’s ${formatCurrency(decision.monthlySavings * 12)} a year. ${alternativeName} costs ${formatCurrency(decision.cheapestPremium)}, and ${currentName === "you" ? "you pay" : `you pay ${currentName}`} ${formatCurrency(decision.currentPremium)}.`,
     action: { label: `See ${alternativeName}`, offerInsurerId: decision.cheapestOffer.insurer_id },
   };

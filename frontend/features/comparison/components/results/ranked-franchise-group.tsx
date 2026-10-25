@@ -1,8 +1,15 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { modelLabels } from "../../config";
 import { formatCurrency, formatDeductible } from "../../formatters";
 import { officialInsurerShortName, officialInsurerWebsite } from "../../insurer-links";
+import {
+  duplicatePraxisPlanNote,
+  logGenericPraxisPlan,
+  planDisplayName,
+  praxisSubtype,
+} from "../../plan-presentation";
+import type { PraxisSubtype } from "../../plan-presentation";
 import { compareOfferWithCurrentPremium, nearbyOfferSentence, shouldShowCurrentPlanDifferenceColumn } from "../../result-view-model";
 import type { RankedOfferSet } from "../../types";
 import { MobileComparisonList } from "./mobile-comparison-list";
@@ -20,6 +27,14 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
   const hadMorePlans = useRef(ranking.offers.length < ranking.total_eligible_offers);
   const [loadError, setLoadError] = useState("");
 
+  useEffect(() => {
+    ranking.offers.forEach((offer) => {
+      if (offer.insurance_model === "praxis" && praxisSubtype(offer.product_name) === "Doctor network") {
+        logGenericPraxisPlan(offer.product_name);
+      }
+    });
+  }, [ranking.offers]);
+
   if (!ranking.offers.length) {
     return <p className="franchise-empty">No published offers match this franchise and insurance model.</p>;
   }
@@ -27,6 +42,38 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
   const allPlansShown = ranking.offers.length >= ranking.total_eligible_offers;
   const statusId = `plans-status-${franchise}-${model}`;
   const showCurrentDifference = shouldShowCurrentPlanDifferenceColumn(ranking.offers, currentPremium);
+  const praxisSubtypesByInsurer = new Map<string, PraxisSubtype[]>();
+  for (const offer of ranking.offers) {
+    if (offer.insurance_model !== "praxis") continue;
+    const subtypes = praxisSubtypesByInsurer.get(offer.insurer_id) ?? [];
+    subtypes.push(praxisSubtype(offer.product_name));
+    praxisSubtypesByInsurer.set(offer.insurer_id, subtypes);
+  }
+  const insurerOccurrences = new Map<string, number>();
+  const presentations = ranking.offers.map((offer) => {
+    const insurerShortName = officialInsurerShortName(offer.insurer_id, offer.insurer_name);
+    const subtype = offer.insurance_model === "praxis"
+      ? praxisSubtype(offer.product_name)
+      : undefined;
+    const occurrence = offer.insurance_model === "praxis"
+      ? (insurerOccurrences.get(offer.insurer_id) ?? 0) + 1
+      : 0;
+    if (offer.insurance_model === "praxis") insurerOccurrences.set(offer.insurer_id, occurrence);
+    const duplicateSubtypes = praxisSubtypesByInsurer.get(offer.insurer_id) ?? [];
+    return {
+      insurerShortName,
+      planName: planDisplayName({
+        insuranceModel: offer.insurance_model,
+        legalInsurerName: offer.insurer_name,
+        productName: offer.product_name,
+        shortInsurerName: insurerShortName,
+      }),
+      subtype,
+      groupNote: occurrence === 2 && duplicateSubtypes.length > 1
+        ? duplicatePraxisPlanNote(insurerShortName, duplicateSubtypes)
+        : undefined,
+    };
+  });
 
   async function loadMore() {
     if (isLoadingMorePlans || allPlansShown) return;
@@ -40,20 +87,20 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
     }
   }
 
-  const mobileItems = ranking.offers.map((offer) => {
+  const mobileItems = ranking.offers.map((offer, index) => {
     const currentComparison = showCurrentDifference
       ? compareOfferWithCurrentPremium(offer, currentPremium)
       : null;
-    const insurerShortName = officialInsurerShortName(offer.insurer_id, offer.insurer_name);
+    const presentation = presentations[index];
     return {
       key: `${offer.rank}-${offer.insurer_id}-${offer.plan_id ?? offer.product_name}`,
       rank: offer.rank,
       eyebrow: modelLabels[offer.insurance_model] || offer.insurance_model,
       premium: Number(offer.monthly_premium_chf),
-      insurer: insurerShortName,
-      legalInsurer: insurerShortName === offer.insurer_name ? undefined : offer.insurer_name,
-      plan: offer.product_name,
+      insurer: presentation.insurerShortName,
+      plan: presentation.planName,
       model: modelLabels[offer.insurance_model] || offer.insurance_model,
+      modelSubtype: presentation.subtype,
       franchise: offer.deductible_chf,
       difference: offer.rank === 1
         ? undefined
@@ -67,6 +114,7 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
         : undefined,
       highlighted: offer.insurer_id === highlightedInsurerId,
       insurerId: offer.insurer_id,
+      groupNote: presentation.groupNote,
     };
   });
 
@@ -83,29 +131,29 @@ function GroupResults({ franchise, model, ranking, isLoadingMorePlans, onLoadMor
           {showCurrentDifference && <th scope="col">Vs your current plan</th>}
           <th scope="col"><span className="sr-only">Insurer website</span></th>
         </tr></thead>
-        <tbody>{ranking.offers.map((offer) => {
+        <tbody>{ranking.offers.map((offer, index) => {
           const insurerUrl = officialInsurerWebsite(offer.insurer_id);
           const currentComparison = showCurrentDifference
             ? compareOfferWithCurrentPremium(offer, currentPremium)
             : null;
-          const insurerShortName = officialInsurerShortName(offer.insurer_id, offer.insurer_name);
+          const presentation = presentations[index];
           const rowClasses = [offer.rank === 1 ? "best-row" : "", offer.insurer_id === highlightedInsurerId ? "highlighted-offer" : ""].filter(Boolean).join(" ");
           return <tr className={rowClasses} data-offer-insurer={offer.insurer_id} tabIndex={-1} key={`${offer.rank}-${offer.insurer_id}-${offer.plan_id ?? offer.product_name}`}>
             <td>#{offer.rank}</td>
             <td className="money"><strong>{formatCurrency(Number(offer.monthly_premium_chf))}</strong><small>/month</small></td>
-            <th scope="row"><strong>{insurerShortName}</strong>{offer.insurer_id === currentInsurerId && <em className="current-insurer-badge">Your insurer</em>}{insurerShortName !== offer.insurer_name && <small className="legal-insurer-name">{offer.insurer_name}</small>}<small>{offer.product_name}</small></th>
-            <td>{modelLabels[offer.insurance_model] || offer.insurance_model}</td>
+            <th scope="row"><strong>{presentation.insurerShortName}</strong>{offer.insurer_id === currentInsurerId && <em className="current-insurer-badge">Your insurer</em>}{presentation.planName && <small>{presentation.planName}</small>}{presentation.groupNote && <small className="duplicate-plan-note">ⓘ {presentation.groupNote}</small>}</th>
+            <td>{modelLabels[offer.insurance_model] || offer.insurance_model}{presentation.subtype && <small className="model-subtype">{presentation.subtype}</small>}</td>
             <td className={offer.rank === 1 ? "difference best" : "difference"}>{offer.rank === 1 ? `Lowest at ${formatDeductible(franchise)}` : `${formatCurrency(Number(offer.monthly_difference_from_cheapest_chf))} more`}</td>
             {currentComparison && <td className={`current-plan-difference ${currentComparison.tone}`}>{currentComparison.label}</td>}
             <td>{insurerUrl
-              ? <a className="insurer-link" href={insurerUrl} target="_blank" rel="noopener noreferrer">Visit insurer ↗</a>
+              ? <a className="insurer-link" href={insurerUrl} target="_blank" rel="noopener noreferrer" title={`Visit ${presentation.insurerShortName} (${offer.insurer_name}) website`} aria-label={`Visit ${presentation.insurerShortName} (${offer.insurer_name}) website`}>Visit insurer ↗</a>
               : <span className="link-unavailable">Website unavailable</span>}
             </td>
           </tr>;
         })}</tbody>
       </table>
     </div>
-    <MobileComparisonList items={mobileItems} label={`Top premiums at ${formatDeductible(franchise)}`} />
+    <MobileComparisonList items={mobileItems} label={`Top premiums at ${formatDeductible(franchise)}`} showFranchise={false} />
     {hadMorePlans.current && <button
       className="show-all-plans"
       aria-disabled={isLoadingMorePlans || allPlansShown}

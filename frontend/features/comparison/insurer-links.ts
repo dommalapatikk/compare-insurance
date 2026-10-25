@@ -9,7 +9,7 @@ export const officialInsurers = [
   { id: "32", name: "Aquilana Versicherungen", shortName: "Aquilana", website: "https://www.aquilana.ch" },
   { id: "134", name: "Einsiedler Krankenkasse", shortName: "Einsiedler", website: "https://www.kkeinsiedeln.ch" },
   { id: "194", name: "Sumiswalder Krankenkasse", shortName: "Sumiswalder", website: "https://www.sumiswalder.ch" },
-  { id: "246", name: "Genossenschaft Krankenkasse Steffisburg", shortName: "Krankenkasse Steffisburg", website: "https://www.kkst.ch" },
+  { id: "246", name: "Genossenschaft Krankenkasse Steffisburg", shortName: "Steffisburg", website: "https://www.kkst.ch" },
   { id: "290", name: "CONCORDIA Schweiz. Kranken- und Unfallversicherung AG", shortName: "CONCORDIA", website: "https://www.concordia.ch" },
   { id: "312", name: "Atupri Gesundheitsversicherung AG", shortName: "Atupri", website: "https://www.atupri.ch" },
   { id: "343", name: "Avenir Assurance Maladie SA", shortName: "Avenir", website: "https://www.groupemutuel.ch" },
@@ -39,7 +39,10 @@ export const officialInsurers = [
   { id: "1560", name: "Agrisano Krankenkasse AG", shortName: "Agrisano", website: "https://www.agrisano.ch" },
   { id: "1562", name: "Helsana Versicherungen AG", shortName: "Helsana", website: "https://www.helsana.ch" },
   { id: "1568", name: "sana24 AG", shortName: "sana24", website: "https://www.visana.ch" },
-].toSorted((left, right) => left.name.localeCompare(right.name));
+].toSorted((left, right) => new Intl.Collator("de", { sensitivity: "base" }).compare(
+  left.shortName,
+  right.shortName,
+));
 
 const insurersById = new Map(officialInsurers.map((insurer) => [insurer.id, insurer]));
 

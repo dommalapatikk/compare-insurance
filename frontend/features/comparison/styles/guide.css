@@ -190,6 +190,7 @@
 .advisor-privacy, .restore-notice { color: var(--muted); font-size: .72rem; }
 .advisor-privacy { margin: 8px 0 0; }
 .restore-notice { max-width: 650px; margin: 12px auto 0; }
+.form-restore-notice { max-width: none; margin: -4px 0 0; padding: 10px 12px; color: var(--ink); background: var(--soft); border-radius: 9px; }
 .preferences-step { max-width: 940px; margin: 0 auto; }
 .preference-group { min-width: 0; display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
 .preference-group + .preference-group { padding-top: 17px; border-top: 1px solid var(--line); }

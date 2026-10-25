@@ -6,9 +6,9 @@ export type MobileComparisonItem = {
   eyebrow: string;
   premium: number;
   insurer: string;
-  legalInsurer?: string;
   plan: string;
   model: string;
+  modelSubtype?: string;
   franchise: number;
   difference?: string;
   insurerUrl?: string | null;
@@ -21,14 +21,17 @@ export type MobileComparisonItem = {
   };
   highlighted?: boolean;
   insurerId?: string;
+  groupNote?: string;
 };
 
 export function MobileComparisonList({
   items,
   label,
+  showFranchise = true,
 }: {
   items: MobileComparisonItem[];
   label: string;
+  showFranchise?: boolean;
 }) {
   return (
     <ol className="mobile-comparison-list" aria-label={label}>
@@ -42,10 +45,11 @@ export function MobileComparisonList({
             <strong>{formatCurrency(item.premium)}</strong><small>/month</small>
           </div>
           <strong className="mobile-result-insurer">{item.insurer}{item.currentInsurer && <em className="current-insurer-badge">Your insurer</em>}</strong>
-          {item.legalInsurer && <span className="mobile-result-legal-insurer">{item.legalInsurer}</span>}
-          <span className="mobile-result-plan">{item.plan}</span>
+          {item.plan && <span className="mobile-result-plan">{item.plan}</span>}
+          {item.modelSubtype && <span className="model-subtype-tag">{item.modelSubtype}</span>}
+          {item.groupNote && <span className="duplicate-plan-note">ⓘ {item.groupNote}</span>}
           <div className="mobile-result-meta">
-            <span>{formatDeductible(item.franchise)}</span>
+            {showFranchise && <span>{formatDeductible(item.franchise)}</span>}
             {item.difference && <span>{item.difference}</span>}
           </div>
           {item.currentComparison && <span className={`mobile-current-plan-difference ${item.currentComparison.tone}`}>
@@ -56,6 +60,7 @@ export function MobileComparisonList({
             href={item.insurerUrl}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={`Visit ${item.insurer} website`}
           >Visit insurer ↗</a>}
         </li>
       ))}

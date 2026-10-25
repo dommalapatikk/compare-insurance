@@ -61,6 +61,7 @@
 .current-comparison p { max-width: 760px; margin: 4px 0 0; color: var(--muted); font-size: .76rem; line-height: 1.45; }
 .current-comparison.neutral { color: var(--ink); background: var(--soft); border-color: var(--line); }
 .current-comparison.warning { color: #7a2e0e; background: #fff4e5; border-color: #efc189; }
+.current-premium-mobile-summary { display: none; }
 .comparison-action, .current-premium-prompt > button { min-height: 44px; flex: none; padding: 0 16px; color: white; background: var(--action); border: 0; border-radius: 999px; cursor: pointer; font-size: .76rem; font-weight: 750; }
 .current-premium-prompt { width: min(100%, 620px); display: grid; grid-template-columns: minmax(150px, .75fr) minmax(190px, 1fr) auto; align-items: end; gap: 9px; }
 .current-premium-prompt label { display: grid; gap: 5px; color: var(--ink); font-size: .7rem; font-weight: 700; }
@@ -136,8 +137,9 @@
 .ranked-franchise-table.with-current-premium th:nth-child(7) { width: 10%; }
 .current-plan-difference { color: var(--muted); font-size: .72rem; font-weight: 700; }
 .current-plan-difference.positive { color: var(--positive); }
-.legal-insurer-name { font-weight: 500; }
-.mobile-result-legal-insurer { display: block; margin-top: 2px; color: var(--muted); font-size: .7rem; }
+.model-subtype { display: block; margin-top: 3px; color: var(--muted); font-size: .68rem; }
+.model-subtype-tag { width: max-content; display: inline-flex; margin-top: 6px; padding: 3px 7px; color: var(--muted); background: var(--soft); border-radius: 999px; font-size: .66rem; font-weight: 650; }
+.comparison-table tbody th small.duplicate-plan-note, .duplicate-plan-note { display: block; margin-top: 7px; color: var(--muted); font-size: .67rem; font-weight: 500; line-height: 1.4; }
 .mobile-current-plan-difference { display: block; margin-top: 8px; color: var(--muted); font-size: .72rem; font-weight: 700; }
 .mobile-current-plan-difference.positive { color: var(--positive); }
 
