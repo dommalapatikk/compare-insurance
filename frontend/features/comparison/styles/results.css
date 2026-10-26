@@ -1,8 +1,14 @@
-.results-preview { margin-bottom: 46px; scroll-margin-top: 20px; }
+.results-preview { margin-bottom: var(--space-section); scroll-margin-top: 20px; }
 .results-preview:focus { outline: none; }
 .results-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 15px; }
 .results-heading h2 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.05rem); font-weight: 710; letter-spacing: -.04em; }
 .results-heading p { margin: 4px 0 0; color: var(--muted); font-size: .78rem; }
+.results-heading .results-trust-line {
+  color: var(--ink);
+  font-size: .7rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
 .results-heading > button {
   min-height: 44px;
   padding: 0;
@@ -163,7 +169,7 @@
 .comparison-context { margin: 7px 0 0; color: var(--muted); font-size: .72rem; }
 
 .savings-panel { margin-top: 12px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.savings-panel > summary, .before-switching > summary { min-height: 48px; display: flex; align-items: center; color: var(--action-ink); cursor: pointer; font-size: .86rem; font-weight: 700; }
+.savings-panel > summary { min-height: 48px; display: flex; align-items: center; color: var(--action-ink); cursor: pointer; font-size: .86rem; font-weight: 700; }
 .savings-content { display: flex; align-items: flex-end; gap: 24px; padding: 2px 0 16px; }
 .savings-content p { max-width: 560px; margin: 0 0 2px; color: var(--muted); font-size: .78rem; line-height: 1.5; }
 .savings-form { flex: none; }
@@ -173,11 +179,15 @@
 .savings-form input { width: 100%; min-width: 0; min-height: 44px; padding: 0 9px; border: 0; border-left: 1px solid var(--line); outline: 0; }
 .savings-form > small { display: block; margin-top: 4px; color: var(--muted); font-size: .7rem; }
 
-.before-switching { margin-top: 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.before-switching[open] { padding-bottom: 14px; }
-.before-switching ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0 0; padding: 0; list-style: none; counter-reset: switch-step; }
-.before-switching li { position: relative; min-height: 128px; padding: 16px 16px 16px 52px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 8px; font-size: .76rem; line-height: 1.5; counter-increment: switch-step; }
-.before-switching li::before { position: absolute; top: 16px; left: 15px; width: 25px; height: 25px; display: grid; place-items: center; content: counter(switch-step); color: var(--action-ink); background: var(--action-pale); border-radius: 50%; font-size: .74rem; font-weight: 750; }
+.before-switching { margin-top: var(--space-section); padding: 24px; background: var(--surface-subtle); border-radius: 18px; }
+.before-switching-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.before-switching-heading p { margin: 0 0 4px; color: var(--brand); font-size: .68rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.before-switching-heading h3 { margin: 0; font-size: 1.15rem; letter-spacing: -.025em; }
+.switch-deadline { min-height: 30px; display: inline-flex; align-items: center; flex: none; padding: 0 10px; color: var(--action-ink); background: var(--card); border-radius: 999px; font-size: .7rem; font-weight: 750; }
+.switch-deadline.expired { color: var(--muted); }
+.before-switching ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 22px 0 0; padding: 0; list-style: none; counter-reset: switch-step; }
+.before-switching li { position: relative; min-height: 92px; padding: 2px 0 0 42px; color: var(--muted); font-size: .76rem; line-height: 1.5; counter-increment: switch-step; }
+.before-switching li::before { position: absolute; top: 0; left: 0; width: 28px; height: 28px; display: grid; place-items: center; content: counter(switch-step); color: var(--action-ink); background: var(--card); border-radius: 50%; font-size: .72rem; font-weight: 750; }
 .before-switching li strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: .82rem; }
 .before-switching > p { margin: 10px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.5; }
 .current-insurer-badge { width: max-content; display: inline-flex; align-items: center; min-height: 20px; margin-left: 7px; padding: 0 6px; color: var(--action-ink); background: var(--action-pale); border-radius: 999px; font-size: .62rem; font-style: normal; font-weight: 750; vertical-align: middle; }

@@ -234,7 +234,7 @@ export function useComparisonFlow() {
       deductibles: Boolean(journey.profile.deductibles),
     },
     continueFromDetails, goToStage, isSearching: premiumSearch.isSearching, isSending: guide.isSending, journeyStage: journey.stage, loadMorePlans: premiumSearch.loadMorePlans, loadingPlansKey: premiumSearch.loadingPlansKey, location: locationPicker.selectedLocation?.label || "",
-    journeyIntent: journey.intent, messages: guide.messages, models, restartJourney, restoredNotice, results, resultsRef, searchNotice, sendMessage: guide.sendMessage,
+    journeyIntent: journey.intent, messages: guide.messages, models, resetConversation: guide.resetConversation, restartJourney, restoredNotice, results, resultsRef, searchNotice, sendMessage: guide.sendMessage,
     setAccident: (value: AccidentChoice) => { setAccidentValue(value); setFormError(""); }, setBirthYear,
     touchBirthYear: () => setBirthYearTouched(true),
     setCurrentInsurerId: guide.setCurrentInsurerId, setCurrentPremium: guide.setCurrentPremium, setDraft: guide.setDraft, selectJourneyIntent, startJourney: () => reduce({ type: "start" }), threadId: guide.threadId,

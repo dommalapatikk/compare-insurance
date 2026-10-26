@@ -24,7 +24,7 @@ export function useGuideConversation(
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(true);
   const [currentPremium, setCurrentPremium] = useState("");
   const [currentInsurerId, setCurrentInsurerId] = useState("");
 
@@ -36,7 +36,7 @@ export function useGuideConversation(
     );
     if (saved) {
       setThreadId(saved.threadId);
-      setMessages(saved.messages);
+      setMessages([]);
       setCurrentPremium(saved.currentPremium);
       setCurrentInsurerId(saved.currentInsurerId ?? "");
     } else {
@@ -50,10 +50,10 @@ export function useGuideConversation(
     if (!hydrated || !threadId || !journeyId) return;
     try {
       saveConversationState(window.sessionStorage, {
-        journeyId, threadId, messages, currentPremium, currentInsurerId,
+        journeyId, threadId, messages: [], currentPremium, currentInsurerId,
       });
     } catch { /* optional */ }
-  }, [currentInsurerId, currentPremium, hydrated, journeyId, messages, threadId]);
+  }, [currentInsurerId, currentPremium, hydrated, journeyId, threadId]);
 
   async function sendMessage(text: string) {
     const message = text.trim();

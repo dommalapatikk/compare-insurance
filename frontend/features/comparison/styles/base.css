@@ -13,6 +13,8 @@
   --positive: #087a61;
   --positive-pale: #e6f5ef;
   --warning: #b42318;
+  --surface-subtle: #eef3fb;
+  --space-section: 64px;
 }
 
 * { box-sizing: border-box; }
@@ -65,6 +67,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   font-weight: 700;
   letter-spacing: -.02em;
 }
+.brand > span:last-child { white-space: nowrap; }
 .brand-mark {
   position: relative;
   width: 30px;
@@ -85,13 +88,28 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 .brand-mark::before { width: 16px; height: 5px; }
 .brand-mark::after { width: 5px; height: 16px; }
 .source-status { color: var(--muted); font-size: .8rem; font-weight: 550; }
+.header-actions { display: flex; align-items: center; gap: 18px; }
+.chat-trigger {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  color: var(--action-ink);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: .78rem;
+  font-weight: 750;
+}
+.chat-trigger svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linejoin: round; stroke-width: 1.8; }
 
 .intro {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 42px;
   align-items: end;
-  padding: 46px 0 28px;
+  padding: 46px 0 var(--space-section);
 }
 .eyebrow {
   margin: 0 0 8px;
@@ -116,6 +134,12 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   font-size: 1rem;
   line-height: 1.55;
 }
+.product-promise {
+  margin: 12px 0 0;
+  color: var(--ink);
+  font-size: .78rem;
+  font-weight: 650;
+}
 .premium-update {
   width: 340px;
   padding: 17px 20px 14px;
@@ -130,10 +154,10 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
 .premium-update a { min-height: 38px; display: inline-flex; align-items: center; margin-top: 5px; font-size: .74rem; font-weight: 700; }
 .mobile-premium-update { display: none; }
 .support-panel {
-  margin-bottom: 42px;
-  padding: 34px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--space-section);
+  padding: 32px;
+  background: var(--surface-subtle);
+  border-radius: 20px;
 }
 .official-help {
   display: grid;
@@ -157,8 +181,8 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   line-height: 1.45;
 }
 .section-heading > a { color: var(--action-ink); font-weight: 700; white-space: nowrap; }
-.faq-list { border-top: 1px solid var(--line); }
-.faq-list details { border-bottom: 1px solid var(--line); }
+.faq-list { display: grid; gap: 4px; }
+.faq-list details { padding: 0 12px; background: rgba(255, 255, 255, .42); border-radius: 10px; }
 .faq-list summary {
   min-height: 52px;
   display: flex;
@@ -168,8 +192,23 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   cursor: pointer;
   font-size: .92rem;
   font-weight: 650;
+  list-style: none;
 }
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::after {
+  margin-left: auto;
+  color: var(--action-ink);
+  content: "+";
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+.faq-list details[open] summary::after { content: "−"; }
 .faq-list p, .faq-answer { margin: -2px 32px 18px 0; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+.faq-list details[open] .faq-answer { animation: faq-reveal .16s ease-out; }
+@keyframes faq-reveal {
+  from { opacity: .4; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .faq-answer ul { margin: 0; padding-left: 20px; }
 .faq-answer li + li { margin-top: 4px; }
 .faq-list a, .result-source a, .before-switching a { min-height: 44px; display: inline-flex; align-items: center; }
@@ -178,8 +217,7 @@ textarea:focus-visible, summary:focus-visible, a:focus-visible {
   display: flex;
   justify-content: space-between;
   gap: 30px;
-  padding: 24px 0 34px;
-  border-top: 1px solid var(--line);
+  padding: 0 0 34px;
   color: var(--muted);
   font-size: .78rem;
 }

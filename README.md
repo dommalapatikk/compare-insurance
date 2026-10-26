@@ -83,8 +83,9 @@ configuration without committing the resulting file.
 
 The two applications are separate Vercel projects in this monorepo. The
 frontend production environment points to the API project. Premium comparison
-does not depend on an LLM. The chat assistant remains safely disabled until
-`OPENAI_API_KEY` is added to the API project's Vercel environment.
+does not depend on an LLM. The chat assistant uses the configured AI service
+when available and otherwise provides bounded, deterministic answers linked to
+official Swiss sources.
 
 Automatic Vercel deployments from Git require the Vercel account's GitHub
 integration to be authorized for `dommalapatikk/compare-insurance`.

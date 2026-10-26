@@ -41,7 +41,7 @@ export function AdvisorComposer({
         <div>
           <textarea
             id="advisor-message"
-            maxLength={2000}
+            maxLength={500}
             onChange={(event) => flow.setDraft(event.target.value)}
             placeholder="What would you like to know?"
             rows={1}
@@ -64,7 +64,7 @@ export function AdvisorComposer({
         ))}
       </div>}
       <p className="advisor-privacy">
-        Please do not enter medical history, policy numbers or payment details.
+        Do not share medical details, policy numbers or contact details.
       </p>
     </div>
   );

@@ -1,6 +1,10 @@
 import type { MouseEvent } from "react";
 
-export function SiteHeader({ onRestart }: { onRestart: () => void }) {
+export function SiteHeader({ chatAvailable, onOpenChat, onRestart }: {
+  chatAvailable: boolean;
+  onOpenChat: () => void;
+  onRestart: () => void;
+}) {
   function handleBrandClick(event: MouseEvent<HTMLAnchorElement>) {
     if (
       event.button !== 0
@@ -26,7 +30,13 @@ export function SiteHeader({ onRestart }: { onRestart: () => void }) {
         <span className="brand-mark" aria-hidden="true" />
         <span>Compare Insurance</span>
       </a>
-      <span className="source-status">Basic insurance · 2027</span>
+      <div className="header-actions">
+        <span className="source-status">Basic insurance · 2027</span>
+        {chatAvailable && <button className="chat-trigger" onClick={onOpenChat} type="button">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5.5h14v10H9l-4 3v-13Z" /></svg>
+          Ask
+        </button>}
+      </div>
     </header>
   );
 }
@@ -40,6 +50,7 @@ export function Intro() {
         <p className="intro-description">
           Compare what you pay now or find the cheapest plan from the official 2027 premiums.
         </p>
+        <p className="product-promise">Official prices. Every insurer. No ads, no sales calls.</p>
       </div>
       <PremiumUpdate className="desktop-premium-update" />
     </section>

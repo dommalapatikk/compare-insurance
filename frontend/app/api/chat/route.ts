@@ -1,20 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { officialAssistantReply } from "../../../features/comparison/domain/official-assistant";
+
 const DEFAULT_API_URL = "http://127.0.0.1:8000";
 
 export async function GET() {
-  const apiUrl = (process.env.COMPARE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
-  try {
-    const upstream = await fetch(`${apiUrl}/v1/chat/availability`, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(5_000),
-    });
-    if (!upstream.ok) return NextResponse.json({ available: false });
-    const result = await upstream.json() as { available?: unknown };
-    return NextResponse.json({ available: result.available === true });
-  } catch {
-    return NextResponse.json({ available: false });
-  }
+  return NextResponse.json({ available: true });
 }
 
 export async function POST(request: Request) {
@@ -41,23 +32,35 @@ export async function POST(request: Request) {
   const apiUrl = (process.env.COMPARE_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
 
   try {
-    const upstream = await fetch(`${apiUrl}/v1/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: body.message.trim(),
-        thread_id: body.thread_id,
-        history: Array.isArray(body.history) ? body.history : [],
-      }),
+    const availability = await fetch(`${apiUrl}/v1/chat/availability`, {
       cache: "no-store",
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(3_000),
     });
-    const result = await upstream.json();
-    return NextResponse.json(result, { status: upstream.status });
+    const status = availability.ok
+      ? await availability.json() as { available?: unknown }
+      : { available: false };
+    if (status.available === true) {
+      const upstream = await fetch(`${apiUrl}/v1/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: body.message.trim(),
+          thread_id: body.thread_id,
+          history: Array.isArray(body.history) ? body.history : [],
+        }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (upstream.ok) {
+        return NextResponse.json(await upstream.json());
+      }
+    }
   } catch {
-    return NextResponse.json(
-      { detail: "The insurance assistant API is unavailable." },
-      { status: 502 },
-    );
+    // The deterministic official-source guide below keeps help available.
   }
+
+  return NextResponse.json({
+    ...officialAssistantReply(body.message.trim()),
+    thread_id: body.thread_id,
+  });
 }
